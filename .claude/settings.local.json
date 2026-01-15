@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx create-expo-app@latest:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm install:*)",
+      "Bash(bd)",
+      "Bash(bd --help:*)",
+      "Bash(bd status:*)",
+      "Bash(bd info:*)",
+      "Bash(bd init:*)",
+      "Bash(bd list:*)",
+      "Bash(/c/Users/joaoa/bin/bd.exe init:*)",
+      "Bash(where:*)",
+      "Bash(/d/Programs/Beads/bd init:*)",
+      "Bash(npx expo install:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(/plugin marketplace add:*)",
+      "Bash(npm start)",
+      "Bash(ls -la \"D:\\\\Projects\\\\Kingside\\\\src\\\\types\"\" 2>/dev/null || ls -la \"D:/Projects/Kingside/src/types/ \")",
+      "Bash(node -e:*)",
+      "Bash(npm test:*)"
+    ]
+  }
+}

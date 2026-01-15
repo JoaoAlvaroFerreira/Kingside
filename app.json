@@ -1,0 +1,20 @@
+{
+  "expo": {
+    "name": "Kingside",
+    "slug": "kingside",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "jsEngine": "hermes",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.kingside.app"
+    },
+    "android": {
+      "package": "com.kingside.app"
+    },
+    "plugins": [
+      "expo-document-picker"
+    ]
+  }
+}

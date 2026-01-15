@@ -1,0 +1,55 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "jsx": "react-native",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "src/*"
+      ],
+      "@components/*": [
+        "src/components/*"
+      ],
+      "@screens/*": [
+        "src/screens/*"
+      ],
+      "@services/*": [
+        "src/services/*"
+      ],
+      "@hooks/*": [
+        "src/hooks/*"
+      ],
+      "@utils/*": [
+        "src/utils/*"
+      ],
+      "@types": [
+        "src/types"
+      ],
+      "@store": [
+        "src/store"
+      ],
+      "@store/*": [
+        "src/store/*"
+      ],
+      "@navigation/*": [
+        "src/navigation/*"
+      ]
+    },
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "lib": [
+      "es2020",
+      "dom"
+    ]
+  },
+  "include": [
+    "src/**/*",
+    "App.tsx"
+  ],
+  "exclude": [
+    "node_modules"
+  ],
+  "extends": "expo/tsconfig.base"
+}

@@ -1,0 +1,1065 @@
+[Event "2025 OTB: 2a Divisão: vs Galitos"]
+[Date "2025.01.04"]
+[White "João Álvaro Ferreira"]
+[Black "João Matos"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "E11"]
+[Opening "Bogo-Indian Defense: Grünfeld Variation"]
+[StudyName "2025 OTB"]
+[ChapterName "2a Divisão: vs Galitos"]
+[ChapterURL "https://lichess.org/study/9jBCfbSD/xLf7tjsy"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.01.04"]
+[UTCTime "18:18:38"]
+
+1. d4 { [%eval 0.17] } 1... Nf6 { [%eval 0.19] } 2. Nf3 { [%eval 0.11] } 2... e6 { [%eval 0.14] } 3. c4 { [%eval 0.12] } 3... Bb4+ { [%eval 0.54] } (3... d5 4. Nc3) 4. Nbd2 { [%eval 0.32] } 4... b6 { [%eval 0.32] } 5. e3 { [%eval 0.28] } 5... Bb7 { [%eval 0.36] } 6. Be2 { [%eval 0.08] } 6... O-O { [%eval 0.17] } 7. O-O { [%eval 0.11] } 7... Re8 { [%eval 0.19] } 8. Qc2 { [%eval 0.09] } 8... Bxd2 { [%eval 0.57] } 9. Nxd2 { [%eval 0.56] } 9... d6 { [%eval 0.78] } 10. e4?! { [%eval 0.03] } { Inaccuracy. b4 was best. } (10. b4 c5 11. dxc5 (11. a3) 11... dxc5 12. b5) 10... e5?! { [%eval 1.0] } { Inaccuracy. c5 was best. } (10... c5) 11. d5 { [%eval 1.06] } 11... Nbd7 { [%eval 1.21] } 12. b3 { [%eval 0.9] } 12... a5 { [%eval 1.07] } 13. Ba3 { [%eval 0.82] } (13. Nb1 Nc5 14. Nc3 Bc8) 13... Qe7 { [%eval 0.89] } 14. Rfe1 { [%eval 0.65] } 14... Nf8 { [%eval 0.91] } 15. Nf1 { [%eval 0.87] } 15... Ng6 { [%eval 1.03] } 16. Ne3 { [%eval 0.92] } 16... Nf4 { [%eval 0.91] } 17. Bf1 { [%eval 1.08] } (17. Nf5 Qd7 (17... Nxe2+ 18. Rxe2 Qd7 (18... Qd8))) 17... Bc8 { [%eval 0.83] } 18. Bb2 { [%eval 0.4] } (18. g3 Nh3+ 19. Kg2 Ng5 (19... Nh5)) 18... Ng4 { [%eval 0.32] } 19. Nxg4 { [%eval 0.36] } (19. Bc1 Qf6 20. Nxg4 Bxg4) 19... Bxg4 { [%eval 0.23] } 20. f3 { [%eval 0.28] } 20... Bd7 { [%eval 0.04] } 21. Bc1 { [%eval 0.06] } 21... Ng6 { [%eval 0.2] } 22. Be3 { [%eval 0.13] } 22... Rf8 { [%eval 0.2] } 23. a3 { [%eval 0.24] } (23. Bd3 f6 24. a3 Rf7 25. b4 Raf8 (25... axb4 26. axb4 Raf8)) 23... f5 { [%eval 0.15] } 24. b4 { [%eval -0.05] } 24... fxe4 { [%eval 0.0] } 25. fxe4 { [%eval -0.06] } 25... Nf4 { [%eval 0.02] } 26. c5 { [%eval 0.0] } 26... axb4 { [%eval 0.24] } 27. axb4 { [%eval -0.09] } 27... bxc5 { [%eval 0.05] } 28. bxc5 { [%eval -0.01] } 28... Rxa1 { [%eval -0.13] } 29. Rxa1 { [%eval -0.01] } 29... Qf6 { [%eval 0.01] } 30. c6 { [%eval -0.01] } (30. h3 h5 31. Kh2 h4 32. Qf2 Be8 33. Ra2 (33. Ra8 Bg6 34. Rxf8+ Kxf8 (34... Qxf8 35. cxd6 cxd6 36. Qf3 Bh5 37. Qf2 g5 38. Bd2 Qf6) 35. cxd6 cxd6 36. Qf3 Bh5 (36... Kf7 37. Bc4 Bh5 38. Qf2 g5 39. Bd2 Kg7 (39... g4 40. hxg4) 40. Qa7+ (40. Bc1 g4 (40... Nxd5 41. Qa7+) 41. Qa7+) (40. Bb3) 40... Kh6 41. Qe3 g4 42. hxg4 Bxg4 43. Be2 Qg5 44. Bf3 Kg6 45. Qa3 Bxf3 46. Qxf3) 37. Qf2 g5 38. Bd2 Kg7)) 30... Bg4 { [%eval 0.12] } 31. h3 { [%eval 0.23] } 31... Bh5 { [%eval 0.34] } 32. g3?! { [%eval -0.35] } { Inaccuracy. Kh2 was best. } (32. Kh2 Bg6) 32... Ng6?! { [%eval 0.69] } { Inaccuracy. Bf3 was best. } (32... Bf3 33. Kh2) 33. g4?! { [%eval 0.0] } { Inaccuracy. Kh2 was best. } (33. Kh2 Bf3) (33. Bg2 Nf4 34. gxf4 exf4 35. Bf2 (35. Rf1 Qe5 36. Bf2 f3 37. Bh1)) 33... Qf3 { [%eval 0.03] } 34. Qf2 { [%eval 0.16] } (34. Qe2 Qg3+ 35. Kh1 Nf4 36. Bxf4 Rxf4 37. Qg2 (37. gxh5 Rf2 38. Ra8+ Kf7) 37... Qc3) 34... Qxe4?? { [%eval 2.23] } { Blunder. Bxg4 was best. } (34... Bxg4 35. Qxf3) 35. Qd2?? { [%eval -3.19] } { Blunder. Bg2 was best. } (35. Bg2 Qc4 (35... Rxf2 36. Bxe4 Re2 37. gxh5 Rxe3 38. hxg6 Rxe4 39. Ra8#) 36. Qa2 Qc3 37. Qa3 Qc2 38. gxh5 Nh4 39. Ra2 Qd1+ 40. Kh2 Qxh5) 35... Nh4 { [%eval -3.09] } 36. Qd3 { [%eval -3.09] } (36. Bd3 Nf3+) (36. Bg2) 36... Rxf1+?? { [%eval 0.0] } { Blunder. Nf3+ was best. } (36... Nf3+ 37. Kh1 Bg6 38. Qxe4 Bxe4 39. Rd1 Rb8 40. Kg2 Rb2+ 41. Kg3 Nh2 42. Bg5) (36... Qxd3 37. Bxd3) 37. Kxf1?? { [%eval -7.67] } { Blunder. Qxf1 was best. } (37. Qxf1 Qxe3+ 38. Qf2 Qd2 (38... Qxf2+ 39. Kxf2 Be8 (39... Bf7 40. Ra7) 40. Ra7 (40. Ra8 Kf8 41. Rc8) 40... Ng6 41. Rxc7 Kf8 42. Rb7 Ne7 43. Rb5 Kf7 44. Rb7 Kf8 45. Kf3)) (37. Rxf1) 37... Qg2+ (37... Qxd3+) 38. Ke1 Bg6 *
+
+
+[Event "Blindfold Training"]
+[Site "Profigaia"]
+[Date "2025.01.11"]
+[White "Carlos Ribeiro"]
+[Black "João Álvaro Ferreira"]
+[Result "0-1"]
+[Variant "Standard"]
+[ECO "C01"]
+[Opening "French Defense: Exchange Variation"]
+[StudyName "2025 OTB"]
+[ChapterName "Blindfold vs Carlos"]
+[ChapterURL "https://lichess.org/study/9jBCfbSD/xuy48eXR"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.01.11"]
+[UTCTime "13:04:28"]
+
+1. e4 e6 2. Nf3 d5 3. exd5 exd5 4. d4 Nf6 5. Be2 c5 6. O-O c4 7. Re1 Be7 8. c3 O-O 9. b3 cxb3 10. axb3 Nc6 11. Nbd2 Qb6 12. Ba3 Bg4 13. Bxe7 Nxe7 14. Qc2 Bf5 15. Qd1 Rac8 16. Ne5 Nc6 17. Ndf3 Ne4 18. Bd3 f6 19. Nxc6 Rxc6 20. Bxe4 Bxe4 21. Nd2 Bd3 22. Qc1 Rfc8 23. Ra3 Rxc3 24. Qb2 Rc2 25. Qa1 (25. Qxc2 Rxc2) 25... Rxd2 26. Rxa7 Ba6 27. Qa4 Qe6 (27... Qxa7 28. Re8+ Rxe8 (28... Kf7 29. Qd7+ Kg6 30. Qg4+ Kf7 31. Qd7+ Kg6 32. Qg4+) 29. Qxe8#) 28. Ra1 (28. Rxe6 Rd1+) (28. Qe8+) 28... Qe2 29. Qe8+ Rxe8 (29... Qxe8) 30. Ra8 Qxf2+ 0-1
+
+
+[Event "2025 OTB: CDSRE 1: Vasco da Gama B"]
+[Date "2025.01.12"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "C00"]
+[Opening "French Defense: Knight Variation"]
+[StudyName "2025 OTB"]
+[ChapterName "CDSRE 1: Vasco da Gama B"]
+[ChapterURL "https://lichess.org/study/9jBCfbSD/AazjeZVc"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.01.12"]
+[UTCTime "11:08:26"]
+
+1. e4 e6 2. Nf3 d5 3. e5 c5 4. Bb5+ Bd7 5. Bxd7+ Nxd7 6. d4 cxd4 7. Qxd4 Bc5 8. Qa4 Ne7 9. O-O O-O 10. Qg4 Ng6 11. Re1 Qb6 12. Re2 Qc7 13. Qh5 h6 14. Bxh6 gxh6 15. Qxh6 Be7 16. Ng5 Bxg5 17. Qxg5 Nxe5 18. h3 b5 19. c3 (19. Rxe5 Qxe5 20. Qd2) 19... a5 20. Rxe5 Qxe5 21. Qd2 (21. Qg4 Qe1+ 22. Kh2 Rac8 23. Qd4 Rc4 24. Qa7 b4 (24... Nf4) 25. Qxa5 Qxf2 26. Nd2) 21... Rac8 *
+
+
+[Event "2025 OTB: CDSRE 2: GXP"]
+[Date "2025.01.12"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "E12"]
+[Opening "Queen's Indian Defense: Petrosian Variation"]
+[StudyName "2025 OTB"]
+[ChapterName "CDSRE 2: GXP"]
+[ChapterURL "https://lichess.org/study/9jBCfbSD/sLz2GlWO"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.01.12"]
+[UTCTime "12:09:00"]
+
+1. d4 Nf6 2. Nf3 e6 3. c4 b6 4. a3 Bb7 5. e3 (5. Nc3) 5... Be7 6. Nc3 Ne4 7. Bd3 Nxc3 8. bxc3 f5 9. Ne5 O-O 10. O-O d6 11. Nf3 *
+
+
+[Event "2025 OTB: CDSRE 3: Vasco da Gama A"]
+[Date "2025.01.12"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "C00"]
+[Opening "French Defense: Schlechter Variation"]
+[StudyName "2025 OTB"]
+[ChapterName "CDSRE 3: Vasco da Gama A"]
+[ChapterURL "https://lichess.org/study/9jBCfbSD/kMRjXVkK"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.01.12"]
+[UTCTime "12:43:34"]
+
+1. e4 e6 2. d4 d5 3. Bd3 c5 4. c3 Nf6 5. e5 Nfd7 6. Nf3 Nc6 7. Bc2 Qb6 8. O-O Be7 9. Nbd2 cxd4 10. cxd4 Nxd4 11. Nb3 Nxf3+ 12. Qxf3 Nxe5 13. Qg3 Ng6 14. Be3 Qd6 15. Qg4 e5 16. Qe2 O-O 17. f4 d4 (17... Nxf4 18. Bxf4 exf4 19. Qf3 Be6 20. Qxf4 Qxf4 21. Rxf4) 18. Rfd1 Qb6 (18... Qc7 19. Bf2 Nxf4) (18... Qf6) 19. Bf2 Nxf4 20. Qxe5 Bd6 21. Qe4 f5 22. Qf3 Qc7 23. Rac1 (23. Bg3) (23. Nxd4 Qb8 24. Bb3+ Kh8 25. Nb5) 23... Qb8 24. Bg3 h6 25. Nxd4 *
+
+
+[Event "2025 OTB: CDSRE6: Amanhã da Criança"]
+[Date "2025.01.12"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "A09"]
+[Opening "Réti Opening: Reversed Blumenfeld Gambit"]
+[StudyName "2025 OTB"]
+[ChapterName "CDSRE6: Amanhã da Criança"]
+[ChapterURL "https://lichess.org/study/9jBCfbSD/b9B8o1Qv"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.01.12"]
+[UTCTime "17:12:31"]
+
+1. Nf3 d5 2. c4 d4 3. e3 c5 4. b4 dxe3 5. fxe3 cxb4 6. d4 Nf6 7. Qa4+ (7. Bd3 Bd7) (7. Qb3 e6) 7... Bd7 8. Qxb4 Nc6 9. Qb3 e6 10. Bd3 Be7 11. O-O O-O 12. a3 (12. Nc3 Na5) (12. Nbd2 Qc7 13. a3 (13. Ne4 Nxe4 14. Bxe4 Na5) (13. Bb2 Na5 14. Qc2) 13... Na5 14. Qa2 Rfc8 15. Bb2 Nc6) 12... Qc7 13. Nc3 Na5 14. Qa2 a6 15. Bd2 (15. Rb1 Rfc8 16. Ne4) 15... Rab8 16. Rab1 Nc6 17. Ne4 Nxe4 (17... Nd8 18. Nxf6+ Bxf6 19. c5 Be8 20. Ne5) 18. Bxe4 Nd8 (18... Na5 19. Bd3 (19. Rbc1 Rfc8 20. Ne5 Be8 21. c5) 19... Rfc8 20. c5) (18... f5 19. Bd3 Na5 20. c5 Kh8 21. Rfe1 Nc6) 19. c5 Be8 20. Bc2 (20. Bd3 Rc8 21. Ne5 Bxc5 22. Rbc1) 20... Rc8 21. Ne5 Bxc5 22. Nc4 (22. Nf3 Be7 (22... Bd6 23. Rbc1 Qd7 24. Bd3 Nc6 25. Ng5 h6) 23. Rbc1 Nc6 (23... Qd7)) (22. Nd3 Bd6 23. Rbc1 (23. h3)) 22... Be7 23. Rbc1 Nc6 (23... Qd7) (23... Qd6) 24. Nb2 (24. Qb1) 24... Qd7 25. Be4 f5 26. Bd3 Bf7 (26... Nxd4) 27. Nd1 e5 *
+
+
+[Event "2025 OTB: Marinha 1"]
+[Date "2025.01.25"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "C01"]
+[Opening "French Defense: Exchange Variation"]
+[StudyName "2025 OTB"]
+[ChapterName "Marinha 1"]
+[ChapterURL "https://lichess.org/study/9jBCfbSD/PyMnDSfo"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.01.25"]
+[UTCTime "10:58:45"]
+
+1. e4 e6 2. Nf3 d5 3. exd5 exd5 4. d4 Nf6 5. Bg5 Be7 6. Bd3 O-O 7. O-O h6 8. Bxf6 Bxf6 9. c3 c6 10. h3 Qb6 11. Qb3 Be6 (11... Bd7 12. Qxb6 (12. Nbd2) 12... axb6 13. Ne5 Bxe5 14. dxe5) 12. Nbd2 Bd7 13. Qxb6 axb6 14. Ne5 Bxe5 15. dxe5 c5 16. Rfe1 (16. Nf3 Nc6 17. Bb5) 16... Nc6 17. Nf3 Rfe8 18. Bb5 Re7 (18... Nxe5 19. Rxe5 Bxb5 20. Rxd5) 19. Re2 Rae8 20. a3 (20. Rae1 Nxe5 (20... Bf5)) 20... Bf5 21. Rae1 Be4 22. Re3 Bxf3 23. Rxf3 Rxe5 24. Rxe5 Rxe5 25. Re3 f6 26. Kh2 Kf7 27. Kg3 Rg5+ 28. Kf3 d4 29. cxd4 Nxd4+ *
+
+
+[Event "2025 OTB: Marinha 2"]
+[Date "2025.01.25"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "D45"]
+[Opening "Semi-Slav Defense: Main Line"]
+[StudyName "2025 OTB"]
+[ChapterName "Marinha 2"]
+[ChapterURL "https://lichess.org/study/9jBCfbSD/o2k6Hcmk"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.01.25"]
+[UTCTime "12:07:39"]
+
+1. d4 Nf6 2. Nf3 e6 3. c4 d5 4. Nc3 c6 (4... Be7) 5. e3 Be7 6. Qc2 Nbd7 7. Bd2 O-O 8. Rc1 b6 9. Bd3 dxc4 10. Bxc4 Bb7 11. e4 Rc8 12. O-O b5 (12... Bb4 13. a3 Be7) 13. Bd3 a6 (13... c5) 14. Rfe1 c5 15. dxc5 Nxc5 16. Bf1 Ncxe4 17. Rcd1 Qb6 18. Be3 Bc5 (18... Qc7 19. Rc1 Nxc3 20. Qxc3 Qxc3 21. Rxc3 Rxc3 22. bxc3 Bxf3 23. gxf3) 19. Bxc5 Qxc5 20. Rc1 Nxc3 (20... Qxc3) 21. Qxc3 Qxc3 22. Rxc3 Rxc3 23. bxc3 Bxf3 (23... Rc8) 24. gxf3 Rc8 25. Rc1 Nd5 26. c4 bxc4 27. Rxc4 Rxc4 28. Bxc4 a5 29. a3 *
+
+
+[Event "2025 OTB: Marinha 3"]
+[Date "2025.01.25"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "A00"]
+[Opening "Hungarian Opening"]
+[StudyName "2025 OTB"]
+[ChapterName "Marinha 3"]
+[ChapterURL "https://lichess.org/study/9jBCfbSD/6pXMyFWA"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.01.25"]
+[UTCTime "13:01:44"]
+
+1. g3 d5 2. Bg2 Nf6 3. Nf3 c5 4. O-O Bf5 5. d3 e6 6. Bg5 h6 (6... Bd6 7. Re1 h6 8. Bxf6 Qxf6) 7. Bxf6 Qxf6 8. c3 Bd6 9. Re1 Bc7 10. e4 dxe4 11. dxe4 Bg4 12. Nbd2 (12. e5 Qe7 (12... Qf5 13. Nh4 Bxd1 14. Nxf5 Ba4) 13. Qa4+ Nc6) 12... Nc6 *
+
+
+[Event "2025 OTB: Marinha 4"]
+[Date "2025.01.25"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "E94"]
+[Opening "King's Indian Defense: Orthodox Variation, Positional Defense"]
+[StudyName "2025 OTB"]
+[ChapterName "Marinha 4"]
+[ChapterURL "https://lichess.org/study/9jBCfbSD/QFAvZk7V"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.01.25"]
+[UTCTime "16:20:28"]
+
+1. d4 Nf6 2. c4 g6 3. Nf3 (3. Nc3) 3... d6 4. Nc3 Bg7 5. e4 Nbd7 6. Be2 O-O 7. O-O e5 8. Be3 Ng4 9. Bg5 f6 10. Bh4 g5 11. Bg3 h5 12. h3 Nh6 *
+
+
+[Event "2025 OTB: Marinha 5"]
+[Date "2025.01.25"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "A48"]
+[Opening "London System"]
+[StudyName "2025 OTB"]
+[ChapterName "Marinha 5"]
+[ChapterURL "https://lichess.org/study/9jBCfbSD/9N3y6pLv"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.01.25"]
+[UTCTime "16:21:39"]
+
+1. d4 Nf6 2. Nf3 g6 3. Bf4 Bg7 4. e3 O-O 5. c3 d6 6. h3 Nbd7 7. Bc4 c5 8. O-O a6 9. a4 Rb8 10. Nbd2 Nh5 11. Bh2 cxd4 12. exd4 Qb6 13. b4 Qc6 14. Qb3 Nhf6 15. Rfe1 b5 16. axb5 axb5 17. Bd3 Re8 *
+
+
+[Event "2025 OTB: Marinha 6"]
+[Date "2025.01.25"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "D43"]
+[Opening "Semi-Slav Defense"]
+[StudyName "2025 OTB"]
+[ChapterName "Marinha 6"]
+[ChapterURL "https://lichess.org/study/9jBCfbSD/3MEFIcV3"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.01.25"]
+[UTCTime "17:23:25"]
+
+1. d4 d5 2. c4 e6 3. Nc3 Nf6 4. Nf3 c6 5. Bg5 Bd6 (5... Be7 6. e3 Nbd7 7. cxd5 exd5 8. Bd3 O-O 9. O-O Re8 10. h3 (10. Qe2 Nf8 11. a3 (11. h3 h6 12. Bxf6 Bxf6 13. a3))) 6. e3 O-O 7. cxd5 exd5 8. Bd3 Re8 9. h3 h6 10. Bxf6 Qxf6 11. O-O Be6 12. a3 Nd7 13. Rc1 Nf8 14. b4 Bd7 15. Na4 b6 16. Qe2 Rac8 17. Rc2 Ng6 18. Rfc1 Nf4 19. Qd1 Nxd3 20. Qxd3 Bxh3 21. Qe2 Bg4 22. Nc3 *
+
+
+[Event "2025 OTB: Marinha 7"]
+[Date "2025.01.25"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "C01"]
+[Opening "French Defense: Exchange Variation"]
+[StudyName "2025 OTB"]
+[ChapterName "Marinha 7"]
+[ChapterURL "https://lichess.org/study/9jBCfbSD/K2VnbY3N"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.01.25"]
+[UTCTime "18:18:43"]
+
+1. e4 { [%eval 0.18] } 1... e6 { [%eval 0.28] } 2. d4 { [%eval 0.28] } 2... d5 { [%eval 0.33] } 3. exd5 { [%eval 0.22] } 3... exd5 { [%eval 0.14] } 4. Nf3 { [%eval 0.09] } 4... Nf6 { [%eval 0.17] } 5. Bg5 { [%eval 0.0] } 5... Bd6 { [%eval 0.0] } 6. Bd3 { [%eval -0.02] } 6... h6 { [%eval 0.0] } 7. Bh4 { [%eval 0.0] } 7... O-O { [%eval 0.2] } 8. O-O { [%eval 0.28] } 8... c6 { [%eval 0.2] } 9. c3 { [%eval 0.12] } 9... Nbd7 { [%eval 0.49] } (9... Qc7 10. Bg3) 10. Nbd2 { [%eval 0.37] } 10... Qc7 { [%eval 0.55] } 11. Bg3 { [%eval 0.04] } 11... Bxg3 { [%eval 0.08] } 12. hxg3 { [%eval 0.09] } 12... Nb6 { [%eval 0.14] } 13. Qc2 { [%eval 0.04] } 13... Bg4 { [%eval 0.18] } 14. Ne5 { [%eval 0.12] } 14... Be6 { [%eval 0.3] } 15. Rfe1 { [%eval 0.37] } 15... Nbd7 { [%eval 0.34] } 16. Ndf3 { [%eval 0.28] } 16... Bg4? { [%eval 1.67] } { Mistake. c5 was best. } (16... c5 17. Qd2) 17. Nxg4 { [%eval 1.68] } 17... Nxg4 { [%eval 1.55] } 18. Bf5? { [%eval 0.15] } { Mistake. Bh7+ was best. } (18. Bh7+ Kh8 19. Re7 Ngf6 20. Ne5 Qd6 21. Nxf7+ Rxf7 22. Rxf7 Nxh7 23. Qf5 Ndf6) 18... Ngf6 { [%eval 0.11] } 19. Ne5 { [%eval 0.0] } 19... Rae8 { [%eval 0.04] } 20. f4 { [%eval 0.06] } 20... c5 { [%eval 0.51] } 21. Bxd7 { [%eval 0.54] } 21... Nxd7 { [%eval 0.57] } 22. Nxd7 { [%eval 0.58] } 22... Qxd7 { [%eval 0.61] } 23. dxc5 { [%eval 0.7] } 23... Qg4 { [%eval 1.05] } 24. Qf2?! { [%eval 0.47] } { Inaccuracy. Qd3 was best. } (24. Qd3 a5 25. b4 Re4 26. Qxd5 Rxe1+ 27. Rxe1 Qxg3 28. Qd2 axb4 29. cxb4 Qh4) 24... Re6?! { [%eval 1.53] } { Inaccuracy. Re4 was best. } (24... Re4 25. b4) 25. Qf3?! { [%eval 0.53] } { Inaccuracy. Rxe6 was best. } (25. Rxe6 Qxe6 26. Re1 Qg6 27. Re7 a5 28. b3 a4 29. b4 a3 30. Re2 Kh7) 25... Qf5? { [%eval 1.89] } { Mistake. Qxf3 was best. } (25... Qxf3 26. gxf3) 26. Rxe6 { [%eval 1.85] } 26... fxe6 { [%eval 1.96] } 27. Re1 { [%eval 1.95] } 27... Rc8 { [%eval 2.25] } 28. b4 { [%eval 2.1] } 28... Rc6?! { [%eval 2.91] } { Inaccuracy. b6 was best. } (28... b6 29. Re5 Qf7 30. cxb6 axb6 31. f5 d4 32. cxd4 exf5 33. d5 Qf6 34. Qf4) 29. Qe3?! { [%eval 1.82] } { Inaccuracy. Re5 was best. } (29. Re5 Qf7 30. Kh2 Qc7 31. Qe2 Qf7 32. c4 d4 33. Qd3 Qd7 34. b5 Rc8) 29... Qc2?? { [%eval 5.95] } { Blunder. Ra6 was best. } (29... Ra6 30. Ra1 Ra3 31. Qc1 Ra4 32. a3 Qg6 33. Qd1 Ra6 34. Qf3 Qc2 35. Kh2) 30. b5 { [%eval 5.66] } 30... Rc7 { [%eval 5.51] } 31. Qxe6+ { [%eval 5.43] } 31... Kh7?! { [%eval 8.23] } { Inaccuracy. Rf7 was best. } (31... Rf7 32. Qxd5 Qf5 33. Re5 Qf6 34. Kh2 g6 35. Re6 Qf5 36. Re8+ Kg7 37. Qd4+) 32. Qxd5?! { [%eval 4.8] } { Inaccuracy. f5 was best. } (32. f5 Qe4 33. Rxe4 dxe4 34. Qxe4 Kh8 35. c6 bxc6 36. bxc6 Rc8 37. Qe6 Rd8) 32... Qxc3 { [%eval 4.7] } 33. Qf5+ { [%eval 4.61] } 33... g6 { [%eval 4.83] } 34. Qe5 { [%eval 4.82] } 34... Qxe5 { [%eval 4.7] } 35. Rxe5 { [%eval 4.54] } 35... Kg7 { [%eval 4.31] } *
+
+
+[Event "2025 OTB: Marinho 8"]
+[Date "2025.01.25"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "D06"]
+[Opening "Queen's Gambit Declined: Marshall Defense"]
+[StudyName "2025 OTB"]
+[ChapterName "Marinho 8"]
+[ChapterURL "https://lichess.org/study/9jBCfbSD/KzUwQVkg"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.01.25"]
+[UTCTime "19:15:00"]
+
+1. d4 Nf6 2. c4 d5 3. cxd5 Qxd5 (3... Nxd5 4. Nf3) 4. Nf3 Bg4 5. Nc3 *
+
+
+[Event "2025 OTB: Taça AXP: vs Efanor D"]
+[Date "2025.02.15"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "D58"]
+[Opening "Queen's Gambit Declined: Tartakower Defense"]
+[StudyName "2025 OTB"]
+[ChapterName "Taça AXP: vs Efanor D"]
+[ChapterURL "https://lichess.org/study/9jBCfbSD/9WHOqODV"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.02.15"]
+[UTCTime "17:53:38"]
+
+1. d4 { [%eval 0.17] } 1... d5 { [%eval 0.24] } 2. c4 { [%eval 0.26] } 2... e6 { [%eval 0.27] } 3. Nf3 { [%eval 0.16] } 3... Be7 { [%eval 0.28] } 4. Nc3 { [%eval 0.21] } 4... Nf6 { [%eval 0.14] } 5. Bg5 { [%eval 0.09] } 5... O-O { [%eval 0.1] } 6. e3 { [%eval 0.09] } 6... h6 { [%eval 0.12] } 7. Bh4 { [%eval 0.09] } 7... b6 { [%eval 0.05] } 8. Qc2 { [%eval 0.07] } 8... c5 { [%eval 0.16] } 9. Bd3 { [%eval -0.28] } (9. dxc5 bxc5 10. cxd5 Nxd5 11. Bxe7 Nxe7 12. Be2 Bb7 13. O-O Nd7) 9... Bd7?! { [%eval 0.39] } { Inaccuracy. Nc6 was best. } (9... Nc6 10. a3 Bb7 11. dxc5 d4 12. Ne4 Nxe4 13. Bxe7 Qxe7 14. Bxe4 bxc5 15. exd4) 10. Ne5?! { [%eval -0.7] } { Inaccuracy. dxc5 was best. } (10. dxc5 Nc6 11. cxd5 Nxd5 12. Bxe7 Ncxe7 13. Rd1 Rc8 14. cxb6 Qxb6 15. O-O Nxc3) 10... Nc6 { [%eval -0.25] } 11. Nxc6 { [%eval -0.64] } 11... Bxc6 { [%eval -0.59] } 12. O-O { [%eval -0.94] } 12... dxc4?! { [%eval -0.14] } { Inaccuracy. cxd4 was best. } (12... cxd4) 13. Bxc4 { [%eval -0.19] } 13... Qd7 { [%eval -0.15] } 14. Rfd1 { [%eval -0.22] } 14... Qb7 { [%eval -0.04] } 15. Bxf6 { [%eval -0.08] } 15... Bxf6 { [%eval -0.09] } 16. d5 { [%eval -0.08] } 16... exd5 { [%eval -0.06] } 17. Bxd5 { [%eval -0.21] } 17... Bxd5 { [%eval 0.13] } 18. Nxd5 { [%eval 0.1] } 18... Be5 { [%eval 0.29] } 19. Qe4 { [%eval 0.02] } 19... Qb8 { [%eval 0.11] } 20. Ne7+ { [%eval -0.01] } 20... Kh8 { [%eval -0.03] } 21. Rd7 { [%eval -0.02] } 21... Bxh2+ { [%eval -0.04] } 22. Kh1?! { [%eval -0.75] } { Inaccuracy. Kf1 was best. } (22. Kf1 Qe5) 22... Be5?? { [%eval 4.88] } { Blunder. Qe5 was best. } (22... Qe5) 23. Nc6 { [%eval 4.71] } 23... Qc8 { [%eval 5.64] } 24. Nxe5 { [%eval 5.27] } 24... Re8?! { [%eval 9.49] } { Inaccuracy. Kg8 was best. } (24... Kg8 25. Rad1 Qe8 26. Qd5 Qe6 27. Qxe6 fxe6 28. f4 c4 29. Nxc4 g5 30. Ne5) 25. Nxf7+ { [%eval 8.7] } 25... Kg8 { [%eval 8.71] } 26. Nxh6+ { [%eval 8.58] } 26... Kh8 { [%eval 8.45] } 27. Nf7+ { [%eval 8.3] } *
+
+
+[Event "2025 OTB: 2a Divisão: vs Amanhã da Criança"]
+[Date "2025.02.22"]
+[White "João Álvaro Ferreira"]
+[Black "Manuel Paiva"]
+[Result "1-0"]
+[Variant "Standard"]
+[ECO "D30"]
+[Opening "Queen's Gambit Declined: Traditional Variation"]
+[StudyName "2025 OTB"]
+[ChapterName "2a Divisão: vs Amanhã da Criança"]
+[ChapterURL "https://lichess.org/study/9jBCfbSD/gSfo6Hb0"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.02.22"]
+[UTCTime "18:32:37"]
+
+1. d4 d5 2. c4 e6 3. Nf3 Nf6 4. Bg5 Be7 5. Nc3 Nbd7 6. e3 h6 7. Bh4 O-O 8. Qc2 a6 9. cxd5 (9. Rd1 dxc4 10. Bxc4 b5 11. Bd3 Bb7 12. O-O Bxf3 13. gxf3) 9... exd5 10. Bd3 c6 11. O-O Re8 12. Bxf6 Bxf6 13. b4 Nb6 14. a4 Bg4 15. Nd2 Be7 16. a5 Nc8 17. Ra4 Bd7 18. Bh7+ Kh8 19. Bf5 Bd6 20. Bxd7 Qxd7 21. Rfa1 Re6 22. Qf5 Qe7 23. Qb1 Bc7 24. Nd1 Nd6 25. Nb3 Qg5 26. Nc5 Rg6 27. g3 Re8 28. Qd3 f5 29. f4 Qe7 30. Kf2 Nc4 31. Kf3 Rf6 32. R4a2 g5 33. Re2 Qf7 34. Raa2 Qh5+ 35. Kg2 Rg8 36. Kh1 Rfg6 37. Qxf5 Qf3+ (37... Nd6 38. Qc2 (38. Qe5+ Kh7 39. Kg2) 38... gxf4) 38. Kg1 gxf4 39. Ne6 Rxe6 (39... fxg3 40. Qxf3 gxh2+ 41. Kf2 (41. Kh1) 41... Rg1 (41... Rg2+) 42. Qf6+ Kh7 43. Qf7+ Kh8 44. Qf6+ R8g7 45. Qxh6+ Kg8 46. Nxg7 (46. Nxc7 Rf7+ 47. Qf4) 46... h1=Q 47. Qxh1 Rxh1 48. Ne6 Rxd1) (39... Rxg3+ 40. hxg3 Rxg3+ 41. Rg2 Rxg2+ 42. Rxg2 Qxd1+ 43. Kh2 f3+ 44. Nxc7 fxg2 45. Qf8+ Kh7 46. Qf7+ Kh8 47. Qf8+) (39... Bb8 40. Nxf4) 40. Qxe6 fxg3 41. Qxh6# (41. Qh3 gxh2#) (41. h3) 1-0
+
+
+[Event "2025 OTB: Taça AXP: vs Efanor A"]
+[Date "2025.03.08"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "C07"]
+[Opening "French Defense: Tarrasch Variation, Chistyakov Defense"]
+[StudyName "2025 OTB"]
+[ChapterName "Taça AXP: vs Efanor A"]
+[ChapterURL "https://lichess.org/study/9jBCfbSD/SJGPjY3P"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.03.08"]
+[UTCTime "19:50:20"]
+
+1. e4 e6 2. d4 d5 3. Nd2 c5 4. exd5 Qxd5 5. Ngf3 Nf6 6. Bc4 Qd7 7. Nb3 cxd4 8. Nbxd4 Qc7 9. Qe2 a6 10. O-O (10. a4 Be7 11. O-O) 10... Be7 (10... Bd6 11. Bg5) (10... Nc6 11. Nxc6) 11. a4 O-O 12. Re1 Nc6 13. Nxc6 Qxc6 (13... bxc6) 14. Bf4 Bd7 15. Nd4 Qb6 16. Rad1 Bc5 (16... Bxa4 17. Nxe6 fxe6 18. Qxe6+ Qxe6 19. Rxe6 Rfc8 (19... Rac8) 20. Bxa6 (20. Rxa6+ Rxc4 (20... Kf8 21. Rxa8 Rxa8 22. Ra1 b6 23. Bb5) 21. Rxa8+ Kf7) (20. Ba2 Kf8 21. Rxa6)) (16... Qxb2 17. Nf5 (17. Nxe6) (17. Bb3 Qc3 18. Be5)) (16... Rad8) (16... Rac8) (16... Rfe8) 17. a5 (17. Be3) (17. Nb3 Be7 18. a5 Qc6) 17... Qxa5 (17... Qa7) (17... Qb3) (17... Qxb2 18. Be5) 18. Nb3 Qb6 19. Nxc5 Qxc5 20. Bd6 Qc6 (20... Qb6 21. Bxf8 Kxf8 22. Bd3 Qxb2) 21. Bxf8 Kxf8 22. Bd3 Qc7 23. Be4 Bb5 (23... Nxe4 24. Qxe4 h6 (24... Kg8 25. Rd4 Bc6 26. Qd3 g6 27. Rd1 Kg7 28. Rd8 Bb5 29. Qd2 Rxd8 30. Qxd8 Qxd8 (30... Qxc2 31. Qd4+ Kg8 32. Qd8+))) (23... Bc6 24. Bxc6 Qxc6) 24. Qf3 Rb8 (24... Bc6) 25. Rd2 (25. Qa3+ Kg8) 25... Bc4 26. Qa3+ Kg8 27. Qc3 Rc8 (27... b5 28. b3 Nxe4 29. Rxe4 Qb7 30. Rg4) 28. Bxb7 Qxb7 29. Qxc4 h6 30. Qd4 (30. h3) 30... Nd5 (30... Qb5) 31. h3 Qb5 32. b3 Rc3 33. Qe4 Qc6 34. Qe2 Nf4 35. Rd8+ Kh7 36. Qe4+ Qxe4 37. Rxe4 g5 38. g3 Nd5 (38... Nxh3+ 39. Kg2 Rxc2 40. Kxh3 Rxf2) 39. Rc4 Rxc4 40. bxc4 Nb4 41. Ra8 Nxc2 42. Rxa6 Nd4 43. Kf1 *
+
+
+[Event "2025 OTB: 2a Divisão: Vit. Guimarães"]
+[Date "2025.03.15"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "E68"]
+[Opening "King's Indian Defense: Fianchetto Variation, Classical Variation"]
+[StudyName "2025 OTB"]
+[ChapterName "2a Divisão: Vit. Guimarães"]
+[ChapterURL "https://lichess.org/study/9jBCfbSD/YPksD2E3"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.03.15"]
+[UTCTime "18:18:11"]
+
+1. d4 Nf6 2. c4 g6 3. Nc3 Bg7 4. Nf3 O-O 5. g3 d6 6. Bg2 Nbd7 7. O-O e5 8. e4 exd4 9. Nxd4 Re8 10. h3 a6 11. Re1 Rb8 12. Rb1 Ne5 13. b3 c5 14. Nc2 b5 15. f4 Ned7 16. Qxd6 bxc4 17. bxc4 Rxb1 18. Nxb1 Qa5 (18... Nb6 19. Qxd8 Rxd8) 19. a3 Re6 20. Qd3 Ne8 21. e5 Nc7 22. Nc3 Re8 23. Ne4 Nf8 24. Bd2 Qb6 25. Ne3 Nce6 26. Nd5 Qa7 27. Nd6 Rd8 28. Ba5 Rxd6 29. exd6 Bb7 30. Rb1 Bxd5 31. Qxd5 Bd4+ 32. Kh2 Qd7 33. Qc6 { [%csl Gc7] } 33... Qa7 34. Qb7 *
+
+
+[Event "2025 OTB: Open Rio Tinto Vs Padeiro"]
+[Date "2025.03.23"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "A40"]
+[Opening "Mikenas Defense: Lithuanian Variation"]
+[StudyName "2025 OTB"]
+[ChapterName "Open Rio Tinto Vs Padeiro"]
+[ChapterURL "https://lichess.org/study/9jBCfbSD/wLJMBbfv"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.03.23"]
+[UTCTime "15:39:32"]
+
+1. d4 Nc6 2. c4 e5 3. d5 Nce7 4. Nc3 Ng6 5. Nf3 Bb4 (5... Nf6 6. Bg5 h6 7. Bxf6 Qxf6) 6. Qc2 (6. Bg5 Nf6) 6... Nf6 7. Bg5 h6 8. Bxf6 Qxf6 9. O-O-O O-O 10. Ne4 Qe7 11. g4 d6 (11... f5) 12. Rg1 (12. Qb3) 12... f5 (12... c6) 13. gxf5 Bxf5 14. Nfd2 (14. Qb3) (14. a3) 14... c6 (14... Bxd2+ 15. Rxd2 c6) 15. Qd3 (15. Qb3 Bxd2+ 16. Nxd2 (16. Rxd2 cxd5) 16... cxd5) (15. f3 cxd5 16. Qb3) 15... Nf4 16. Qb3 Bxd2+ 17. Nxd2 cxd5 18. e3 Ne6 19. cxd5 Nc5 20. Qa3 Rac8 21. Re1 Nd3+ 22. Kd1 Rc1+ 23. Ke2 *
+
+
+[Event "2025 OTB: Open Rio Tinto vs Vera"]
+[Date "2025.03.23"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "B23"]
+[Opening "Sicilian Defense: Closed"]
+[StudyName "2025 OTB"]
+[ChapterName "Open Rio Tinto vs Vera"]
+[ChapterURL "https://lichess.org/study/9jBCfbSD/aOrA5rWI"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.03.23"]
+[UTCTime "16:25:42"]
+
+1. e4 c5 2. Nc3 e6 3. f4 d5 4. Bb5+ Bd7 5. Bxd7+ Qxd7 6. d3 (6. e5) 6... d4 7. Nce2 Nc6 8. Nf3 f6 (8... f5) 9. b3 Nh6 10. Ba3 Ng4 11. Qd2 Ne3 12. c3 Nxg2+ 13. Kf2 Ne3 14. cxd4 cxd4 15. Bxf8 Rxf8 16. h3 (16. Rhg1 e5) (16. Nfxd4 Ng4+ 17. Kg3 Nxd4 18. Nxd4 Qxd4 19. Kxg4 O-O-O) 16... e5 17. fxe5 fxe5 18. Ng3 Qf7 (18... O-O-O 19. Nf1 (19. Qe2 Qf7) 19... Qf7 20. Nh2 Nb4) 19. Qe2 O-O-O (19... Nb4) 20. Nf1 Nb4 21. Rc1+ Kb8 22. Nh2 (22. Nxe3 Nxd3+) 22... Qh5 23. Ng4 Qh4+ 24. Kg1 Qg3+ *
+
+
+[Event "2025 OTB: Open Rio Tinto vs Gonçalo Rodrigues"]
+[Date "2025.03.23"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "A41"]
+[Opening "Rat Defense: English Rat"]
+[StudyName "2025 OTB"]
+[ChapterName "Open Rio Tinto vs Gonçalo Rodrigues"]
+[ChapterURL "https://lichess.org/study/9jBCfbSD/DLwmzUkF"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.03.23"]
+[UTCTime "17:05:38"]
+
+1. d4 d6 2. c4 e5 3. d5 a5 4. Nc3 Na6 5. e4 f5 (5... Nc5 6. Be3 f5 7. exf5 Nf6 8. Bd3) 6. exf5 Nf6 7. Bd3 Nc5 8. Bc2 e4 9. Be3 Bxf5 10. Bxc5 dxc5 11. Nge2 Bd6 12. O-O O-O 13. f3 (13. Ng3 Bxg3) 13... Qe7 14. Ng3 Bxg3 15. hxg3 Bg6 (15... Qd6 16. fxe4 (16. Bxe4 Bxe4 (16... Nd7) (16... Qxg3) 17. Nxe4) (16. Nxe4 Qxg3 (16... Bxe4 17. Bxe4))) (15... Nh5) (15... Qe5 16. Bxe4 Bxe4) 16. Qe2 (16. Qd3) 16... Qd6 17. Bxe4 Qxg3 18. Bxg6 Qxg6 19. Rae1 (19. Qd2 Nh5 (19... Qg3 20. Rae1 Nh5 21. Ne4 Qg6 22. Qg5 Qxg5 23. Nxg5) 20. Ne4) 19... Rae8 (19... Nh5 20. Ne4 Nf4 21. Qd2 Nh5) 20. Qd2 Rxe1 (20... Nh5 21. Rxe8 Rxe8 22. Qc1 Qg3 23. Ne4 Qh4 24. Qg5) (20... Qg3) 21. Rxe1 Nh5 (21... Qg3 22. Ne4) (21... Rf7 22. Ne4) 22. Re6 (22. Qc1 Qg3 23. Ne4 Qh4 24. Qg5 Qxg5 25. Nxg5) (22. Qe3 Qg3 23. Ne4 Qh4) 22... Qg3 23. Ne4 Qh4 24. Qg5 Qxg5 25. Nxg5 Nf4 (25... Nf6 26. Re7 Rc8) 26. Re1 (26. Re7 Rc8) 26... h6 (26... b6 27. Ne6 (27. Ne4 Re8 (27... Kf7 28. d6))) 27. Ne4 b6 (27... Kf7) *
+
+
+[Event "2025 OTB: Open Rio Tinto vs Tomás"]
+[Date "2025.03.23"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "B20"]
+[Opening "Sicilian Defense"]
+[StudyName "2025 OTB"]
+[ChapterName "Open Rio Tinto vs Tomás"]
+[ChapterURL "https://lichess.org/study/9jBCfbSD/e6Uv1Dh5"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.03.23"]
+[UTCTime "17:34:33"]
+
+1. e4 c5 *
+
+
+[Event "2025 OTB: Open Rio Tinto vs Frutuoso"]
+[Date "2025.03.23"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "B48"]
+[Opening "Sicilian Defense: Taimanov Variation, Bastrikov Variation, English Attack"]
+[StudyName "2025 OTB"]
+[ChapterName "Open Rio Tinto vs Frutuoso"]
+[ChapterURL "https://lichess.org/study/9jBCfbSD/zp9Hkrd8"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.03.23"]
+[UTCTime "18:17:05"]
+
+1. e4 c5 2. Nf3 e6 3. d4 cxd4 4. Nxd4 Nc6 5. Nc3 Qc7 6. Be3 a6 7. Bd3 Nf6 8. Qe2 Be7 (8... b5) 9. O-O Ne5 (9... b5) 10. h3 b5 11. f4 Nxd3 12. cxd3 d5 (12... O-O 13. e5) (12... Bb7 13. e5 (13. f5 Rc8 14. Rac1 Qe5 (14... Qb8)) (13. Rac1 Qd8 14. e5 Nd5 15. Nxd5 Bxd5 16. f5 O-O 17. f6 gxf6 18. exf6 Bxf6) 13... Nd5 14. Qg4 (14. Nxd5 Bxd5 15. Qg4 O-O)) (12... d6) 13. e5 Nd7 14. Qg4 g6 15. Rad1 (15. Rac1 Qa5) 15... Bb7 16. Nce2 *
+
+
+[Event "2025 OTB: Open Rio Tinto vs Jorge Coelho"]
+[Date "2025.03.23"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "D70"]
+[Opening "Neo-Grünfeld Defense: with Nf3"]
+[StudyName "2025 OTB"]
+[ChapterName "Open Rio Tinto vs Jorge Coelho"]
+[ChapterURL "https://lichess.org/study/9jBCfbSD/tLi6N1km"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.03.23"]
+[UTCTime "20:40:14"]
+
+1. d4 Nf6 2. Nf3 g6 3. c4 d5 4. e3 Bg7 5. cxd5 Nxd5 6. Bc4 Nb6 7. Bb3 O-O 8. O-O Nc6 9. Nc3 Na5 10. Bc2 c5 (10... Be6 11. a3 (11. Ne4 Nc6 12. a3 Bc4 13. Re1) 11... c5 12. Qe2) 11. Ne2 *
+
+
+[Event "2025 OTB: 2a Divisão: GX Porto"]
+[Date "2025.05.17"]
+[White "João Álvaro Ferreira"]
+[Black "Tiago Teixeira"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "D02"]
+[Opening "Queen's Pawn Game: Symmetrical Variation"]
+[StudyName "2025 OTB"]
+[ChapterName "2a Divisão: GX Porto"]
+[ChapterURL "https://lichess.org/study/9jBCfbSD/xPR9LHKh"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.05.17"]
+[UTCTime "17:00:57"]
+
+1. d4 { [%eval 0.17] } 1... Nf6 { [%eval 0.19] } 2. Nf3 { [%eval 0.11] } 2... d5 { [%eval 0.11] } 3. c4 { [%eval 0.22] } 3... e6 { [%eval 0.17] } 4. cxd5 { [%eval 0.0] } 4... exd5 { [%eval 0.0] } 5. Nc3 { [%eval 0.03] } 5... c6 { [%eval 0.06] } 6. Bg5 { [%eval 0.0] } 6... Be7 { [%eval 0.14] } 7. Qc2 { [%eval 0.03] } 7... Nbd7 { [%eval 0.19] } 8. e3 { [%eval 0.21] } 8... Ng4?! { [%eval 0.77] } { Inaccuracy. Nh5 was best. } (8... Nh5 9. Bxe7) 9. Bxe7 { [%eval 0.41] } 9... Qxe7 { [%eval 0.37] } 10. Bd3 { [%eval 0.39] } 10... Ngf6 { [%eval 0.42] } 11. O-O { [%eval 0.45] } 11... O-O { [%eval 0.4] } 12. a3 { [%eval 0.39] } 12... a5 { [%eval 0.45] } 13. Rab1 { [%eval 0.44] } 13... Re8 { [%eval 0.35] } 14. b4 { [%eval 0.34] } 14... axb4 { [%eval 0.46] } 15. axb4 { [%eval 0.39] } 15... b5 { [%eval 0.51] } 16. Ne2 { [%eval 0.27] } 16... Bb7 { [%eval 0.36] } 17. Rfc1 { [%eval 0.14] } (17. Nc1 Ra4 18. Nb3 Rxb4 19. Na5 Rxb1 20. Rxb1 Ba8 (20... Nb8 21. Ne5)) 17... Ne4 { [%eval 0.56] } 18. Bxe4 { [%eval 0.48] } 18... Qxe4 { [%eval 0.51] } 19. Qxe4 { [%eval 0.37] } 19... Rxe4 { [%eval 0.78] } 20. Nd2 { [%eval 0.83] } *
+
+
+[Event "2025 OTB: Casual vs Carlos Oliveira"]
+[Date "2025.06.07"]
+[White "João Álvaro Ferreira"]
+[Black "Carlos Oliveira"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "A70"]
+[Opening "Benoni Defense: Classical Variation"]
+[StudyName "2025 OTB"]
+[ChapterName "Casual vs Carlos Oliveira"]
+[ChapterURL "https://lichess.org/study/9jBCfbSD/Msiyg4mK"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.06.07"]
+[UTCTime "10:08:15"]
+
+1. d4 Nf6 2. Nf3 e6 3. c4 c5 4. d5 exd5 (4... b5 5. Bf4) 5. cxd5 d6 6. Nc3 g6 7. e4 Bg7 8. Bc4 O-O 9. O-O Re8 10. Re1 Nbd7 11. a4 b6 12. Bf4 (12. Bb5) 12... Nf8 13. Bb5 Re7 14. Bc6 Rb8 15. Nb5 Ne8 16. Bxe8 Rxe8 17. Nxd6 Re7 18. Ng5 f6 19. Nf3 Ra8 20. Qc2 Nd7 21. Nb5 (21. Rad1 Ne5) 21... Ne5 22. Nxe5 fxe5 23. Bg5 *
+
+
+[Event "Torneio Absoluto por Equipas da Maia"]
+[Site "Maia, Portugal"]
+[Date "2025.07.14"]
+[Round "1.4"]
+[White "Ferreira, Joao Alvaro"]
+[Black "Forgas Moreno, Yaniela"]
+[Result "0-1"]
+[WhiteElo "1646"]
+[WhiteFideId "1975331"]
+[BlackElo "2154"]
+[BlackTitle "WGM"]
+[BlackFideId "3508072"]
+[TimeControl "90' + 30''"]
+[Variant "Standard"]
+[ECO "A88"]
+[Opening "Dutch Defense: Leningrad Variation, Warsaw Variation"]
+[StudyName "2025 OTB"]
+[ChapterName "Equipas Maia R1"]
+[ChapterURL "https://lichess.org/study/9jBCfbSD/J4EXImqn"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.07.14"]
+[UTCTime "22:08:18"]
+
+1. d4 { [%eval 0.17] [%clk 1:30:51] } 1... d6 { [%eval 0.48] [%clk 1:30:39] } 2. Nf3 { [%eval 0.48] [%clk 1:30:33] } 2... f5 { [%eval 0.56] [%clk 1:30:53] } 3. c4 { [%eval 0.46] [%clk 1:27:41] } 3... Nf6 { [%eval 0.55] [%clk 1:31:06] } 4. Nc3 { [%eval 0.45] [%clk 1:28:05] } (4. b3 g6) 4... g6 { [%eval 0.52] [%clk 1:31:14] } 5. g3 { [%eval 0.47] [%clk 1:26:46] } 5... Bg7 { [%eval 0.48] [%clk 1:31:38] } 6. Bg2 { [%eval 0.59] [%clk 1:27:13] } 6... O-O { [%eval 0.52] [%clk 1:31:58] } 7. O-O { [%eval 0.5] [%clk 1:27:39] } 7... c6 { [%eval 0.49] [%clk 1:32:17] } 8. Qc2 { [%eval 0.51] [%clk 1:27:45] } (8. d5 e5 9. dxe6 Bxe6 10. b3) 8... Na6 { [%eval 0.39] [%clk 1:32:11] } 9. a3 { [%eval 0.34] [%clk 1:27:47] } 9... Qc7?! { [%eval 0.91] } { Inaccuracy. Nc7 was best. } { [%clk 1:29:26] } (9... Nc7) 10. Re1? { [%eval -0.21] } { Mistake. b4 was best. } { [%clk 1:23:09] } (10. b4 e5 11. dxe5 dxe5) (10. e4 fxe4 11. Nxe4 Nxe4 (11... Bf5)) 10... e5 { [%eval -0.15] [%clk 1:29:28] } 11. dxe5 { [%eval -0.65] [%clk 1:15:54] } 11... dxe5 { [%eval -0.63] [%clk 1:29:54] } 12. e4 { [%eval -0.68] [%clk 1:15:46] } 12... Nc5 { [%eval -0.57] [%clk 1:29:24] } 13. Nd2?! { [%eval -1.34] } { Inaccuracy. Ng5 was best. } { [%clk 1:10:06] } (13. Ng5) (13. exf5 e4) (13. b3 Nfxe4 14. Nxe4 Nxe4) 13... Ne6?! { [%eval -0.7] } { Inaccuracy. f4 was best. } { [%clk 1:21:09] } (13... f4 14. b4 Ne6 15. Ne2 fxg3 16. hxg3 Ng4 17. Nf3 a5 18. Bb2 g5 19. c5) 14. b4 { [%eval -1.23] [%clk 1:06:32] } 14... Nd4 { [%eval -0.94] [%clk 1:20:21] } 15. Qa2 { [%eval -0.86] [%clk 1:06:30] } 15... Be6 { [%eval -0.72] [%clk 1:17:15] } 16. Ne2 { [%eval -0.81] [%clk 0:58:48] } 16... Qf7?! { [%eval 0.0] } { Inaccuracy. f4 was best. } { [%clk 1:00:29] } (16... f4 17. Nxd4) 17. Nxd4 { [%eval 0.0] [%clk 0:57:59] } 17... exd4 { [%eval 0.0] [%clk 1:00:54] } 18. exf5?! { [%eval -0.64] } { Inaccuracy. e5 was best. } { [%clk 0:57:00] } (18. e5 Ng4 19. Nf3 Bxc4 20. Qb2 Rae8 21. Qxd4 Bd5 22. Bf4 Bxf3 23. Bxf3 g5) 18... Bxf5?! { [%eval 0.2] } { Inaccuracy. gxf5 was best. } { [%clk 1:00:41] } (18... gxf5) 19. Bb2? { [%eval -1.02] } { Mistake. Nf3 was best. } { [%clk 0:55:31] } (19. Nf3 Rae8) 19... Rad8 { [%eval -0.97] [%clk 0:59:39] } 20. c5 { [%eval -1.4] [%clk 0:55:19] } 20... Nd5 { [%eval -1.44] [%clk 0:57:45] } 21. Ne4?? { [%eval -4.1] } { Blunder. Qb3 was best. } { [%clk 0:46:58] } (21. Qb3) (21. Nc4) 21... Bxe4 { [%eval -4.01] [%clk 0:57:03] } 22. Rxe4 { [%eval -5.01] [%clk 0:46:00] } 22... Qxf2+ { [%eval -4.51] [%clk 0:57:24] } 23. Kh1 { [%eval -4.8] [%clk 0:46:24] } 23... Kh8 { [%eval -4.73] [%clk 0:55:16] } 24. Rf1 { [%eval -5.22] [%clk 0:44:48] } 24... Qc2? { [%eval -2.86] } { Mistake. Qd2 was best. } { [%clk 0:54:32] } (24... Qd2 25. Qa1 Ne3 26. Rg1 Rf2 27. Bc1 Qe2 28. Qb2 Qxb2 29. Bxb2 Rxb2 30. Bf1) 25. Rxf8+ { [%eval -4.34] [%clk 0:34:57] } (25. Ree1 Rxf1+ 26. Rxf1 Ne3 27. Rg1 Nxg2 28. Rxg2 Qd1+ 29. Rg1 Qf3+ 30. Rg2 Qd1+ 31. Rg1 Qf3+ 32. Rg2 Re8 33. Ba1 (33. Qb1 Re2 34. Qg1)) 25... Rxf8 { [%eval -4.2] [%clk 0:54:49] } 26. Re1?! { [%eval -6.74] } { Inaccuracy. Qa1 was best. } { [%clk 0:35:03] } (26. Qa1 Kg8 27. Rxd4 Bxd4 28. Bxd4 Qd2 29. Bxd5+ cxd5 30. Kg1 a6 31. a4 Qxb4) 26... Ne3 { [%eval -6.62] [%clk 0:54:13] } 27. Bh3?? { [%eval #-13] } { Checkmate is now unavoidable. Rg1 was best. } { [%clk 0:29:20] } (27. Rg1 Nxg2 28. Qe6 Ne3 29. Ba1 Qf2 30. h4 Qf3+ 31. Kh2 Nf1+ 32. Kh3 Nxg3) 27... Rf2 { [%eval -7.52] [%clk 0:54:03] } 28. Qe6? { [%eval #-2] } { Checkmate is now unavoidable. Bxd4 was best. } { [%clk 0:28:32] } (28. Bxd4 Rxh2+ 29. Kg1 Qxa2 30. Bxe3 Rxh3 31. Bf2 Rh1+ 32. Kxh1 Qxf2 33. Re8+ Bf8) 28... Rxh2+ { [%eval #-1] [%clk 0:54:23] } (28... Qxb2 29. Qc8+) 29. Kg1 { [%eval #-1] [%clk 0:29:00] } 29... Qf2# { 0-1 Black wins. } { [%clk 0:54:48] } 0-1
+
+
+[Event "2025 OTB: Equipas Maia R3"]
+[Date "2025.07.16"]
+[White "João Álvaro Ferreira"]
+[Black "João Silva"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "E11"]
+[Opening "Bogo-Indian Defense: Nimzowitsch Variation"]
+[StudyName "2025 OTB"]
+[ChapterName "Equipas Maia R3"]
+[ChapterURL "https://lichess.org/study/9jBCfbSD/w9cI8qkv"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.07.16"]
+[UTCTime "22:27:07"]
+
+1. d4 Nf6 2. Nf3 (2. c4) 2... e6 3. c4 Bb4+ 4. Bd2 Qe7 5. a3 Bxd2+ 6. Nbxd2 d6 7. e3 Nbd7 8. Bd3 e5 9. Qc2 exd4 10. Nxd4 Nc5 11. Bf5 Ng4 12. O-O (12. Bxc8 Nxe3 (12... Rxc8 13. Qf5) 13. fxe3 Qxe3+ 14. Kf1 (14. Ne2 Nd3+ 15. Kd1 Nf2+ 16. Kc1 Nxh1 17. Bxb7 Rb8) (14. Kd1 Nd3 15. Bh3 (15. Rf1 Qxd4 16. Bxb7 Rb8)) 14... Nd3 15. N2f3) (12. Bxg4) 12... Nxe3 13. Qc3 (13. fxe3 Qxe3+ 14. Kh1 Qxd4 15. Rae1+ Ne6 16. Ne4 g6 (16... O-O) 17. Bxe6 Bxe6 18. Nf6+ Ke7 (18... Kf8 19. Re3 (19. Rxe6 fxe6) 19... Qb6) 19. b4 Qxf6) 13... Nxf1 14. Kxf1 (14. Re1) 14... O-O (14... Kf8) 15. b4 (15. Re1 Qf6 16. b4) 15... Ne6 16. Re1 Qf6 17. Bxe6 (17. Ne4 Qxd4 18. Qh3 Ng5) (17. Qh3 Qh6 (17... Ng5 18. Qg4 h5)) 17... fxe6 18. Ne4 Qg6 19. Re3 e5 20. Nb5 Bf5 21. Ng3 c6 *
+
+
+[Event "2025 OTB: Equipas Maia R4"]
+[Date "2025.07.18"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "E67"]
+[Opening "King's Indian Defense: Fianchetto Variation, Classical Fianchetto"]
+[StudyName "2025 OTB"]
+[ChapterName "Equipas Maia R4"]
+[ChapterURL "https://lichess.org/study/9jBCfbSD/G275P4nw"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.07.18"]
+[UTCTime "23:17:48"]
+
+1. d4 Nf6 2. c4 g6 (2... e6 3. g3 Bb4+ 4. Nd2 (4. Bd2 c5) 4... c5) 3. g3 (3. Nf3) 3... Bg7 4. Bg2 O-O 5. Nf3 d6 6. O-O Nbd7 7. Nc3 e5 8. e3 (8. e4 exd4 9. Nxd4 a6 10. Re1 Rb8 11. h3 (11. Qc2 Ne5 12. b3 c5 13. Nf3 b5) (11. Rb1 Ne5 12. b3 c5 13. Nde2 b5 14. f4 Ned7 15. Qxd6) 11... Ne5 12. b3 c5 13. Nc2 (13. Rb1) 13... b5) 8... Rb8 (8... Re8) 9. Qc2 Re8 10. b3 c6 11. Ba3 Qc7 12. Rad1 (12. Rac1 e4 13. Nd2) 12... e4 13. Nd2 d5 14. Rc1 Qa5 15. Bd6 Ra8 16. b4 Qb6 17. a3 (17. c5 Qd8) 17... Bf8 18. c5 Qd8 19. Bxf8 Nxf8 20. Nb3 Nh5 21. a4 f5 22. Ne2 g5 23. Nd2 Ng6 (23... f4 24. f3 exf3 (24... fxe3 25. Nxe4 dxe4 26. fxe4) 25. Bxf3 g4 26. Nxf4 Nxf4 27. exf4) 24. f4 gxf4 25. Nxf4 Ngxf4 26. exf4 Qf6 27. Qc3 Bd7 28. Rfe1 Re7 (28... Kh8) 29. Nf1 Kh8 30. Ne3 Rg8 31. Nf1 (31. Re2 Ng7 32. Rcc2 (32. Rf2 Ne6 33. Nc2 h5 34. Kf1 Reg7) 32... h5 (32... Ne6) 33. Kf2 Ne6) 31... Ng7 32. Ne3 Ne6 33. Nc2 h5 34. Kf2 Reg7 35. Re3 b6 36. Ke1 bxc5 37. bxc5 Rb8 38. Re2 (38. Bf1) 38... Bc8 39. Bf1 Rgb7 40. Qa5 Qd8 41. Qxd8+ Nxd8 42. Kf2 Ne6 43. Bh3 Nc7 (43... Rb3 44. Bxf5 Rf3+ 45. Kg1) 44. Bf1 Rb2 (44... Rb3 45. Bh3 Kg8 (45... Kg7)) 45. Re3 R2b3 46. Bh3 Kg7 47. Bf1 Rxe3 48. Nxe3 Rb4 49. Be2 Kg6 50. Ng2 (50. Bd1) 50... Ba6 51. Bd1 Bd3 52. Nh4+ Kf6 53. Bxh5 (53. Ke3 Ne6) 53... Rc4 (53... Ne6 54. Rd1) (53... Rxd4 54. Be2) 54. Rd1 Rxd4 55. Be2 Rxa4 (55... Ne6 56. Bxd3 Rxd3 57. Rxd3 exd3 58. Ke3 Nxc5) 56. Bxd3 exd3 57. Rxd3 Ra5 (57... Ne6 58. Nf3 (58. Ke2 Ra5 59. Rc3) 58... Nxc5 59. Nd4 (59. Rc3 Ke6 60. Nd4+)) 58. Rc3 Ne6 59. Ke2 (59. Nf3 Nxc5 60. Kg2 (60. Ke2 Ke6 (60... Ke7) 61. Nd4+ Kd7 62. Nxf5 Ne4 63. Re3 Ra2+ 64. Ke1 (64. Kf3) (64. Kf1) 64... Ra1+ 65. Ke2 Ra2+ 66. Kf1) (60. Ke3 Ke6 61. Nd4+ Kd7 62. Nxf5 Ne4) (60. Nd4) 60... Ra2+ 61. Kg1 Ra1+ 62. Kg2) (59. Ke3) 59... Nxc5 60. Nf3 Ke6 61. Nd4+ Kd7 62. Nxf5 Ne4 63. Re3 Ra2+ 64. Kf1 (64. Kf3) 64... Ra1+ 65. Kg2 a5 66. h4 a4 67. h5 a3 68. h6 a2 69. h7 (69. Ra3 Rh1 70. h7 Rxh7 71. Rxa2 Ke6 72. Nd4+ Kd6 73. Ra6 Kc5 (73... Rg7) (73... Rc7 74. Nb5+)) 69... Rb1 (69... Rc1 70. Ra3 Rh1 71. Rxa2 Rxh7 72. Ra3 Ke6 73. Nd4+ Kd6 74. Ra6 Rg7 75. Nf5+) 70. Ra3 Rh1 71. Rxa2 Rxh7 *
+
+
+[Event "2025 OTB: Equipas Maia R5"]
+[Date "2025.07.19"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "A46"]
+[Opening "Indian Defense: Knights Variation"]
+[StudyName "2025 OTB"]
+[ChapterName "Equipas Maia R5"]
+[ChapterURL "https://lichess.org/study/9jBCfbSD/qqCxupeK"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.07.19"]
+[UTCTime "20:28:03"]
+
+1. d4 Nf6 2. Nf3 Nc6 3. c4 (3. d5 Nb4 4. c4 c6 5. a3 Na6 6. Nc3) 3... e6 4. Bg5 h6 5. Bh4 g5 6. Bg3 d5 7. e3 Bd7 8. Nc3 Bg7 9. Nb5 a6 10. Nxc7+ (10. Bxc7 Qe7 11. Bd6 Qd8 12. Nc7+ Qxc7 13. Bxc7) 10... Kf8 11. Nxa8 Qxa8 12. Qb3 Na5 13. Qb4+ Kg8 14. Qxa5 dxc4 15. Bxc4 Qc8 (15... Bb5 16. Bxb5) 16. Bd3 Bb5 17. Bxb5 axb5 18. O-O g4 19. Ne5 h5 20. Rac1 Qf8 21. Bh4 Bh6 22. Bxf6 h4 23. Rc7 Rh7 24. Rfc1 Rg7 25. Rc8 h3 26. Rxf8+ *
+
+
+[Event "2025 OTB: Leça R1"]
+[Date "2025.07.31"]
+[White "João Álvaro Ferreira"]
+[Black "André Dumont"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "E12"]
+[Opening "Queen's Indian Defense: Petrosian Variation"]
+[StudyName "2025 OTB"]
+[ChapterName "Leça R1"]
+[ChapterURL "https://lichess.org/study/9jBCfbSD/BRqwZNKK"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.07.31"]
+[UTCTime "19:29:44"]
+
+1. d4 { [%eval 0.17] } 1... Nf6 { [%eval 0.19] } 2. c4 { [%eval 0.18] } 2... e6 { [%eval 0.14] } 3. Nf3 { [%eval 0.11] } 3... b6 { [%eval 0.23] } 4. a3 { [%eval 0.18] } 4... Ne4 { [%eval 0.5] } 5. e3 { [%eval 0.37] } (5. d5) 5... Bb7 { [%eval 0.38] } 6. Bd3 { [%eval 0.42] } 6... Be7 { [%eval 0.41] } 7. Qc2 { [%eval 0.42] } 7... f5 { [%eval 0.38] } 8. Nc3 { [%eval -0.01] } 8... Nxc3 { [%eval 0.0] } 9. Qxc3 { [%eval 0.0] } 9... O-O { [%eval 0.04] } 10. O-O { [%eval -0.16] } 10... d6 { [%eval 0.32] } 11. b4?! { [%eval -0.23] } { Inaccuracy. Qc2 was best. } (11. Qc2 Bxf3 12. gxf3 Nd7 13. f4 g6 14. Rb1 Kh8 15. b4 Rg8 16. Kh1 c6) 11... Nd7 { [%eval 0.2] } 12. Bb2 { [%eval 0.05] } 12... Qe8 { [%eval 0.0] } 13. Qb3?? { [%eval -1.95] } { Blunder. Ne1 was best. } (13. Ne1 Qf7 14. Be2 e5 15. Qc2 c5 16. d5 e4 17. f4 exf3 18. Nxf3 Bf6) (13. Be2 Qg6) 13... Bxf3 { [%eval -1.77] } 14. gxf3 { [%eval -1.82] } 14... Qh5 { [%eval -1.94] } 15. Qd1?! { [%eval -2.69] } { Inaccuracy. Kg2 was best. } (15. Kg2 Rf6 16. Rg1 Rg6+ 17. Kf1 Qxf3 18. Rxg6 hxg6 19. Qd1 Qh1+ 20. Ke2 Qxh2) 15... Rf6 { [%eval -2.56] } 16. f4?? { [%eval -6.41] } { Blunder. Re1 was best. } (16. Re1 Rg6+ 17. Kf1 Qxh2 18. Ke2 Bh4 19. Kd2 Qxf2+ 20. Qe2 Rg2 21. Qxf2 Rxf2+) 16... Qh3 { [%eval -6.19] } 17. f3?? { [%eval #-4] } { Checkmate is now unavoidable. Qh5 was best. } (17. Qh5 Qxh5 18. f3 Rg6+ 19. Kh1 Kf8 20. d5 exd5 21. cxd5 Bf6 22. Rac1 Rc8) 17... Rg6+ { [%eval #-3] } 18. Kf2 { [%eval #-3] } 18... Qg2+ { [%eval #-2] } 19. Ke1 { [%eval #-2] } 19... Bh4+ { [%eval #-1] } (19... Qxb2 20. Qc1) *
+
+
+[Event "2025 OTB: Leça R3"]
+[Date "2025.08.01"]
+[White "Hugo Araújo"]
+[Black "João Álvaro Ferreira"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "A46"]
+[Opening "Yusupov-Rubinstein System"]
+[StudyName "2025 OTB"]
+[ChapterName "Leça R3"]
+[ChapterURL "https://lichess.org/study/9jBCfbSD/dbtdu25W"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.08.01"]
+[UTCTime "19:27:57"]
+
+1. d4 { [%eval 0.17] } 1... Nf6 { [%eval 0.19] } 2. Nf3 { [%eval 0.11] } 2... e6 { [%eval 0.14] } 3. e3 { [%eval 0.0] } 3... c5 { [%eval 0.2] } 4. b3 { [%eval 0.01] } 4... Nc6 { [%eval 0.08] } 5. a3 { [%eval -0.11] } 5... d5 { [%eval 0.0] } 6. Bd3 { [%eval 0.0] } 6... cxd4 { [%eval 0.0] } 7. exd4 { [%eval 0.03] } 7... Be7 { [%eval 0.16] } 8. Bb2 { [%eval 0.38] } 8... a6 { [%eval 0.45] } 9. Nbd2 { [%eval 0.43] } 9... O-O { [%eval 0.45] } 10. O-O { [%eval 0.45] } 10... b5 { [%eval 0.39] } 11. Ne5 { [%eval 0.45] } 11... Bb7 { [%eval 0.56] } (11... Nxe5 { Szabo, Gergely Andras - Pasztor, Ferenc, 1-0, HUN-chT2 Charousek 0910, 2010, https://lichess.org/TqHVIb89 } 12. dxe5) 12. f4 { [%eval 0.11] } (12. Qf3 { Almagro Llamas, Pablo - Petkov, Vladimir, 0-1, Llucmajor op, 2013, https://lichess.org/DxaBoDIq }) 12... Qb6 { [%eval 0.27] } 13. Ndf3 { [%eval -0.25] } 13... Qc7 { [%eval -0.23] } 14. Qe1 { [%eval -0.22] } 14... Rac8 { [%eval 0.05] } 15. Nd2 { [%eval 0.0] } 15... Nxe5 { [%eval 0.13] } 16. fxe5 { [%eval 0.04] } 16... Ne4 { [%eval 0.0] } 17. Rc1? { [%eval -1.11] } { Mistake. Kh1 was best. } (17. Kh1 Bg5) (17. Bxe4 dxe4) 17... Bg5 { [%eval -1.62] } 18. Nf3 { [%eval -1.79] } (18. Bxe4 dxe4 19. c4 e3 20. Nf3 e2 21. Qxe2 Bxc1 22. Rxc1 Bxf3 23. Qxf3 bxc4 24. bxc4 Qb6 25. Ba1 Qa5) 18... Bxc1 { [%eval -1.69] } 19. Bxc1 { [%eval -1.65] } 19... f5 { [%eval -1.69] } (19... Qc3 20. Qh4 f5 21. exf6 Rxf6) 20. exf6 { [%eval -1.62] } 20... Rxf6 { [%eval -1.71] } 21. Qh4 { [%eval -1.46] } 21... Rcf8 { [%eval -1.61] } 22. Be3 { [%eval -1.8] } 22... R6f7?! { [%eval -0.88] } { Inaccuracy. Qd6 was best. } (22... Qd6) 23. Rc1 { [%eval -1.27] } 23... Rf6 { [%eval -0.89] } 24. Ne5 { [%eval -0.57] } 24... Qe7 { [%eval -0.52] } 25. Nf3? { [%eval -1.82] } { Mistake. Qe1 was best. } (25. Qe1 Qd6 26. Qb4 Qxb4 27. axb4 Rc8 28. Bxe4 dxe4 29. c4 Rc7 30. g4 Rc8) 25... Qxa3 { [%eval -1.81] } 26. Ng5 { [%eval -2.29] } 26... h6 { [%eval -2.25] } (26... Nxg5 27. Bxg5 h6 28. Be3) 27. Nxe4? { [%eval -3.89] } { Mistake. Nf3 was best. } (27. Nf3 Qe7) 27... dxe4 { [%eval -3.77] } 28. Bxe4?? { [%eval #-2] } { Checkmate is now unavoidable. Be2 was best. } (28. Be2 Qb4 29. Qe1 Qxe1+ 30. Rxe1 b4 31. Ra1 Rc8 32. Bd1 Ra8 33. Ra5 Rf5) 28... Qxc1+ { [%eval #-1] } 29. Bxc1 { [%eval #-1] } 29... Rf1# *
+
+
+[Event "2025 OTB: Leça R4"]
+[Date "2025.08.02"]
+[White "João Álvaro Ferreira"]
+[Black "Alejandro Herrera"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "E10"]
+[Opening "Indian Defense: Anti-Nimzo-Indian"]
+[StudyName "2025 OTB"]
+[ChapterName "Leça R4"]
+[ChapterURL "https://lichess.org/study/9jBCfbSD/VDxYZumN"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.08.02"]
+[UTCTime "11:46:17"]
+
+1. d4 { [%eval 0.17] } 1... Nf6 { [%eval 0.19] } 2. c4 { [%eval 0.18] } 2... e6 { [%eval 0.14] } 3. Nf3 { [%eval 0.11] } 3... d5 { [%eval 0.17] } 4. cxd5 { [%eval 0.0] } 4... exd5 { [%eval 0.0] } 5. Nc3 { [%eval 0.03] } 5... c6 { [%eval 0.06] } 6. Qc2 { [%eval 0.0] } 6... g6 { [%eval 0.08] } 7. Bg5 { [%eval 0.0] } 7... Be7 { [%eval 0.0] } 8. e4 { [%eval -0.18] } (8. e3 Bf5 9. Bd3 Bxd3 10. Qxd3 O-O 11. O-O) 8... dxe4 { [%eval -0.26] } 9. Bxf6 { [%eval -0.25] } 9... Bxf6 { [%eval -0.21] } 10. Qxe4+ { [%eval -0.16] } 10... Qe7 { [%eval -0.19] } 11. Bc4 { [%eval -0.17] } 11... O-O { [%eval -0.09] } 12. Qxe7 { [%eval -0.16] } 12... Bxe7 { [%eval 0.0] } 13. Kd2?! { [%eval -0.74] } { Inaccuracy. O-O was best. } (13. O-O Nd7 14. Rfe1 Bd8 15. Ne4 Nb6 16. Bb3 Be7 17. Nc5 Bd6 18. Ne4 Be7) 13... Nd7 { [%eval -0.42] } 14. Rhe1 { [%eval -0.44] } 14... Bf6 { [%eval -0.49] } (14... Bd8 15. Ne4) 15. Ne4 { [%eval -0.47] } 15... Bd8 { [%eval -0.27] } 16. Nd6? { [%eval -1.83] } { Mistake. a3 was best. } (16. a3 Ba5+ 17. b4 Bc7 18. Kc3 (18. Nc5 Nxc5 19. dxc5)) 16... Ba5+ { [%eval -1.81] } 17. Kc2 { [%eval -2.15] } 17... Bxe1 { [%eval -2.28] } 18. Rxe1 { [%eval -2.13] } 18... Nb6 { [%eval -1.93] } 19. Bb3 { [%eval -2.5] } 19... Nd5 { [%eval -2.58] } 20. Bxd5 { [%eval -2.7] } 20... cxd5 { [%eval -2.55] } 21. Re7 { [%eval -2.57] } 21... Rd8 { [%eval -2.57] } 22. Nxb7 { [%eval -2.54] } 22... Bxb7 { [%eval -2.61] } 23. Rxb7 { [%eval -2.48] } 23... f6?! { [%eval -1.67] } { Inaccuracy. Rdc8+ was best. } (23... Rdc8+ 24. Kd2 Rcb8 25. Rxb8+ Rxb8 26. b3 f6 27. Ne1 a5 28. Nd3 Kf7 29. Kc3) 24. b3 { [%eval -2.08] } 24... Rd6?! { [%eval -1.4] } { Inaccuracy. a5 was best. } (24... a5 25. Nd2 a4 26. b4 Rdb8 27. Rxb8+ Rxb8 28. a3 Rc8+ 29. Kb2 Kf7 30. Nb1) 25. Rc7 { [%eval -1.38] } 25... Re8 { [%eval -1.42] } 26. Kd3 { [%eval -1.52] } (26. b4) 26... a6 { [%eval -1.57] } 27. b4 { [%eval -1.93] } 27... Rb8 { [%eval -1.74] } 28. a3 { [%eval -1.83] } 28... a5 { [%eval -1.86] } 29. Kc3? { [%eval -3.21] } { Mistake. bxa5 was best. } (29. bxa5 Rb3+ (29... Ra6 30. Rc5 Rb3+ 31. Rc3 Rxc3+ 32. Kxc3 Rxa5) 30. Rc3 Rxc3+ 31. Kxc3) 29... axb4+ { [%eval -3.12] } 30. axb4 { [%eval -3.16] } 30... Rdb6 { [%eval -2.96] } 31. Rc5 { [%eval -3.21] } 31... Rxb4 { [%eval -3.33] } 32. Rxd5 { [%eval -3.29] } 32... Rb3+ { [%eval -3.21] } 33. Kc4 { [%eval -3.09] } 33... R8b4+ { [%eval -2.91] } 34. Kc5 { [%eval -2.82] } 34... Rb5+ { [%eval -2.76] } 35. Kd6 { [%eval -2.89] } 35... Rxd5+ { [%eval -2.8] } 36. Kxd5 { [%eval -3.42] } 36... Kf7 { [%eval -2.78] } 37. Kc6?! { [%eval -4.18] } { Inaccuracy. Ke4 was best. } (37. Ke4 Ke6 38. h4 Rb2 39. Ke3 Ra2 40. Nd2 Ra3+ 41. Kf4 h6 42. Nf3 g5+) 37... Ke7 { [%eval -3.78] } 38. d5?! { [%eval -5.08] } { Inaccuracy. Ng1 was best. } (38. Ng1 Rb2 39. Nh3 g5 40. Kd5 Re2 41. g3 h6 42. Kc4 Re1 43. Kd3 f5) 38... Rc3+ { [%eval -5.27] } 39. Kb5 { [%eval -5.24] } 39... Kd6 { [%eval -5.12] } 40. Kb4 { [%eval -5.3] } 40... Rc8 { [%eval -5.03] } *
+
+
+[Event "2025 OTB: Leça R5"]
+[Date "2025.08.02"]
+[White "Sandro Batista"]
+[Black "João Álvaro Ferreira"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "B47"]
+[Opening "Sicilian Defense: Taimanov Variation, Bastrikov Variation"]
+[StudyName "2025 OTB"]
+[ChapterName "Leça R5"]
+[ChapterURL "https://lichess.org/study/9jBCfbSD/YVdW09pw"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.08.02"]
+[UTCTime "19:51:32"]
+
+1. e4 { [%eval 0.18] } 1... c5 { [%eval 0.25] } 2. Nf3 { [%eval 0.2] } 2... e6 { [%eval 0.28] } 3. d4 { [%eval 0.4] } 3... cxd4 { [%eval 0.29] } 4. Nxd4 { [%eval 0.35] } 4... Nc6 { [%eval 0.28] } 5. Nc3 { [%eval 0.26] } 5... Qc7 { [%eval 0.35] } 6. a3 { [%eval 0.14] } 6... a6 { [%eval 0.22] } 7. Be3 { [%eval 0.15] } 7... Nf6 { [%eval 0.4] } (7... b5) 8. Be2 { [%eval 0.35] } 8... Be7 { [%eval 0.34] } 9. O-O { [%eval 0.33] } 9... O-O { [%eval 0.3] } 10. Nb3 { [%eval -0.16] } 10... b5 { [%eval -0.05] } 11. f4 { [%eval -0.03] } 11... b4 { [%eval 0.25] } (11... d5 12. e5 (12. exd5 Nxd5 13. Nxd5 exd5 14. Qxd5 Be6 15. Qe4) 12... Nd7) 12. axb4 { [%eval 0.18] } 12... Bxb4?! { [%eval 0.81] } { Inaccuracy. Nxb4 was best. } (12... Nxb4 13. Bf3 d6 14. Kh1 Rb8 15. Qe2 Bb7 16. Bg1 Ba8 17. Nd4 Rbc8 18. h3) 13. Bd3 { [%eval 0.9] } 13... Bb7 { [%eval 1.22] } 14. Bd2? { [%eval -0.09] } { Mistake. e5 was best. } (14. e5 Bxc3 (14... Ne8 15. Na4 Be7 16. Bb6 Qc8 17. Bf2 Qc7 18. Nac5 d6 19. Nxb7 Qxb7) 15. bxc3 Nd5 16. Bc5) 14... Ne7 { [%eval 0.35] } 15. Qe2 { [%eval 0.23] } 15... Qc6?! { [%eval 1.08] } { Inaccuracy. Rfb8 was best. } (15... Rfb8 16. Bxa6 Bxc3 17. Bxc3 Qb6+ 18. Bd4 Bxa6) (15... Rfc8) 16. Rae1?! { [%eval 0.14] } { Inaccuracy. e5 was best. } (16. e5) 16... Rfc8?! { [%eval 0.85] } { Inaccuracy. a5 was best. } (16... a5) 17. Rf3?! { [%eval -0.04] } { Inaccuracy. e5 was best. } (17. e5 Nfd5 (17... Ne8) 18. Nxd5 Nxd5 19. c3 Bf8) 17... d5 { [%eval -0.07] } 18. e5 { [%eval -0.27] } 18... Bxc3 { [%eval 0.13] } 19. Bxc3 { [%eval 0.1] } 19... Ne4 { [%eval 0.25] } 20. Bd4 { [%eval 0.04] } 20... Nf5 { [%eval 0.15] } 21. Bf2 { [%eval 0.2] } 21... Nxf2?! { [%eval 1.3] } { Inaccuracy. a5 was best. } (21... a5 22. Nd4 Nxd4 23. Bxd4 Ba6 24. Qe3 Nc5 25. f5 Bxd3 26. cxd3 Nb3 27. fxe6) 22. Qxf2 { [%eval 1.24] } 22... a5?! { [%eval 2.34] } { Inaccuracy. d4 was best. } (22... d4) 23. Bxf5 { [%eval 2.27] } 23... exf5 { [%eval 2.25] } 24. Nd4 { [%eval 2.21] } 24... Qd7 { [%eval 2.34] } 25. c3?! { [%eval 1.66] } { Inaccuracy. e6 was best. } (25. e6 fxe6 26. Rxe6 Re8 27. Re5 Rad8 28. Qe1 a4 29. Nxf5 Rxe5 30. fxe5 Bc8) 25... a4?! { [%eval 2.46] } { Inaccuracy. Re8 was best. } (25... Re8 26. Rfe3 Ra6 27. g4 fxg4 28. f5 f6 29. e6 Qe7 30. h3 a4 31. hxg4) 26. Qc2? { [%eval 1.12] } { Mistake. e6 was best. } (26. e6 fxe6 27. Rxe6 Re8 28. Rfe3 Rxe6 29. Rxe6 Re8 30. Qe2 Rxe6 31. Qxe6+ Qxe6) 26... g6?! { [%eval 2.31] } { Inaccuracy. Rc4 was best. } (26... Rc4 27. Qxf5 Qxf5 28. Nxf5 d4) 27. Rg3 { [%eval 1.75] } 27... Kh8?! { [%eval 2.51] } { Inaccuracy. a3 was best. } (27... a3 28. h4 a2 29. Ra1 Ra6 30. h5 Rca8 31. hxg6 Rxg6 32. Re3 Bc8 33. b4) 28. h4 { [%eval 2.45] } 28... Qe7 { [%eval 2.61] } 29. Rh3? { [%eval 1.22] } { Mistake. Qf2 was best. } (29. Qf2) 29... Rc4? { [%eval 2.5] } { Mistake. Rg8 was best. } (29... Rg8) 30. h5 { [%eval 2.51] } 30... Bc8 { [%eval 2.94] } 31. hxg6?! { [%eval 2.09] } { Inaccuracy. e6 was best. } (31. e6) 31... fxg6 { [%eval 2.24] } 32. Kf2 { [%eval 2.09] } 32... Qc7? { [%eval 3.55] } { Mistake. Bd7 was best. } (32... Bd7 33. Reh1 h5 34. Rb1 Rac8 35. Qd2 Rb8 36. Kg1 Be8 37. Kh2 Kh7 38. b3) 33. Reh1 { [%eval 3.16] } 33... h5?! { [%eval 4.6] } { Inaccuracy. a3 was best. } (33... a3 34. Rxh7+ Qxh7 35. Rxh7+ Kxh7 36. bxa3 Rxa3 37. Qb1 Raxc3 38. Qb6 Rc1 39. Kg3) 34. Qd1 { [%eval 4.38] } 34... Qf7 { [%eval 4.65] } 35. Qf3?? { [%eval 1.97] } { Blunder. Rxh5+ was best. } (35. Qe2 Be6) (35. Rxh5+) 35... Rb8 { [%eval 1.93] } (35... Ra6) 36. Qe2 { [%eval 1.94] } 36... Rb6 { [%eval 2.02] } 37. Re3 { [%eval 1.91] } 37... Be6 { [%eval 1.98] } 38. g3?! { [%eval 1.34] } { Inaccuracy. Kg1 was best. } (38. Rb1) (38. Kg1 Rc7 39. Qf2 Rcb7 40. Re2 Qe7 41. Rh3 Bd7 42. Kh2 Be8 43. Nf3 Qc7) 38... Qb7 { [%eval 1.18] } 39. Rb1 { [%eval 1.34] } 39... Rc8 { [%eval 1.39] } 40. Qc2 { [%eval 1.21] } 40... Ra8 { [%eval 1.26] } 41. g4?! $138 { [%eval 0.59] } { Inaccuracy. Kg2 was best. } { White wins on time here } (41. Kg2 Kg7 42. Ree1 Kh6 43. Kh3 Qb8 44. Re2 Qb7 45. Rd1 Qa6 46. Red2 Ra7) 41... Qg7? { [%eval 1.82] } { Mistake. a3 was best. } (41... a3) *
+
+
+[Event "2025 OTB: Leça R6"]
+[Date "2025.08.03"]
+[White "João Álvaro Ferreira"]
+[Black "Danica Ria"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "E73"]
+[Opening "King's Indian Defense: Semi-Averbakh System"]
+[StudyName "2025 OTB"]
+[ChapterName "Leça R6"]
+[ChapterURL "https://lichess.org/study/9jBCfbSD/OLIDB9Go"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.08.03"]
+[UTCTime "17:19:21"]
+
+1. d4 { [%eval 0.17] } 1... Nf6 { [%eval 0.19] } 2. c4 { [%eval 0.18] } 2... g6 { [%eval 0.28] } 3. Nc3 { [%eval 0.18] } 3... Bg7 { [%eval 0.51] } 4. e4 { [%eval 0.4] } 4... O-O { [%eval 0.53] } 5. Be2 { [%eval 0.49] } 5... d6 { [%eval 0.48] } 6. Be3 { [%eval 0.5] } 6... e6 { [%eval 0.62] } (6... e5 7. d5 Na6 8. g4) 7. g4 { [%eval 0.39] } 7... b6?! { [%eval 0.96] } { Inaccuracy. d5 was best. } (7... d5 8. e5 Ne4 9. Nxe4 dxe4 10. f4 f6 11. Qc2 c5 12. O-O-O) 8. g5 { [%eval 0.91] } 8... Nfd7 { [%eval 1.05] } 9. h4 { [%eval 1.18] } 9... Nc6 { [%eval 1.4] } 10. Nf3 { [%eval 1.31] } 10... Bb7 { [%eval 1.41] } 11. Qd2 { [%eval 1.4] } 11... Qe7 { [%eval 1.72] } 12. O-O-O { [%eval 1.68] } 12... e5?! { [%eval 2.83] } { Inaccuracy. Na5 was best. } (12... Na5 13. h5) 13. d5 { [%eval 2.77] } 13... Nb4 { [%eval 2.96] } 14. h5 { [%eval 2.74] } 14... c6 { [%eval 3.14] } 15. Nh4?! { [%eval 2.4] } { Inaccuracy. dxc6 was best. } (15. dxc6 Nxc6 16. h6 Bh8 17. Qxd6 Qxd6 18. Rxd6 Nc5 19. Bxc5 bxc5 20. Na4 Nd4) (15. h6 Bh8) 15... cxd5 { [%eval 2.54] } 16. cxd5 { [%eval 2.35] } 16... Rac8 { [%eval 2.72] } 17. Kb1 { [%eval 2.85] } 17... Kh8? { [%eval 5.38] } { Mistake. Nc5 was best. } (17... Nc5 18. f3 a5 19. Bf1 Rc7 20. Qh2 Rfc8 21. hxg6 hxg6 22. a3 Nb3 23. axb4) 18. hxg6 { [%eval 5.37] } 18... Kg8?! { [%eval 7.27] } { Inaccuracy. Qd8 was best. } (18... Qd8 19. f3 fxg6 20. Nxg6+ Kg8 21. Nxf8 Nxf8 22. a3 Na6 23. Nb5 Nc5 24. Nxa7) 19. Nf5 { [%eval 7.51] } 19... Qd8? { [%eval #6] } { Checkmate is now unavoidable. Rfe8 was best. } (19... Rfe8 20. Nxe7+ Rxe7 21. gxh7+ Kh8 22. Nb5 a5 23. Nxd6 Rb8 24. Nxb7 Nc5 25. Nxc5) 20. Rxh7 { [%eval #5] } 20... Bh8 { [%eval #1] } 21. Nh6# *
+
+
+[Event "2025 OTB: Leça R7"]
+[Date "2025.08.04"]
+[White "Gonçalo Maria"]
+[Black "João Álvaro Ferreira"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "A18"]
+[Opening "English Opening: Mikenas-Carls Variation"]
+[StudyName "2025 OTB"]
+[ChapterName "Leça R7"]
+[ChapterURL "https://lichess.org/study/9jBCfbSD/v0jP7QGt"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.08.04"]
+[UTCTime "19:38:58"]
+
+1. c4 { [%eval 0.12] } 1... Nf6 { [%eval 0.14] } 2. Nc3 { [%eval 0.12] } 2... e6 { [%eval 0.2] } 3. e4 { [%eval 0.14] } 3... Nc6 { [%eval 0.56] } 4. d4 { [%eval 0.53] } 4... Bb4 { [%eval 0.6] } 5. e5 { [%eval 0.52] } 5... Ne4 { [%eval 0.55] } 6. Qd3 { [%eval 0.32] } 6... f5 { [%eval 0.34] } 7. a3?! { [%eval -0.4] } { Inaccuracy. exf6 was best. } (7. exf6 Bxc3+ 8. bxc3 Nxf6 9. Nf3 O-O 10. Be2 d6 11. c5 dxc5) 7... Bxc3+ { [%eval -0.43] } 8. bxc3 { [%eval -0.72] } 8... d6 { [%eval -0.61] } 9. f4?! { [%eval -1.53] } { Inaccuracy. exd6 was best. } (9. exd6 cxd6) 9... O-O { [%eval -1.19] } 10. Nf3 { [%eval -1.09] } 10... dxe5 { [%eval -0.63] } 11. fxe5?! { [%eval -1.34] } { Inaccuracy. Be2 was best. } (11. Be2 exf4 12. Bxf4 b6 13. O-O Bb7 14. Qe3 Na5 15. Bd3 c5 16. Rad1 Qe7) 11... b6 { [%eval -1.07] } 12. d5?! { [%eval -2.19] } { Inaccuracy. h4 was best. } (12. h4 Ba6) 12... Na5 { [%eval -2.17] } 13. Nd2?! { [%eval -3.09] } { Inaccuracy. Bf4 was best. } (13. Bf4 Ba6 14. dxe6 Qxd3 15. Bxd3 Nb3 16. Rd1 Nxc3 17. e7 Rfe8 18. c5 Nxd1) 13... Nc5 { [%eval -3.29] } 14. Qe3 { [%eval -3.45] } 14... exd5 { [%eval -3.43] } 15. cxd5 { [%eval -3.57] } 15... Qxd5 { [%eval -3.38] } 16. c4 { [%eval -3.79] } (16. Bb2 Bb7) 16... Qe6 { [%eval -3.89] } 17. Bb2 { [%eval -4.1] } 17... Bb7 { [%eval -3.9] } 18. O-O-O?! { [%eval -4.94] } { Inaccuracy. h4 was best. } (18. h4 Rad8 19. h5 f4 20. Qh3 Qh6 21. Nf3 Bxf3 22. Qxf3 Na4 23. Rd1 Nxb2) 18... Rad8 { [%eval -4.81] } (18... f4) 19. Be2 { [%eval -5.59] } 19... f4 { [%eval -5.37] } 20. Qc3 { [%eval -5.42] } 20... Qg6 { [%eval -4.77] } (20... Rxd2 21. Rxd2 Nab3+ 22. Kb1 (22. Kc2 Nxd2 23. Qxd2 Qf5+ 24. Bd3) 22... Ne4 23. Rdd1) (20... Qf5) 21. Ba1 { [%eval -5.37] } 21... Rxd2 { [%eval -5.3] } 22. Rxd2 { [%eval -5.38] } 22... Nab3+ { [%eval -5.39] } 23. Kb2 { [%eval -5.13] } (23. Kd1) 23... Na4+?! { [%eval -3.6] } { Inaccuracy. Nxd2 was best. } (23... Nxd2 24. Qxd2 Qxg2 25. Rd1 Qxh2 26. Bg4 Qxd2+ 27. Rxd2 Bc8 28. Bf3 g5 29. Kc2) 24. Kxb3 { [%eval -3.44] } 24... Nxc3 { [%eval -3.97] } 25. Bxc3 { [%eval -3.83] } 25... Qe6 { [%eval -3.19] } 26. h3?! { [%eval -4.21] } { Inaccuracy. Rd5 was best. } (26. Rd5 f3 27. gxf3 b5 28. Rhd1 Bxd5 29. cxd5 Qb6 30. Kb2 Rb8 31. Bd3 a5) 26... Bxg2? { [%eval -2.31] } { Mistake. f3 was best. } (26... f3 27. gxf3 Bxf3 28. Bxf3 Rxf3 29. Rg1 Qxh3 30. Rc2 Qe6 31. Rcg2 g6 32. Rd2) 27. Bg4 { [%eval -2.4] } 27... Qc6 { [%eval -2.39] } (27... Qxg4 28. hxg4 Bxh1 29. Rd7 Re8 30. e6 Rxe6 31. Rxg7+ Kf8 32. Rxh7 Be4 33. Rxc7 f3 34. Rc8+ Ke7 35. Rc7+ Kd8) 28. Bd7? { [%eval -4.29] } { Mistake. Rhd1 was best. } (28. Rhd1 b5) 28... Qa8?? { [%eval -0.79] } { Blunder. Bxh1 was best. } (28... Bxh1 29. Bxc6 Bxc6 30. e6 f3 31. Bd4 Re8 32. Be5 Rxe6 33. Bxc7 Rh6 34. Kc3) 29. Re1 { [%eval -0.03] } 29... Bc6 { [%eval 0.35] } (29... f3 30. e6) 30. e6 { [%eval 0.06] } (30. Rg1) 30... f3?? { [%eval 4.15] } { Blunder. Bxd7 was best. } (30... Bxd7 31. Rxd7 (31. exd7) 31... Qg2 32. e7 Re8 33. Rd8) 31. Bxc6 { [%eval 4.27] } 31... Qxc6 { [%eval 4.17] } 32. Rd7 { [%eval 4.44] } 32... f2?? { [%eval #3] } { Checkmate is now unavoidable. Qxd7 was best. } (32... Qxd7 33. exd7 Kf7 34. Re3 Rd8 35. Rxf3+ Ke7 36. Bxg7 Rxd7 37. Bc3 Rd6 38. Rg3) (32... Ra8 33. Rxg7+ Kf8 34. Rf7+ Ke8 35. Bb4 Qxe6 36. Rxe6+ Kxf7) 33. Rxg7+ { [%eval #2] } 33... Kh8 { [%eval #2] } 34. Rg3+ { [%eval #1] } *
+
+
+[Event "2025 OTB: Leça R8"]
+[Date "2025.08.05"]
+[White "João Álvaro Ferreira"]
+[Black "Adur Muñoz Ferreira"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "E12"]
+[Opening "Queen's Indian Defense: Kasparov-Petrosian Variation"]
+[StudyName "2025 OTB"]
+[ChapterName "Leça R8"]
+[ChapterURL "https://lichess.org/study/9jBCfbSD/TQl1qOBO"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.08.05"]
+[UTCTime "19:21:52"]
+
+1. d4 { [%eval 0.17] } 1... Nf6 { [%eval 0.19] } 2. c4 { [%eval 0.18] } 2... e6 { [%eval 0.14] } 3. Nf3 { [%eval 0.11] } 3... b6 { [%eval 0.23] } 4. a3 { [%eval 0.18] } 4... Bb7 { [%eval 0.14] } 5. Nc3 { [%eval 0.14] } 5... d6 { [%eval 0.36] } 6. d5 { [%eval 0.39] } 6... e5?! { [%eval 0.95] } { Inaccuracy. g6 was best. } (6... g6 7. e4 Bg7 8. Be2 O-O 9. O-O Re8 10. Be3 a6 11. Re1) 7. e4 { [%eval 0.96] } 7... Nbd7 { [%eval 0.99] } 8. Bd3 { [%eval 1.1] } 8... g6 { [%eval 1.15] } 9. O-O { [%eval 1.09] } 9... Bg7 { [%eval 1.15] } 10. Ne1 { [%eval 0.87] } 10... O-O { [%eval 0.83] } 11. Be3 { [%eval 0.78] } 11... Ne8 { [%eval 0.86] } 12. Rc1 { [%eval 0.73] } 12... f5 { [%eval 0.77] } 13. f3 { [%eval 0.69] } 13... f4 { [%eval 0.61] } 14. Bf2 { [%eval 0.43] } 14... h5 { [%eval 0.8] } 15. Be2 { [%eval 0.42] } 15... g5 { [%eval 0.62] } 16. Nd3 { [%eval 0.47] } 16... Rf6 { [%eval 0.92] } 17. b4 { [%eval 0.66] } 17... a6 { [%eval 1.12] } 18. c5 { [%eval 0.85] } 18... Bc8 { [%eval 0.83] } 19. cxb6 { [%eval 0.8] } 19... cxb6 { [%eval 0.81] } 20. b5 { [%eval 0.62] } 20... axb5 { [%eval 0.68] } (20... a5 21. Na4 Rb8) 21. Nxb5 { [%eval 0.79] } 21... Nc5 { [%eval 0.74] } 22. Nb4 { [%eval 0.66] } 22... Rg6 { [%eval 0.87] } 23. Bxc5 { [%eval 0.97] } (23. Nc6 { Ordem correta, passei mal o jogo } 23... Qd7 24. Bxc5 bxc5 25. a4) 23... bxc5 { [%eval 1.37] } 24. Nc6 { [%eval 1.45] } 24... Qd7 { [%eval 1.37] } (24... Qf6 25. Nba7 Bd7 26. Qb3 g4 27. Qb7) 25. a4 { [%eval 1.35] } 25... h4?! { [%eval 2.31] } { Inaccuracy. Bf6 was best. } (25... Bf6 26. Na3 Rg7 27. Bb5 Qc7 28. Nc4 g4 29. a5 h4 30. Rb1 h3 31. g3) (25... g4 26. Na3 g3 27. h3 Qe7) 26. h3 { [%eval 2.23] } 26... Bb7 { [%eval 2.67] } 27. Rb1 { [%eval 2.75] } 27... Bxc6 { [%eval 3.43] } 28. dxc6 { [%eval 3.32] } 28... Qxc6 { [%eval 3.3] } 29. Bc4+ { [%eval 3.34] } 29... Kf8 { [%eval 4.01] } 30. Bd5 { [%eval 4.36] } 30... Qa6 { [%eval 4.35] } 31. Bxa8 { [%eval 4.26] } 31... Qxa8 { [%eval 4.3] } 32. Qc2 { [%eval 3.74] } 32... Bf6 { [%eval 4.0] } 33. Rfd1 { [%eval 3.58] } 33... Bd8 { [%eval 3.65] } 34. Rd5 { [%eval 3.26] } 34... Ke7 { [%eval 3.47] } 35. Rbd1 { [%eval 3.52] } 35... Qa6 { [%eval 3.51] } 36. Qd3 { [%eval 3.37] } 36... Qb6 { [%eval 3.79] } 37. Kh2 { [%eval 3.65] } 37... Bc7 { [%eval 3.82] } 38. Qc4 { [%eval 3.94] } 38... Nf6 { [%eval 4.39] } 39. Nxd6?? { [%eval 1.93] } { Blunder. R5d2 was best. } (39. R5d2 Ne8 40. Nc3 Nf6 41. a5 Qb4 42. Nd5+ Nxd5 43. Qxd5 c4 44. a6 Bb8) 39... Qb8?? { [%eval 10.95] } { Blunder. Bxd6 was best. } (39... Bxd6 40. Rxd6 Ng4+ (40... Qxd6 41. Rxd6) 41. hxg4 Rxd6 42. Rxd6 Qxd6 43. Qg8 h3 (43... c4) (43... Qf6 44. Qc8 Qd6) 44. Qxg5+ Kf7 45. Qf5+) 40. Nf5+ { [%eval 8.22] } 40... Kf8 { [%eval 8.02] } 41. Qxc5+ { [%eval 7.9] } 41... Kf7 { [%eval 8.35] } (41... Kg8) 42. Qe7+ { [%eval 8.34] } 42... Kg8 { [%eval 9.17] } 43. Rd8+ { [%eval 8.89] } 43... Bxd8 { [%eval 8.8] } 44. Rxd8+ { [%eval 8.64] } 44... Qxd8 { [%eval 8.1] } 45. Qxd8+ Kf7 46. Qe7+ Kg8 47. Qe6+ Kf8 48. Qxe5 *
+
+
+[Event "Open Maia"]
+[Date "2025.08.22"]
+[Round "1"]
+[White "Alexis Duault"]
+[Black "João Álvaro Ferreira"]
+[Result "0-1"]
+[WhiteElo "1900"]
+[BlackElo "1633"]
+[Variant "Standard"]
+[ECO "E39"]
+[Opening "Nimzo-Indian Defense: Classical Variation, Berlin Variation, Macieja System"]
+[StudyName "2025 OTB"]
+[ChapterName "Open Maia R1"]
+[ChapterURL "https://lichess.org/study/9jBCfbSD/qsxQ6vVA"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.08.22"]
+[UTCTime "22:15:41"]
+
+1. d4 { [%eval 0.17] } 1... Nf6 { [%eval 0.19] } 2. c4 { [%eval 0.18] } 2... e6 { [%eval 0.14] } 3. Nc3 { [%eval 0.09] } 3... Bb4 { [%eval 0.07] } 4. Qc2 { [%eval 0.08] } 4... c5 { [%eval 0.19] } 5. dxc5 { [%eval 0.16] } 5... O-O { [%eval 0.17] } 6. a3 { [%eval 0.23] } 6... Bxc5 { [%eval 0.28] } 7. Nf3 { [%eval 0.19] } 7... b6 { [%eval 0.4] } 8. e3 { [%eval 0.11] } { This felt somewhat passive from white, it's a slower move that foreshadows B4 Bb2 in the future. } (8. Bf4) 8... Bb7 { [%eval 0.09] } 9. Be2 { [%eval 0.11] } { Defending from Bxf3, but I like the bishop better on d3 } 9... d5 { [%eval 0.14] } (9... Be7 { Also felt like a good move, preventing Ne4 and b4 coming with tempo }) 10. cxd5 { [%eval 0.14] } 10... Nxd5 { [%eval 0.12] } 11. Ne4?! { [%eval -0.46] } { Inaccuracy. Nxd5 was best. } (11. Nxd5 Qxd5) 11... Be7 { [%eval -0.38] } (11... Nd7 12. Nxc5 Nxc5 { Is something I considered due to wanting to exchange some pieces. But after B4 with tempo, I felt like my dark squared bishop would be missed. } 13. b4 Nd7 14. Bb2 Rc8 15. Qb3 N7f6 16. Rd1 Qe7 { Looks good for white }) 12. O-O { [%eval -0.41] } 12... Nd7 { [%eval -0.48] } 13. Rd1 { [%eval -0.52] } 13... Rc8 { [%eval -0.57] } 14. Qd3 { [%eval -0.87] } 14... Qc7 { [%eval -0.47] } (14... f5 { Engine likes this idea, forcing the knight back and grabbing space. I did not consider this, it seems very risky. and turns the E pawn into a long term weakness. } 15. Ng3 Bf6 { [%csl Ge6] }) 15. Neg5? { [%eval -1.93] } { Opponent saw I was lower rated and wanted to threaten mate. There are a couple of options here. I didn't realize it instantly, but this waste of time from white is actually critical and allows black to grab the initiative in the best line. } (15. Bd2 f5 16. Ng3 Nc5 17. Qc2 f4 18. exf4 Nxf4 19. Bxf4 Qxf4 20. Bc4 Kh8) 15... N5f6!! { [%eval -1.91] } { This is a pawn sacrifice, but I visualized the resulting position and thought that if white went for it, black would have tremendous initiative and probably win an exchange. } (15... N7f6 { Which knight to use? This doesn't sacrifice a pawn but allows e4, which can become a problem. } 16. e4 Nf4 17. Bxf4 Qxf4 { Trading off white's bad bishop. } 18. e5 (18. g3!?) 18... Rfd8) 16. Nxh7?! { [%eval -2.52] } 16... Nc5 { [%eval -2.6] } (16... Be4 17. Nxf6+ Nxf6 18. Qb5 { And white is fine. Black has more activity but not enough for the pawn imo. }) (16... Nxh7 17. Qxd7 { White is hoping for this, winning a relatively clean pawn. Black still has more activity, but no compensation. } 17... Bf6 (17... Qxd7 18. Rxd7 Bxf3 19. Bxf3 Bf6 { [%csl Gh7] })) 17. Nxf6+ { [%eval -2.42] } 17... Bxf6 { [%eval -2.25] } { And white is actually in trouble here. The queen doesn't have any good squares. } 18. Qd2?? { [%eval -4.76] } { Blunder. Qc2 was best. } (18. Qc2 Be4 19. Qc4 Rfd8 (19... Bd5 20. Qc2 (20. Qb5 a6 21. Qb4 a5 22. Qb5 { The queen is just getting battered, and this is the best engine line })) 20. Nd4 Qb7 21. f3 Bd5 22. Qb4 e5 23. Nb5 e4) (18. Qb1 Be4) (18. Qc4 Ba6 19. Qc2 Bxe2 20. Qxe2 Nb3 21. Rb1 Nxc1 22. Rbxc1 Qxc1 23. Rxc1 Rxc1+ 24. Ne1 Rd8 25. f4 Rdd1 26. Kf2 Rxe1 27. Qd3 Red1 28. Qe2 Rf1+ 29. Kg3 g6) 18... Nb3 { [%eval -4.96] } { Opponent blunders a simple fork. He did not try to win the piece back to only be down an exchange, but it's not really possible. } 19. Qb4 { [%eval -5.14] } (19. Qe1 Nxa1 20. Bd2 Nb3) 19... Nxa1 { [%eval -5.02] } 20. Bd2 { [%eval -5.02] } 20... Nc2 { [%eval -4.63] } 21. Qg4 { [%eval -4.44] } 21... Bxf3 { [%eval -4.43] } { Just exchanging pieces. If you're up a rook, trading is good. } 22. gxf3 { [%eval -4.87] } 22... Rfd8! { [%eval -4.71] } { Pinning the rook and the bishop to each other. } 23. Kh1 { [%eval -5.07] } (23. h4) 23... Bxb2 { [%eval -4.99] [%csl Gg7][%cal Gb2g7] } 24. h4 { [%eval -5.54] } 24... Bc3 { [%eval -5.51] } 25. Rg1 { [%eval -6.25] } 25... Rxd2 { [%eval -6.19] } 26. f4 { [%eval -6.11] } 26... f5 { [%eval -6.12] } 27. Qh5 { [%eval -6.11] } 27... Qf7 { [%eval -6.04] } (27... Rxe2 28. Qxe2 Qc6+ 29. Kh2 Ne1 30. Rxe1 (30. Rg3 Qc4 31. Qd1 Qd3) 30... Bxe1 31. Qxe1 Qc1) 28. Qf3 { [%eval -5.91] } 28... Qf6 { [%eval -5.84] } (28... Rd7 29. Rg5) (28... Qe7 29. Rg5 Ne1 30. Qh5 Qf7 31. Qxf7+ Kxf7 32. Ba6 Rc7 33. h5 Bf6 34. Rg1 Rc1 (34... Rd1)) 29. Kg2 { [%eval -6.17] } 29... Rd7 { [%eval -5.73] } (29... Qxh4 { Feels extremely risky, even though it's correct. } 30. Kf1 { Is a bit scary visually. }) (29... Ne1+ 30. Rxe1) 30. Kh3 { [%eval -5.69] } 30... Qh6 { [%eval -5.23] } 31. Rg5 { [%eval -5.81] } 31... Ne1 { [%eval -5.81] } (31... Bf6) 32. Qg3 { [%eval -5.89] } 32... Rd2 { [%eval -5.65] } (32... Bf6 33. Rh5) 33. Ba6 { [%eval -5.95] } 33... Re8 { [%eval -5.91] } 34. Bc4 { [%eval -5.93] } (34. Rg6 Qh5 35. Rg5 Qf3 { Was planned }) 34... Kh7! { [%eval -5.68] } { Prevents Rg6, ends any themes with king pins (preventing Rxf5 as well) and prepares Bf6 winning another exchange. } { [%csl Gg6] } (34... Bf6 35. Rxf5 Kf7) 35. e4 { [%eval -6.66] } 35... Bf6 { [%eval -6.5] } 36. exf5 { [%eval -6.62] } 36... Bxg5 { [%eval -6.42] } 37. fxg5 { [%eval -6.1] } 37... Qh5 { [%eval -5.86] } 38. fxe6 { [%eval -5.81] } 38... Qf3 { [%eval -5.73] } 39. g6+ { [%eval -5.81] } 39... Kh8 { [%eval -5.67] } 0-1
+
+
+[Event "2025 OTB: Open Maia R2"]
+[Date "2025.08.23"]
+[White "João Álvaro Ferreira"]
+[Black "Nuno Sá"]
+[Result "1/2-1/2"]
+[WhiteElo "1630"]
+[BlackElo "1850"]
+[Variant "Standard"]
+[ECO "D11"]
+[Opening "Slav Defense: Modern Line"]
+[StudyName "2025 OTB"]
+[ChapterName "Open Maia R2"]
+[ChapterURL "https://lichess.org/study/9jBCfbSD/CaV5ikHk"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.08.23"]
+[UTCTime "17:09:27"]
+
+1. d4 { [%eval 0.17] } 1... d5 { [%eval 0.2] } 2. c4 { [%eval 0.18] } 2... c6 { [%eval 0.21] } 3. Nf3 { [%eval 0.2] } 3... e6 { [%eval 0.28] } 4. cxd5 { [%eval 0.06] } 4... exd5 { [%eval 0.17] } 5. Nc3 { [%eval 0.0] } 5... Nf6 { [%eval 0.06] } 6. Bg5 { [%eval 0.0] } 6... Be7 { [%eval 0.13] } (6... Bf5 7. e3 (7. Qb3)) 7. Qc2 { [%eval 0.03] } 7... Nbd7 { [%eval 0.19] } 8. e3 { [%eval 0.19] } 8... O-O { [%eval 0.22] } 9. Bd3 { [%eval 0.29] } 9... Re8 { [%eval 0.34] } (9... h6 10. Bf4 Nh5 11. Be5 Nxe5 12. Nxe5) 10. O-O { [%eval 0.37] } 10... h6 { [%eval 0.45] } 11. Bh4 { [%eval 0.29] } (11. Bf4 Nh5 (11... Nf8) 12. Nxd5 cxd5) 11... Ne4 { [%eval 0.29] } 12. Bxe7 { [%eval 0.19] } 12... Qxe7 { [%eval 0.2] } 13. a3 { [%eval -0.03] } 13... Ng5 { [%eval 0.39] } 14. Nxg5 { [%eval 0.22] } 14... Qxg5 { [%eval 0.33] } 15. Bf5 { [%eval -0.04] } 15... Nb6 { [%eval 0.24] } 16. Bxc8 { [%eval -0.23] } 16... Nxc8 17. Na4 Nd6 18. Nc5 Qe7 19. a4 a5 20. h3 1/2-1/2
+
+
+[Event "2025 OTB: Open Maia R3"]
+[Date "2025.08.24"]
+[White "Athar Ansari"]
+[Black "João Álvaro Ferreira"]
+[Result "1-0"]
+[WhiteElo "1957"]
+[BlackElo "1633"]
+[Variant "Standard"]
+[ECO "A00"]
+[Opening "Hungarian Opening: Indian Defense"]
+[StudyName "2025 OTB"]
+[ChapterName "Open Maia R3"]
+[ChapterURL "https://lichess.org/study/9jBCfbSD/mduUQ4aD"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.08.24"]
+[UTCTime "19:07:34"]
+
+1. g3 { [%eval 0.0] } 1... Nf6 { [%eval 0.18] } 2. Bg2 { [%eval 0.07] } 2... c5 { [%eval 0.17] } 3. e3 { [%eval -0.24] } 3... e6 { [%eval 0.03] } 4. Ne2 { [%eval -0.11] } 4... Be7 { [%eval 0.09] } 5. O-O { [%eval -0.09] } 5... O-O { [%eval 0.06] } 6. b3 { [%eval -0.16] } 6... Nc6 { [%eval -0.15] } 7. d4 { [%eval -0.07] } 7... d5 { [%eval -0.02] } 8. Bb2 { [%eval -0.1] } 8... Qc7 { [%eval 0.05] } 9. Nd2 { [%eval -0.13] } 9... Rb8 { [%eval 0.31] } 10. c3?! { [%eval -0.41] } { Inaccuracy. dxc5 was best. } (10. dxc5 Rd8) 10... b5 { [%eval 0.08] } 11. dxc5 { [%eval 0.04] } 11... Bxc5 { [%eval 0.14] } 12. Nd4 { [%eval -0.35] } 12... Ne5 { [%eval -0.34] } 13. N2f3?! { [%eval -0.96] } { Inaccuracy. Qe2 was best. } (13. Qe2) 13... Nxf3+?! { [%eval -0.32] } { Inaccuracy. Ng6 was best. } (13... Ng6) 14. Nxf3 { [%eval -0.37] } 14... Be7?! { [%eval 0.19] } { Inaccuracy. Ba6 was best. } (14... Ba6) 15. Nd2?! { [%eval -0.46] } { Inaccuracy. a4 was best. } (15. a4 a6 16. axb5 axb5 17. c4 bxc4 18. Be5 Bd6 19. Bxd6 Qxd6 20. bxc4 Rb4) 15... Bb7 { [%eval -0.14] } 16. Qe2 { [%eval -0.18] } 16... Ba8 { [%eval -0.13] } 17. Rfd1 { [%eval -0.24] } 17... Rfd8 { [%eval -0.17] } 18. b4?! { [%eval -0.82] } { Inaccuracy. a4 was best. } (18. a4 a6) 18... a5 { [%eval -0.83] } 19. a3 { [%eval -0.88] } 19... a4 { [%eval -0.61] } 20. f4?! { [%eval -1.5] } { Inaccuracy. Rac1 was best. } (20. Rac1 Nd7) 20... Ne8 { [%eval -1.58] } (20... Nd7) 21. e4 { [%eval -1.54] } 21... Nd6? { [%eval -0.16] } { Mistake. dxe4 was best. } (21... dxe4 22. c4 (22. Nxe4 Nf6 23. c4) 22... Bf6 23. Bxf6 (23. Nxe4 Bxe4 24. Bxe4 bxc4 25. Bxf6 Nxf6) 23... Nxf6 24. cxb5 Qb6+ 25. Kf1 Qxb5 26. Qxb5 Rxb5 27. Nxe4) 22. e5 { [%eval -0.16] } 22... Nc4 { [%eval -0.04] } 23. Nxc4?! { [%eval -0.81] } { Inaccuracy. Nf3 was best. } (23. Nf3 d4) 23... Qxc4? { [%eval 0.3] } { Mistake. dxc4 was best. } (23... dxc4 24. h4) 24. Rd2 { [%eval -0.16] } 24... Qxe2 { [%eval -0.14] } 25. Rxe2 { [%eval -0.14] } 25... Rdc8 { [%eval -0.09] } 26. Rd1 { [%eval -0.16] } 26... Bd8 { [%eval -0.15] } 27. Bf3 { [%eval -0.29] } 27... Bb6+ { [%eval -0.19] } 28. Kg2 { [%eval -0.27] } 28... Rc4 { [%eval -0.15] } 29. Red2 { [%eval -0.17] } 29... h6 { [%eval -0.12] } 30. Kf1 { [%eval -0.18] } 30... Rcc8 { [%eval -0.04] } 31. Rd3 { [%eval -0.1] } (31. Be2) 31... Kh7 { [%eval 0.0] } 32. Bc1 { [%eval 0.0] } 32... Rc7 { [%eval 0.0] } 33. Be3 { [%eval 0.06] } 33... Bxe3 { [%eval 0.0] } 34. Rxe3 { [%eval 0.0] } 34... Rbc8 { [%eval 0.04] } 35. Rdd3 { [%eval 0.18] } 35... Bc6 { [%eval 0.42] } (35... d4 36. cxd4 Bxf3 37. Rxf3 Rc2 38. Rf2 R8c3 39. Rxc2 Rxc2 40. d5 exd5 41. Rxd5 Ra2 42. Rxb5 Rxa3 43. Ra5 Ra1+ 44. Kg2 a3 45. f5 Rb1 46. Rxa3 Rxb4) 36. Ke1 { [%eval 0.31] } 36... Bd7 { [%eval 0.72] } 37. Kd2 { [%eval 0.33] } 37... Kg6 { [%eval 0.87] } 38. Rd4 { [%eval 0.5] } 38... Kh7 { [%eval 0.91] } 39. Be2 { [%eval 0.52] } 39... Kg8?! { [%eval 1.55] } { Inaccuracy. g6 was best. } (39... g6 40. h4 (40. g4 Rg8 41. h4 Kg7)) 40. h4?! { [%eval 0.87] } { Inaccuracy. f5 was best. } (40. f5 exf5) 40... Kf8 { [%eval 0.74] } 41. g4 { [%eval 0.67] } 41... Ke7 { [%eval 1.22] } 42. f5 { [%eval 1.09] } 42... Rg8 { [%eval 1.44] } 43. Rf4 { [%eval 1.28] } 43... Rgc8 { [%eval 1.16] } 44. Ref3 { [%eval 1.47] } 44... Rg8? { [%eval 3.11] } { Mistake. Be8 was best. } (44... Be8 45. Re3) 45. fxe6? { [%eval 1.32] } { Mistake. f6+ was best. } (45. f6+ gxf6 46. Rxf6 Be8 47. Rxh6 Rxg4 48. Rxf7+ Kxf7 49. Bxg4 Rc4 50. Bxe6+ Kg7) 45... fxe6?? { [%eval 3.91] } { Blunder. Bxe6 was best. } (45... Bxe6 46. Bxb5 g5 47. hxg5 Rxg5 48. Bd3 h5 49. gxh5 Rxh5 50. b5 Ra7 51. Rb4) 46. Rf7+ { [%eval 3.71] } 46... Kd8 { [%eval 3.73] } 47. Rf8+ { [%eval 3.86] } 47... Rxf8 { [%eval 3.85] } 48. Rxf8+ { [%eval 3.7] } 48... Ke7 { [%eval 3.62] } 49. Rb8 { [%eval 3.26] } 49... g5?! { [%eval 4.75] } { Inaccuracy. g6 was best. } (49... g6 50. Rh8 Kf7 51. Rxh6 Kg7 52. g5 Be8 53. h5 gxh5 54. Rxe6 Bf7 55. Rh6) 50. Rh8 { [%eval 4.7] } 50... gxh4 { [%eval 4.55] } 51. Rxh6 { [%eval 4.41] } 51... Kf8 { [%eval 4.63] } 52. Rxh4 { [%eval 4.81] } 52... Be8 { [%eval 5.8] } 53. g5?? { [%eval 2.79] } { Blunder. Rh8+ was best. } (53. Rh8+ Ke7 54. Bd3 Bg6 55. Bxg6 Rc4 56. Bd3 Rxg4 57. Bxb5 Rg2+ 58. Ke3 Rg4) 53... Kg7? { [%eval 4.88] } { Mistake. Rg7 was best. } (53... Rg7 54. Rg4 Rh7 55. g6 Rh6 56. Ke3 Bxg6 57. Bxb5 Bf5 58. Rg3 Rh4 59. Bxa4) 54. Rh6 { [%eval 4.59] } (54. Rh7+) 54... Re7 { [%eval 5.44] } 55. Bd3 { [%eval 5.4] } 55... Kg8 { [%eval 5.31] } 56. g6 { [%eval 5.36] } 56... Kf8 { [%eval 6.59] } 57. Rh7 { [%eval 6.99] } (57. Rh8+ Kg7 58. Rh7+ Kf8) 57... Rg7 { [%eval 7.01] } 58. Rxg7 { [%eval 6.86] } 58... Kxg7 { [%eval 6.51] } 59. Ke3 { [%eval 6.33] } 1-0
+
+
+[Event "2025 OTB: Open Maia R4"]
+[Date "2025.08.25"]
+[White "João Álvaro Ferreira"]
+[Black "Francesco Valgimigli"]
+[Result "1/2-1/2"]
+[WhiteElo "1630"]
+[BlackElo "1780"]
+[Variant "Standard"]
+[ECO "A52"]
+[Opening "Indian Defense: Budapest Defense, Adler Variation"]
+[StudyName "2025 OTB"]
+[ChapterName "Open Maia R4"]
+[ChapterURL "https://lichess.org/study/9jBCfbSD/1elDWg21"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.08.25"]
+[UTCTime "18:51:24"]
+
+1. d4 { [%eval 0.17] } (1. Nf3) 1... Nf6 { [%eval 0.19] } 2. c4 { [%eval 0.18] } 2... e5 { [%eval 0.49] } 3. dxe5 { [%eval 0.61] } 3... Ng4 { [%eval 0.58] } 4. Nf3 { [%eval 0.5] } 4... Bc5 { [%eval 0.62] } 5. e3 { [%eval 0.6] } 5... Nc6 { [%eval 0.69] } 6. Be2 { [%eval 0.5] } 6... Ngxe5 { [%eval 0.48] } 7. Nxe5 { [%eval 0.57] } 7... Nxe5 { [%eval 0.62] } 8. Nc3 { [%eval 0.44] } 8... d6 { [%eval 0.39] } 9. a3 { [%eval 0.35] } 9... a5 { [%eval 0.36] } 10. Qc2?! { [%eval -0.19] } { Inaccuracy. b3 was best. } (10. b3 O-O) 10... O-O { [%eval -0.11] } (10... Qg5 11. f4 (11. Bf1)) 11. O-O { [%eval -0.07] } 11... Re8 { [%eval 0.0] } 12. Na4 { [%eval -0.47] } 12... Ba7 { [%eval -0.51] } 13. b4 { [%eval -0.46] } 13... axb4?! { [%eval 0.49] } { Inaccuracy. Qg5 was best. } (13... Qh4 14. Bb2 Re6 15. Bxe5 Rxe5 16. g3 Qh3 17. Bf3) (13... Qg5 14. f4 g6 (14... Qg6 15. Qxg6 Nxg6)) 14. axb4 { [%eval 0.51] } 14... Qh4 { [%eval 0.47] } 15. g3? { [%eval -0.7] } { Mistake. Nc3 was best. } (15. Nc3 c5 (15... Bg4 16. Bxg4 Qxg4 17. Nd5 Bb6 18. Rxa8 Rxa8 19. Nf4 c6 20. h3 Qg5) (15... Re6 16. g3 Qh3) (15... Nxc4)) (15. c5 Re6 (15... dxc5 16. Nxc5 Qxb4 17. Bd2 (17. Ba3 Qb6 18. Bb2)) 16. g3 Qh3) (15. Bb2 Re6 16. Bxe5 dxe5 17. g3 Qh3) 15... Qh3 { [%eval -0.71] } (15... Qf6 16. Bb2 Bh3 17. Rfd1 Nf3+ 18. Kh1) 16. Qe4 { [%eval -0.66] } 16... Bd7 { [%eval -0.42] } 17. b5 { [%eval -0.54] } 17... c6 { [%eval -0.01] } 18. Bb2 { [%eval -0.31] } (18. Nc3) 18... Ng4 { [%eval 0.1] } 19. Qg2 { [%eval 0.0] } 19... Nxf2?? { [%eval 2.61] } { Blunder. Nxe3 was best. } (19... Nxe3 20. fxe3 Rxe3 21. Qxh3 Bxh3 (21... Rxe2+ 22. b6 Bxh3 23. bxa7 Rxa7 24. Rfe1 Rg2+ 25. Kh1) 22. b6 Rxe2 23. bxa7 Bxf1 (23... Rxa7 24. Nc3 Rg2+ 25. Kh1 Rxa1 26. Bxa1 (26. Rxa1)) (23... Rg2+ 24. Kh1 Rxa7 25. Nb6 Rxa1 26. Rxa1 h6) 24. Kxf1) 20. b6 { [%eval 2.83] } 20... Qxg2+ { [%eval 2.78] } 21. Kxg2 { [%eval 2.78] } 21... Bh3+ { [%eval 2.72] } 22. Kxf2 { [%eval 2.73] } 22... Bxf1 { [%eval 2.69] } 23. Bxf1 { [%eval 2.7] } 23... Bb8 { [%eval 2.71] } 24. Nc3? { [%eval 1.11] } { Mistake. Be2 was best. } (24. Bg2) (24. Be2 h5 25. Bf3 g6 26. Bd4 Ra5 27. Ra2 f5 28. Bd1 h4 29. Rd2 hxg3+) 24... Rxa1 { [%eval 1.22] } 25. Bxa1 { [%eval 1.15] } 25... Rd8? { [%eval 2.94] } { Mistake. Re5 was best. } (25... f6) (25... Re5 26. Bb2 Ra5 27. Be2 Ra6 28. c5 Ra5 29. Ne4 dxc5 30. Nd2 Bd6 31. Nc4) 26. Bg2 { [%eval 2.82] } 26... f6 { [%eval 2.89] } 27. e4 { [%eval 2.72] } 27... Kf7 { [%eval 2.97] } 28. Ke3 { [%eval 2.59] } 28... g6 { [%eval 2.65] } 29. Kd3 { [%eval 2.88] } 29... f5 { [%eval 2.83] } 30. Bb2 { [%eval 2.85] } (30. exf5 gxf5 31. Ke3 (31. Ne2 d5 32. cxd5 cxd5 33. Nf4 Bxf4 34. gxf4 Ke6 (34... h5 35. Bb2 Ke6 36. Bf3 h4 37. Be5 Ra8 38. Kd4) 35. Bf3) (31. Bb2 d5 32. cxd5 cxd5) 31... Re8+ (31... h5 32. Ne2 d5 33. cxd5 cxd5 34. Nf4 Bxf4+) 32. Kf2) 30... fxe4+ { [%eval 3.0] } 31. Bxe4 { [%eval 2.63] } 31... Ke6 { [%eval 2.7] } 32. Ne2?! { [%eval 1.51] } { Inaccuracy. Bc1 was best. } (32. Nd1) (32. Bc1 d5 33. cxd5+ cxd5 34. Bg2 Be5 (34... h6 35. Nb5 g5 36. Nc7+ Kf5 37. Be3 Rd7) 35. Be3 Bxc3 36. Kxc3 Rc8+ 37. Kd4 Rc4+) 32... d5 { [%eval 1.3] } 33. Nd4+ { [%eval 1.16] } (33. cxd5+ cxd5 34. Nd4+ Kf7) 33... Kf7 { [%eval 1.0] } 34. cxd5 { [%eval 0.55] } 34... cxd5 { [%eval 0.52] } 35. Bf3 { [%eval 0.59] } 35... Rd6 { [%eval 0.55] } 36. Bc3 { [%eval 0.57] } 1/2-1/2
+
+
+[Event "2025 OTB: Open Maia R5"]
+[Date "2025.08.26"]
+[White "Pascual Villa Caiguelas"]
+[Black "João Álvaro Ferreira"]
+[Result "0-1"]
+[WhiteElo "1770"]
+[BlackElo "1633"]
+[Variant "Standard"]
+[ECO "E20"]
+[Opening "Nimzo-Indian Defense"]
+[StudyName "2025 OTB"]
+[ChapterName "Open Maia R5"]
+[ChapterURL "https://lichess.org/study/9jBCfbSD/xsoFi3uE"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.08.26"]
+[UTCTime "18:24:19"]
+
+1. d4 { [%eval 0.17] } 1... Nf6 { [%eval 0.19] } 2. c4 { [%eval 0.18] } 2... e6 { [%eval 0.14] } 3. Nc3 { [%eval 0.09] } 3... Bb4 { [%eval 0.07] } 4. Bd2 { [%eval 0.0] } 4... c5 { [%eval 0.05] } 5. a3 { [%eval 0.0] } 5... Bxc3 { [%eval 0.0] } 6. Bxc3 { [%eval 0.0] } 6... Ne4 { [%eval 0.09] } 7. Nf3 { [%eval -0.22] } 7... O-O { [%eval 0.12] } 8. e3 { [%eval 0.03] } 8... b6 { [%eval 0.21] } 9. Bd3 { [%eval -0.17] } 9... Bb7?! { [%eval 0.71] } { Inaccuracy. Nxc3 was best. } (9... Nxc3) 10. O-O?! { [%eval -0.06] } { Inaccuracy. Bxe4 was best. } (10. Bxe4 Bxe4 11. dxc5 bxc5 12. Nd2 (12. Qd6) 12... Bf5 13. Qf3 Nc6 14. b4 f6 15. O-O Bg6) 10... d6 { [%eval 0.31] } 11. Qc2?! { [%eval -0.29] } { Inaccuracy. Be1 was best. } (11. Be1) 11... f5 { [%eval 0.24] } 12. Nd2 { [%eval -0.2] } 12... Nxc3 { [%eval -0.19] } 13. Qxc3 { [%eval -0.23] } (13. bxc3 Qg5) 13... Qg5 { [%eval -0.24] } (13... Qh4 14. Rae1 (14. Nb3 Bxg2 15. Kxg2 Qg4+ 16. Kh1 Qf3+ 17. Kg1 Rf6 18. Rfd1 Qh3 19. f3 Rg6+ 20. Kf2 Rg2+ 21. Ke1 Qxf3 22. Qc2 (22. Rd2 Rg1+ 23. Bf1 Qxf1#))) 14. e4? { [%eval -1.63] } { Mistake. g3 was best. } (14. g3) (14. d5) (14. f4) 14... cxd4 { [%eval -1.3] } 15. Qc2 { [%eval -1.44] } (15. Qxd4) 15... Nd7 { [%eval -1.39] } 16. f4 { [%eval -1.32] } 16... Qg4 { [%eval -1.45] } 17. Rae1 { [%eval -1.8] } (17. b4) 17... Nc5 { [%eval -2.03] } 18. b4 { [%eval -1.98] } 18... Nxd3 { [%eval -2.15] } 19. Qxd3 { [%eval -2.27] } 19... fxe4 { [%eval -2.16] } (19... e5 20. fxe5 dxe5 21. h3 Qg6 22. Nf3) 20. Nxe4 { [%eval -2.11] } 20... Rxf4 { [%eval -2.09] } 21. Rxf4 { [%eval -2.26] } (21. Nxd6) 21... Qxf4 { [%eval -2.21] } 22. Qxd4 { [%eval -1.95] } 22... e5 { [%eval -2.11] } (22... d5) 23. Qe3?! { [%eval -2.88] } { Inaccuracy. Qd2 was best. } (23. Qd2 Qxd2 24. Nxd2 Rc8 25. Rf1 h6 26. h3 Ba8 27. b5 d5 28. cxd5 Bxd5) 23... Qxe3+ { [%eval -3.22] } 24. Rxe3 { [%eval -3.16] } 24... Bxe4 { [%eval -3.1] } 25. Rxe4 { [%eval -3.01] } 25... Rc8 { [%eval -2.8] } 26. b5 { [%eval -3.25] } 26... Kf7 { [%eval -3.29] } 27. Kf2 { [%eval -3.19] } 27... Ke6 { [%eval -2.95] } (27... g5 28. h4 h6 29. Ke3 Ke6 30. hxg5 hxg5 31. Rg4 Kf5 32. Rg3) 28. a4 { [%eval -3.45] } (28. Ke3 g5 29. h4 h6 30. hxg5 hxg5 31. Kd3 (31. Rg4) 31... Kf5 32. Rg4) 28... g5 { [%eval -3.42] } (28... Rf8+ 29. Ke3 g5 30. Rg4) 29. h4 { [%eval -3.92] } 29... h6 { [%eval -3.69] } 30. hxg5 { [%eval -3.44] } 30... hxg5 { [%eval -3.28] } 31. Rg4? { [%eval -5.34] } { Mistake. Ke2 was best. } (31. Ke2 Rf8 32. g3 Rc8 33. Kd3 Rc5 34. Ke3 Kf5 35. Kd3 d5 36. cxd5 Rxd5+) 31... Rf8+?! { [%eval -4.1] } { Inaccuracy. Kf5 was best. } (31... Kf5 32. Rg3 Rxc4 33. Rd3 Rd4 34. Ra3 Rb4 35. Rd3 Ke6 36. Rg3 Rf4+ 37. Ke2) 32. Ke3 { [%eval -3.87] } 32... Kf5 { [%eval -3.67] } 33. Rg3 { [%eval -3.96] } 33... g4 { [%eval -4.81] } 34. Kd3 { [%eval -4.4] } 34... Rh8 { [%eval -4.36] } (34... Rc8 35. Kd2 (35. Kc3 e4)) 35. Kc3 { [%eval -4.85] } 35... e4 { [%eval -4.72] } 36. Kd4 { [%eval -4.88] } 36... Rh1 { [%eval -4.72] } 37. Rc3 { [%eval -5.19] } 37... Rd1+ { [%eval -5.12] } 38. Ke3 { [%eval -4.89] } 38... Ra1 { [%eval -5.25] } (38... g3 39. Ke2 Ra1 (39... Rd4 40. Ke3) 40. Rxg3 Rxa4 41. Rc3 (41. Rg7 Rxc4 42. Rf7+ Ke5 43. g4) 41... Ra2+ 42. Kf1 Kf4) (38... Rd3+ 39. Rxd3 exd3 40. Kxd3 Kf4 41. Ke2 (41. Kd4) 41... Ke4 (41... Kg3 42. Kf1 Kh2 43. Kf2) 42. Kf2 Kd4 (42... Kf4 43. Ke2 Ke4 44. Kf2 Kd3 45. Kg3 Kxc4 46. Kxg4 d5 47. Kf3) 43. Kg3 Kxc4 44. Kxg4 d5 45. Kf3) 39. Kd4 { [%eval -5.18] } 39... Rd1+ { [%eval -5.1] } 40. Ke3 { [%eval -4.87] } 40... Ra1 { [%eval -5.0] } (40... Ke5) (40... Rd3+ 41. Rxd3 exd3 42. Kxd3 Kf4 43. Kd4 (43. Ke2 Kg3 44. Kf1) 43... Kg3 44. Kd5 Kxg2 45. Kxd6 Kf2 46. c5 bxc5 47. a5 g3 48. b6 axb6 49. axb6 g2 50. b7 g1=Q 51. b8=Q) 41. Kd4 { [%eval -5.12] } 41... Kf4 { [%eval -5.09] } 42. g3+ { [%eval -4.79] } 42... Kf5 { [%eval -4.44] } 43. Re3 { [%eval -5.54] } (43. Ke3 Ke5) (43. Kd5) 43... Rd1+ { [%eval -6.08] } 44. Kc3 { [%eval -5.99] } 44... Ke5 { [%eval -5.94] } 45. Kc2 { [%eval -5.94] } 45... Ra1 { [%eval -5.86] } 46. Kb3?! { [%eval -8.22] } { Inaccuracy. Kc3 was best. } (46. Kb2) (46. Kc3 Ra3+ 47. Kd2 Ra2+ 48. Kc3 Ra1 49. Re2 Ra3+ 50. Kb2 Rxg3 51. a5 Rf3) 46... Kd4 { [%eval -8.16] } 47. Re2 { [%eval -8.16] } 47... e3 { [%eval -8.16] } 48. Rc2 { [%eval -7.71] } 48... Rb1+ { [%eval #-22] } 49. Ka2 { [%eval #-25] } 49... Rd1 { [%eval -15.52] } 50. Kb3 { [%eval -10.69] } 50... Rd3+ { [%eval -7.38] } 51. Kb2 { [%eval -7.12] } 51... Ke4 { [%eval -6.87] } 52. Rc1 { [%eval -7.87] } 52... e2 { [%eval -8.99] } 53. Kc2 { [%eval -8.54] } 53... Ke3 { [%eval -7.97] } 54. a5? { [%eval #-8] } { Checkmate is now unavoidable. c5 was best. } (54. c5 dxc5 55. Kb2 Kf2 56. Rc2 c4 57. Rxc4 e1=Q 58. Rc2+ Kxg3) (54. Rh1 Rd2+ 55. Kc1 Ra2 56. Kb1 Rxa4 57. Rh6 (57. c5 dxc5 58. Kc2 Rc4+ 59. Kb3 Rb4+ 60. Kc3 Rxb5 61. Kc4 Rb4+ 62. Kd5 a5 63. Ra1 a4 64. Ra3+ Rb3 65. Rxa4 e1=Q 66. Re4+ Kd2 67. Rxe1 Kxe1 68. Ke4 Rxg3)) 54... Rd4? { [%eval -7.36] } { Lost forced checkmate sequence. Rd2+ was best. } (54... Rd2+ 55. Kb3 Rd1 56. Rc3+ Kd4 57. c5 Rb1+ 58. Kc2 e1=Q 59. Rd3+ Ke4 60. Rd4+) 55. Kc3? { [%eval #-7] } { Checkmate is now unavoidable. Rh1 was best. } (55. Rh1 bxa5 56. c5 dxc5 57. Kb2 Kf2 58. Kc2 Kf3 59. Re1 a4 60. Ra1) 55... Rd1 { [%eval #-6] } 0-1
+
+
+[Event "2025 OTB: Open Maia R7"]
+[Date "2025.08.28"]
+[White "João Álvaro Ferreira"]
+[Black "João Daniel Marcos"]
+[Result "1-0"]
+[WhiteElo "1633"]
+[BlackElo "1699"]
+[Variant "Standard"]
+[ECO "D85"]
+[Opening "Grünfeld Defense: Exchange Variation"]
+[StudyName "2025 OTB"]
+[ChapterName "Open Maia R7"]
+[ChapterURL "https://lichess.org/study/9jBCfbSD/SAbzfzIH"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.08.28"]
+[UTCTime "19:10:25"]
+
+1. d4 { [%eval 0.17] } 1... Nf6 { [%eval 0.19] } 2. c4 { [%eval 0.18] } 2... g6 { [%eval 0.28] } 3. Nc3 { [%eval 0.18] } 3... d5 { [%eval 0.28] } 4. cxd5 { [%eval 0.21] } 4... Nxd5 { [%eval 0.17] } 5. Bd2 { [%eval 0.13] } 5... Bg7 { [%eval 0.18] } 6. e4 { [%eval 0.24] } 6... Nb6 { [%eval 0.25] } 7. Be3 { [%eval 0.23] } (7. Be2 O-O) 7... O-O { [%eval 0.3] } 8. Be2 { [%eval 0.33] } 8... Nc6 { [%eval 0.38] } 9. d5 { [%eval 0.02] } 9... Ne5 { [%eval 0.0] } 10. Bd4 { [%eval 0.03] } 10... f6? { [%eval 1.4] } { Mistake. c5 was best. } (10... c5) 11. f4 { [%eval 1.3] } 11... Nf7 { [%eval 1.37] } 12. Nf3 { [%eval 0.91] } 12... e5 { [%eval 1.23] } 13. dxe6 { [%eval 1.44] } 13... Bxe6 { [%eval 1.35] } 14. O-O { [%eval 1.19] } 14... Nd7 { [%eval 1.55] } 15. Qc2 { [%eval 1.63] } 15... c5 { [%eval 2.02] } 16. Be3 { [%eval 1.83] } 16... a6?? { [%eval 4.95] } { Blunder. Qe7 was best. } (16... Qe7 17. Rad1 Rad8 18. Bf2 Nd6 19. Rfe1 Kh8 20. Bf1 Bh6 21. g3 Rfe8 22. Bg2) 17. Rfd1?? { [%eval 1.82] } { Blunder. f5 was best. } (17. f5 gxf5 18. exf5 Bxa2 19. Nxa2 Re8 20. Bf2 b5 21. Nc3 Qc7 22. Rfd1 c4) 17... Qe7?! { [%eval 2.52] } { Inaccuracy. Qe8 was best. } (17... Qe8 18. Rd2) 18. Bf2 { [%eval 2.46] } 18... Nd8 { [%eval 2.49] } 19. Nd5 { [%eval 2.66] } 19... Bxd5 { [%eval 2.66] } 20. Rxd5 { [%eval 3.05] } 20... Rc8?! { [%eval 4.17] } { Inaccuracy. Ne6 was best. } (20... Ne6 21. Qb3 b5 22. f5 c4 23. Qd1 Nec5 24. Rxc5 Nxc5 25. Qd5+ Qf7 26. Qxc5) 21. Rad1 { [%eval 4.19] } 21... Nb6 { [%eval 3.71] } 22. Rxc5 { [%eval 3.55] } 22... Ne6?! { [%eval 4.51] } { Inaccuracy. Nf7 was best. } (22... Rxc5 23. Bxc5) (22... Nf7 23. Rxc8 Nxc8 24. Bc4 Kh8 25. Bd5 Ncd6 26. Nd4 g5 27. f5 Ne5 28. Ne6) 23. Rxc8 { [%eval 4.49] } 23... Nxc8 { [%eval 4.39] } 24. Qb3?! { [%eval 2.95] } { Inaccuracy. f5 was best. } (24. f5 Nf4 25. Bc4+ (25. Bf1 Kh8 26. g3 gxf5 27. exf5 Rg8 28. gxf4 Bf8+ 29. Bg2 Qg7) 25... Kh8) 24... Kh8 { [%eval 2.81] } 25. g3 { [%eval 2.67] } 25... Nc5 { [%eval 2.56] } 26. Bxc5 { [%eval 2.62] } 26... Qxc5+ { [%eval 2.58] } 27. Kg2 { [%eval 2.55] } 27... b5 { [%eval 3.09] } 28. Nd4?! { [%eval 2.37] } { Inaccuracy. Qe6 was best. } (28. Qe6 Qe3 29. Kf1 a5 30. b3 a4 31. Rd7 Qc5 32. Kg2 axb3 33. axb3 Nb6) 28... Qe7?! { [%eval 3.23] } { Inaccuracy. Re8 was best. } (28... Re8 29. Qe6) 29. Ne6 { [%eval 2.75] } 29... Re8 { [%eval 3.1] } 30. f5 { [%eval 2.91] } 30... gxf5 { [%eval 3.6] } 31. exf5 { [%eval 3.49] } 31... Bh6 { [%eval 4.14] } 32. Qd5 { [%eval 4.06] } 32... Nb6 { [%eval 4.19] } 33. Qc6 { [%eval 4.17] } 33... Be3 { [%eval 4.26] } 34. Qe4 { [%eval 3.98] } 34... Bh6 { [%eval 4.17] } 35. Qd4 { [%eval 3.47] } 35... Nc8?! { [%eval 4.63] } { Inaccuracy. Na4 was best. } (35... Na4 36. Bf3 Rc8 37. Kh3 Nc5 38. Qc3 a5 39. a3 a4 40. Rd5 Bf8 41. Kg2) 36. Bf3 { [%eval 4.24] } 36... Qa7? { [%eval 9.46] } { Mistake. a5 was best. } (36... a5 37. Rd3 b4 38. a4 Rg8 39. b3 Bf8 40. Rd2 Nd6 41. Qc5 Nf7 42. Qxe7) 37. Qxf6+ { [%eval 8.7] } 37... Bg7? { [%eval #11] } { Checkmate is now unavoidable. Kg8 was best. } (37... Kg8 38. Rd8 Qe7 39. Rxe8+ Qxe8 40. Qxh6 Qe7 41. f6 Qf7 42. Ng5 Qd7 43. f7+) 38. Rd8 { [%eval #10] } 38... Nd6 { [%eval #14] } 39. Nxg7 { [%eval 6.98] } (39. Qxg7+) 39... Qxg7 { [%eval 6.99] } 40. Qxg7+ { [%eval 6.95] } 40... Kxg7 { [%eval 6.83] } 41. Rxd6 { [%eval 6.7] } 1-0
+
+
+[Event "new tournament description"]
+[Site "https://lichess.org/broadcast/maia-chess-festival-2025--u2000/round-8/5fqv0qGm/Nf7cK4r4"]
+[Date "2025.08.29"]
+[Round "8.5"]
+[White "Ferreira, Joao Alvaro"]
+[Black "Perchard, Matthew"]
+[Result "1/2-1/2"]
+[WhiteElo "1633"]
+[WhiteFideId "1975331"]
+[BlackElo "1770"]
+[BlackFideId "343404235"]
+[Variant "Standard"]
+[ECO "D35"]
+[Opening "Queen's Gambit Declined: Exchange Variation, Positional Variation"]
+[StudyName "2025 OTB"]
+[ChapterName "Open Maia R8"]
+[ChapterURL "https://lichess.org/study/9jBCfbSD/bXnTLA7w"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.08.29"]
+[UTCTime "18:53:37"]
+
+1. d4 { [%eval 0.17] [%clk 1:30:58] } 1... d5 { [%eval 0.2] [%clk 1:30:47] } 2. c4 { [%eval 0.18] [%clk 1:31:24] } 2... e6 { [%eval 0.17] [%clk 1:31:14] } 3. Nc3 { [%eval 0.18] [%clk 1:31:50] } 3... Nf6 { [%eval 0.24] [%clk 1:31:38] } 4. cxd5 { [%eval 0.22] [%clk 1:32:13] } 4... exd5 { [%eval 0.2] [%clk 1:32:02] } 5. Bg5 { [%eval 0.24] [%clk 1:32:40] } 5... Be7 { [%eval 0.25] [%clk 1:32:08] } 6. e3 { [%eval 0.23] [%clk 1:32:51] } 6... O-O { [%eval 0.22] [%clk 1:31:32] } 7. Qc2 { [%eval 0.24] [%clk 1:33:13] } 7... c6 { [%eval 0.23] [%clk 1:31:55] } 8. Nf3 { [%eval 0.26] [%clk 1:33:05] } 8... Nbd7 { [%eval 0.25] [%clk 1:30:21] } 9. Bd3 { [%eval 0.28] [%clk 1:33:24] } 9... Re8 { [%eval 0.36] [%clk 1:30:08] } 10. h3 { [%eval 0.25] [%clk 1:31:49] } 10... Nf8 { [%eval 0.46] [%clk 1:30:30] } 11. O-O { [%eval 0.45] [%clk 1:25:23] } 11... g6 { [%eval 0.54] [%clk 1:29:02] } 12. Ne5 { [%eval 0.51] [%clk 1:23:25] } 12... Ne6?! { [%eval 1.14] } { Inaccuracy. Nh5 was best. } { Inaccuracy. Nh5 was best. } { [%clk 1:28:05] } (12... Nh5 13. Bxe7) 13. Bh6 { [%eval 0.67] [%clk 1:21:36] } 13... Ng7 { [%eval 1.07] [%clk 1:28:20] } 14. g4 { [%eval 1.19] [%clk 1:19:58] } 14... Nd7 { [%eval 1.06] [%clk 1:11:41] } 15. f4 { [%eval 1.2] [%clk 1:16:16] } 15... Nxe5 { [%eval 1.12] [%clk 1:05:02] } 16. fxe5 { [%eval 0.79] [%clk 1:14:53] } 16... Bg5 { [%eval 0.93] [%clk 0:59:20] } 17. Bxg5 { [%eval 0.93] [%clk 1:12:48] } 17... Qxg5 { [%eval 0.78] [%clk 0:59:45] } 18. Qf2 { [%eval 0.87] [%clk 1:13:03] } 18... Rf8 { [%eval 0.94] [%clk 0:57:08] } 19. Qf4?! { [%eval 0.7] } { Inaccuracy. Kh2 was best. } { [%clk 1:06:11] } 19... Qxf4 { [%eval 0.56] [%clk 0:41:00] } 20. exf4 { [%eval 0.21] [%clk 1:00:12] } 20... f5 { [%eval 0.47] [%clk 0:31:53] } 21. Ne2?? { [%eval -2.61] } { Blunder. g5 was best. } { Blunder. g5 was best. } { [%clk 0:46:37] } (21. g5) (21. gxf5 gxf5 (21... Nxf5 22. Ne2)) 21... fxg4 { [%eval -2.49] [%clk 0:32:07] } 22. h4 { [%eval -2.43] [%clk 0:45:21] } 22... Bf5 { [%eval -2.5] [%clk 0:31:47] } 23. Bxf5?! { [%eval -3.28] } { Inaccuracy. Rfd1 was best. } { [%clk 0:44:05] } (23. Rfd1 Nh5 (23... Bxd3 24. Rxd3 Nf5 25. Kf2 Nxh4 26. Kg3 Nf5+ 27. Kxg4) 24. Rac1 a5 25. Rc3 Bxd3 26. Rdxd3 Nxf4 27. Nxf4 Rxf4 28. Rb3 Rf7) 23... Nxf5 { [%eval -3.3] [%clk 0:32:11] } 24. Kh2 { [%eval -3.98] [%clk 0:44:01] } 24... h5 { [%eval -4.0] [%clk 0:30:33] } 25. b4 { [%eval -3.8] [%clk 0:40:29] } 25... Kf7 { [%eval -3.81] [%clk 0:25:27] } 26. Rab1 { [%eval -3.85] [%clk 0:40:39] } 26... Nxh4 { [%eval -3.63] [%clk 0:24:33] } 27. Rfc1 { [%eval -4.19] [%clk 0:37:49] } 27... Nf3+ { [%eval -3.93] [%clk 0:22:59] } 28. Kg3 { [%eval -4.02] [%clk 0:38:41] } 28... Nd2 { [%eval -3.87] [%clk 0:22:52] } 29. Rb2 { [%eval -3.73] [%clk 0:38:21] } 29... Nc4 { [%eval -3.55] [%clk 0:23:48] } 30. Rbc2 { [%eval -3.91] [%clk 0:37:48] } 30... a5 { [%eval -3.24] [%clk 0:19:13] } 31. b5 { [%eval -3.39] [%clk 0:35:43] } 31... Na3 { [%eval -2.67] [%clk 0:18:49] } 32. Rb2 { [%eval -3.11] [%clk 0:35:28] } 32... Nxb5?? { [%eval 0.0] } { Blunder. Nc4 was best. } { Blunder. Nc4 was best. } { [%clk 0:17:54] } (32... Nc4 33. Rbc2 Kg7 34. Rxc4 dxc4 35. Rxc4 Rac8 36. Kh4 Kh6 37. Rc5 cxb5 38. Rxc8) 33. a4 { [%eval 0.08] [%clk 0:29:50] } 33... Na7 { [%eval 0.14] [%clk 0:17:36] } 34. Rxb7+ { [%eval 0.51] [%clk 0:30:18] } 34... Ke6 { [%eval 0.53] [%clk 0:17:59] } 35. f5+?! { [%eval -0.42] } { Inaccuracy. Rf1 was best. } { [%clk 0:27:26] } (35. Rf1 Kf5 36. Kh4 Ke4 37. Kg5 Kd3 38. Rb2 Ke3 39. Nc1 Kxd4 40. Rd1+ Kc5 41. Nb3+ Kb6 42. Nd4+ Kc7) 35... Rxf5?? { [%eval 2.7] } { Blunder. Kxf5 was best. } { Blunder. Kxf5 was best. } { [%clk 0:15:08] } (35... Kxf5 36. Rxa7 h4+ 37. Kg2 h3+ 38. Kg1 Rxa7 39. Rf1+ Ke4 40. Rxf8 Ke3 41. Nf4) (35... gxf5 36. Nf4#) 36. Nf4+ { [%eval 2.76] } { 1/2-1/2  wins. } { [%clk 0:27:09] } 36... Rxf4 37. Kxf4 1/2-1/2
+
+
+[Event "2025 OTB: Open Maia R9"]
+[Date "2025.08.30"]
+[White "Alessandro Volpi"]
+[Black "João Álvaro Ferreira"]
+[Result "0-1"]
+[WhiteElo "1760"]
+[BlackElo "1633"]
+[Variant "Standard"]
+[ECO "B22"]
+[Opening "Sicilian Defense: Alapin Variation, Smith-Morra Declined"]
+[StudyName "2025 OTB"]
+[ChapterName "Open Maia R9"]
+[ChapterURL "https://lichess.org/study/9jBCfbSD/5Y3jzMWo"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.08.30"]
+[UTCTime "13:03:05"]
+
+1. e4 { [%eval 0.18] } 1... c5 { [%eval 0.24] } 2. c3 { [%eval 0.0] } 2... Nf6 { [%eval 0.02] } 3. e5 { [%eval 0.07] } 3... Nd5 { [%eval 0.1] } 4. d4 { [%eval 0.0] } 4... cxd4 { [%eval 0.0] } 5. cxd4 { [%eval 0.0] } 5... e6 { [%eval 0.19] } 6. Nf3 { [%eval 0.07] } 6... d6 { [%eval 0.16] } 7. Be2 { [%eval 0.09] } 7... Nc6 { [%eval 0.19] } 8. exd6 { [%eval -0.05] } 8... Bxd6 { [%eval -0.11] } 9. Nc3 { [%eval -0.17] } 9... Nxc3 { [%eval 0.11] } (9... Nce7 10. Bg5) 10. bxc3 { [%eval 0.08] } 10... Qc7 { [%eval 0.23] } 11. O-O { [%eval 0.23] } 11... O-O { [%eval 0.22] } 12. Be3 { [%eval -0.07] } 12... b6 { [%eval -0.1] } 13. Qd2 { [%eval -0.55] } 13... Ne7 { [%eval -0.49] } 14. c4 { [%eval -0.52] } 14... Rd8 { [%eval -0.4] } (14... Nf5 15. h3 Bb7) 15. h3 { [%eval -0.53] } 15... Nf5 { [%eval -0.46] } 16. Bd3 { [%eval -0.55] } 16... Bb7 { [%eval -0.67] } (16... Nxe3 17. fxe3 Bb7 (17... g6 18. Ng5)) 17. Qe2 { [%eval -0.7] } (17. Bxf5 exf5 (17... Bxf3 18. Bxh7+ Kxh7 19. gxf3) 18. Qd3 Be4 19. Qe2 Rac8 20. c5 Bf8 21. cxb6 Qxb6 22. d5 Qb7 23. Rfc1) 17... Ne7?! { [%eval -0.01] } { Inaccuracy. Rac8 was best. } (17... Rac8 18. d5) 18. Ng5 { [%eval -0.52] } 18... h6 { [%eval -0.51] } 19. Qh5? { [%eval -2.24] } { Mistake. Nf3 was best. } (19. Nf3 Rac8) 19... Nf5 { [%eval -2.25] } (19... hxg5 20. Qh7+ Kf8 21. Qh8+ Ng8 22. Bh7 Ke7 23. Bxg5+ (23. Qxg7 Bf4 24. Bxg8 (24. Bg6 Rf8)) 23... Kd7 24. Qxg7 (24. Bxd8)) 20. Bxf5 { [%eval -2.26] } (20. Nf3 g6 21. Qg4 h5 22. Qg5 Be7 23. Qf4 Qxf4 (23... Bd6 24. Qg5 Be7 25. Qf4) 24. Bxf4 Bxf3 25. gxf3 Nxd4 26. Be2 (26. Be4 Ne2+ 27. Kh2)) 20... exf5 { [%eval -2.34] } 21. Nf3 { [%eval -2.38] } 21... f4 { [%eval -2.3] } 22. Bd2 { [%eval -2.6] } 22... Qxc4 { [%eval -2.44] } 23. Rfc1 { [%eval -2.8] } 23... Qd3 { [%eval -2.75] } 24. Bc3 { [%eval -3.17] } 24... Rac8 { [%eval -3.13] } 25. Bb2?! { [%eval -4.55] } { Inaccuracy. Ne1 was best. } (25. Ne1 Qe4 26. a4 Rc7 27. Bb2 Rxc1 28. Rxc1 Rc8 29. Qd1 Rxc1 30. Qxc1 Qe8) 25... Qe2 { [%eval -4.5] } 26. Bc3 { [%eval -4.41] } 26... Bxf3 { [%eval -4.47] } 27. gxf3 { [%eval -5.5] } 27... Re8? { [%eval -3.44] } { Mistake. Ba3 was best. } (27... Ba3 28. Re1 Qc2 29. Kh1 Qxc3 30. Rg1 Rc6 31. Rad1 Bf8 32. d5 Rg6 33. Rxg6) 28. Qf5 { [%eval -3.94] } 28... Qxf3 { [%eval -3.96] } 29. Bd2 { [%eval -3.98] } 29... Rcd8 { [%eval -3.8] } 30. Re1?! { [%eval -5.08] } { Inaccuracy. Rc3 was best. } (30. Rc3 Qe4 31. Qxe4 Rxe4 32. Rd3 Rc8 33. Bc3 Rc4 34. Kg2 f5 35. Rb1 g6) 30... Re2 { [%eval -4.82] } 31. Rxe2 { [%eval -5.09] } 31... Qxe2 { [%eval -4.89] } 32. Bc3 { [%eval -4.81] } 32... Qf3 { [%eval -4.8] } 33. Rc1 { [%eval -5.05] } 33... Re8 { [%eval -4.71] } 34. Qd7? { [%eval -8.7] } { Mistake. Be1 was best. } (34. Be1 Qe2 35. Kg2 Re6 36. Rc8+ Bf8 37. Bb4 Rg6+ 38. Qxg6 fxg6 39. Bd6 Kh7) 34... Re6 { [%eval -8.8] } 35. Bd2? { [%eval #-8] } { Checkmate is now unavoidable. Bb4 was best. } (35. Bb4 Rg6+ 36. Qg4 Rxg4+ 37. hxg4 Qxg4+ 38. Kf1 Qh3+ 39. Ke2 Bxb4 40. Rc7 Qg4+) 35... Rg6+ { [%eval #-7] } 36. Kf1 { [%eval #-2] } 36... Qd3+ { [%eval #-1] } 37. Ke1 { [%eval #-1] } 0-1
+
+
+[Event "Nacional de Amadores"]
+[Date "2025.09.03"]
+[Round "1"]
+[White "Vítor Morais"]
+[Black "João Álvaro Ferreira"]
+[Result "1-0"]
+[WhiteElo "1835"]
+[WhiteTitle "NM"]
+[BlackElo "1635"]
+[Variant "Standard"]
+[ECO "E17"]
+[Opening "Queen's Indian Defense: Classical Variation"]
+[StudyName "2025 OTB"]
+[ChapterName "Nacional Amadores R1"]
+[ChapterURL "https://lichess.org/study/9jBCfbSD/YleZbEvC"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.09.03"]
+[UTCTime "21:48:50"]
+
+1. Nf3 { [%eval 0.1] } 1... Nf6 { [%eval 0.18] } 2. c4 { [%eval 0.12] } 2... e6 { [%eval 0.27] } 3. g3 { [%eval 0.1] } 3... b6 { [%eval 0.3] } 4. Bg2 { [%eval 0.29] } 4... Bb7 { [%eval 0.28] } 5. O-O { [%eval 0.23] } 5... Be7 { [%eval 0.23] } 6. d4 { [%eval 0.17] } 6... c5 { [%eval 0.66] } 7. Nc3 { [%eval 0.2] } 7... cxd4 { [%eval 0.31] } 8. Qxd4 { [%eval 0.29] } 8... O-O { [%eval 0.38] } 9. Qd3 { [%eval 0.0] } 9... Na6 { [%eval 0.0] } 10. Rd1 { [%eval -0.08] } 10... h6 { [%eval 0.15] } 11. b3 { [%eval -0.03] } 11... Qc8 { [%eval 0.15] } (11... Nc5 12. Qd4) 12. Bb2 { [%eval 0.12] } 12... Nc5 { [%eval 0.09] } 13. Qd4 { [%eval 0.07] } 13... Nce4 { [%eval 0.15] } 14. Nxe4 { [%eval 0.07] } 14... Bxe4 { [%eval 0.12] } 15. Rac1 { [%eval 0.08] } (15. Nh4 Bxg2 16. Nxg2) 15... Qb7 { [%eval 0.05] } 16. Nh4 { [%eval 0.05] } 16... Bxg2 { [%eval 0.08] } 17. Nxg2 { [%eval 0.08] } 17... Rfd8 { [%eval 0.12] } 18. Ne3 { [%eval 0.09] } 18... Bc5 { [%eval 0.08] } 19. Qf4 { [%eval 0.06] } 19... Qe4 { [%eval 0.23] } 20. Bxf6 { [%eval 0.12] } 20... Qxf4 { [%eval 0.15] } 21. gxf4 { [%eval 0.17] } 21... gxf6 { [%eval 0.16] } 22. Rd3 { [%eval 0.11] } 22... Be7? { [%eval 1.29] } { Mistake. Kf8 was best. } (22... Bxe3 23. Rxe3 (23. fxe3 Kf8 24. Rcd1 Ke7) 23... d5 (23... Kg7 24. Rd1 Kf8 25. Rh3 Kg7 26. Rhd3) (23... f5 24. Rd1 Kf8 25. Rh3 Ke7 26. Rxh6 Rg8+ 27. Kh1 Rg4 28. e3 Rag8 29. Rh3 Rg2 30. Rf3 a5) 24. cxd5 Rxd5 25. Rc7 a5 26. Rb7 b5) (22... Kf8 23. Rcd1 Bxe3 24. fxe3 Ke7 25. e4 Rac8 26. a4 Rc5 27. Kg2 d6 28. h3) (22... f5 23. Nc2 Be7) (22... Rac8 23. Rcd1 Rc7) 23. Rcd1 { [%eval 1.4] } 23... d6 { [%eval 1.45] } 24. f5 { [%eval 1.41] } 24... Rac8 { [%eval 1.52] } 25. Kg2 { [%eval 1.27] } 25... Kh7 { [%eval 1.8] } (25... Rc5 26. b4 Re5) 26. f4 { [%eval 1.75] } 26... a5 { [%eval 2.25] } 27. Kf3 { [%eval 2.27] } 27... Rc5 { [%eval 2.39] } 28. fxe6 { [%eval 2.44] } 28... fxe6 { [%eval 2.37] } 29. f5 { [%eval 2.3] } 29... Re5 { [%eval 2.45] } 30. fxe6 { [%eval 2.47] } 30... Rxe6 { [%eval 2.48] } 31. Nd5 { [%eval 2.72] } 31... Rg8 { [%eval 3.11] } 32. Nxe7 { [%eval 2.99] } 32... Rxe7 { [%eval 2.93] } 33. Rxd6 { [%eval 2.73] } 33... Rb8 { [%eval 3.4] } 1-0
+
+
+[Event "2025 OTB: Nacional Amadores R2"]
+[Date "2025.09.04"]
+[Round "2"]
+[White "João Álvaro Ferreira"]
+[Black "Guilherme Sousa"]
+[Result "0-1"]
+[WhiteElo "1635"]
+[BlackElo "1680"]
+[Variant "Standard"]
+[ECO "E10"]
+[Opening "Indian Defense: Dzindzi-Indian Defense"]
+[StudyName "2025 OTB"]
+[ChapterName "Nacional Amadores R2"]
+[ChapterURL "https://lichess.org/study/9jBCfbSD/CHnD9wRR"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.09.04"]
+[UTCTime "21:53:16"]
+
+1. d4 { [%eval 0.17] } 1... Nf6 { [%eval 0.19] } 2. c4 { [%eval 0.18] } (2. Nf3) 2... e6 { [%eval 0.14] } 3. Nf3 { [%eval 0.11] } 3... a6 { [%eval 0.3] } 4. Bg5 { [%eval 0.11] } (4. Nc3 Bb4) 4... Be7 { [%eval 0.21] } 5. e3 { [%eval 0.21] } 5... d5 { [%eval 0.32] } 6. Qc2 { [%eval 0.2] } 6... O-O { [%eval 0.35] } (6... h6 7. Bh4 O-O 8. Bd3 Nbd7 9. cxd5 exd5 10. O-O (10. Nc3 c5 11. O-O c4 (11... Re8 12. Rfd1 cxd4 13. Nxd4 Nc5 14. Nf5 (14. Bf5 Bxf5) 14... Nxd3 15. Nxe7+ Qxe7 16. Nxd5 Qe4 17. Bxf6 Qxd5 18. Rxd3 Qh5 19. Bd4 (19. Rd8 Bf5 (19... Rxd8) 20. Rxa8 (20. Rxe8+ Rxe8 21. Qa4 b5 22. Qh4 Qg6 23. Bc3) 20... Bxc2 (20... Rxa8 21. e4 Qg6 22. exf5 Qxf6) 21. Rxe8+ Kh7 22. Bc3) 19... Bf5 20. Qd1 Qg6 21. Rc3 (21. Rd2) 21... Rac8 22. Rac1 Rxc3 23. Rxc3 Bh3) 12. Bf5 b5) 10... c5) 7. cxd5 { [%eval 0.32] } 7... exd5 { [%eval 0.34] } 8. Bd3 { [%eval 0.3] } 8... Nbd7 { [%eval 0.41] } 9. Nc3 { [%eval 0.33] } 9... c5 { [%eval 0.36] } (9... h6 10. Bh4 c5 (10... Re8) 11. O-O Re8 12. Rfd1 (12. dxc5 Nxc5 13. Rfd1 Nxd3 14. Qxd3 Be6 15. Rac1 (15. Bxf6 Bxf6 16. Nxd5 Bxd5 17. Qxd5 Qxd5 18. Rxd5 Bxb2 19. Rb1 Reb8 (19... Rec8 20. Rdd1 Bf6 21. Rxb7 Rc2 22. a4)) 15... Rc8 16. Nd4 (16. Bxf6)) 12... cxd4 13. Nxd4 Nc5 14. Bf5 (14. Nf5 Nxd3 15. Nxe7+ Qxe7 16. Nxd5 Qe4 17. Nxf6+ (17. Bxf6 Qxd5 18. Rxd3 Qh5 19. Bd4 (19. Rd8 Bf5 (19... Rxd8 20. Bxd8 Bf5 21. Qc7 Qe2 22. Qb6 Rc8) 20. Rxe8+ (20. Rxa8) 20... Rxe8 21. Qa4 b5 22. Qxa6 (22. Qh4 Qg6) 22... gxf6 23. Qxb5) 19... Bf5 20. Qd1) 17... gxf6 18. Qxd3) 14... g5 (14... Be6) (14... Bxf5 15. Nxf5) 15. Bg3 Bxf5 (15... Bd7) (15... Be6) 16. Nxf5 Bf8 17. Rac1) 10. O-O { [%eval -0.06] } 10... Re8?? { [%eval 1.86] } { Blunder. c4 was best. } (10... h6 11. Bh4) (10... c4 11. Bf5 h6 12. Bxd7 Qxd7 13. Bxf6 Bxf6 14. e4 dxe4 15. Nxe4 Qd5 16. Nxf6+) 11. Rfd1?? { [%eval -0.22] } { Blunder. dxc5 was best. } (11. dxc5) 11... cxd4? { [%eval 0.98] } { Mistake. c4 was best. } (11... c4 12. Bf5 h6 13. Bh4 b5 14. Ne5 Nb6 15. a3 Bxf5 16. Qxf5 Qd6 17. g4) 12. Nxd4 { [%eval 1.06] } (12. exd4) 12... Nc5? { [%eval 2.37] } { Mistake. h6 was best. } (12... h6 13. Bh4) 13. Nf5? { [%eval 1.08] } { Mistake. Bxf6 was best. } (13. Bxf6 Bxf6 14. Bxh7+ Kh8 15. Nf3 Bxc3 16. Qxc3 b6 17. Bd3 Bg4 18. Be2 Bf5) 13... Nxd3 { [%eval 1.36] } 14. Nxe7+ { [%eval 1.25] } 14... Qxe7 { [%eval 1.49] } 15. Nxd5?! { [%eval 0.44] } { Inaccuracy. Qxd3 was best. } (15. Qxd3 Be6 16. Qd4 Rac8 (16... b5 17. Bxf6 Qxf6 18. Qxf6 gxf6 19. Kf1 Rec8 20. Ke1 Rc5) 17. Bxf6 Qxf6) 15... Qe4 { [%eval 0.43] } 16. Bxf6 { [%eval 0.5] } 16... Qxd5 { [%eval 0.71] } 17. Rxd3 { [%eval 0.63] } 17... Qh5 { [%eval 0.61] } 18. Rd8 { [%eval 0.26] } (18. Bd4 Bf5) (18. Bc3 Bf5 19. Qd1) 18... Bf5 { [%eval 0.29] } 19. Rxe8+ { [%eval 0.15] } (19. Rxa8 Bxc2 (19... Rxa8 20. e4) 20. Rxe8#) 19... Rxe8 { [%eval 0.17] } 20. Qa4 { [%eval 0.13] } 20... b5 { [%eval 0.21] } 21. Qxa6?? { [%eval -2.04] } { Blunder. Qh4 was best. } (21. Qh4 Qxh4 22. Bxh4 Rc8 23. Rd1 f6) 21... gxf6 { [%eval -2.18] } 22. Qxb5 { [%eval -2.11] } 22... Re5 { [%eval -2.18] } 23. Qb8+?! { [%eval -2.98] } { Inaccuracy. Qf1 was best. } (23. Qf1 Be6 24. Kh1 Qh4 25. a4 Bd5 26. f3 Rxe3 27. a5 Bc4 28. Qg1 Re6) 23... Kg7 { [%eval -3.19] } 24. h3?! { [%eval -4.71] } { Inaccuracy. Qd6 was best. } (24. Qd6 Qg6 25. Kh1 Be6 26. Qd2 Rh5 27. Qe1 Rg5 28. Qf1 Qe4 29. b3 Bd5) 24... Bxh3 { [%eval -4.47] } 0-1
+
+
+[Event "2025 OTB: Nacional Amadores R3"]
+[Date "2025.09.05"]
+[White "Rodrigo Fernandes"]
+[Black "João Álvaro Ferreira"]
+[Result "1-0"]
+[Variant "Standard"]
+[ECO "B48"]
+[Opening "Sicilian Defense: Taimanov Variation, Bastrikov Variation, English Attack"]
+[StudyName "2025 OTB"]
+[ChapterName "Nacional Amadores R3"]
+[ChapterURL "https://lichess.org/study/9jBCfbSD/zG2nXlRm"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.09.05"]
+[UTCTime "23:07:30"]
+
+1. e4 { [%eval 0.18] } 1... c5 { [%eval 0.24] } 2. Nf3 { [%eval 0.2] } 2... e6 { [%eval 0.28] } 3. d4 { [%eval 0.4] } 3... cxd4 { [%eval 0.29] } 4. Nxd4 { [%eval 0.35] } 4... Nc6 { [%eval 0.28] } 5. Nc3 { [%eval 0.26] } 5... Qc7 { [%eval 0.35] } 6. Be3 { [%eval 0.31] } 6... a6 { [%eval 0.34] } 7. Qd2 { [%eval 0.16] } 7... Nf6 { [%eval 0.14] } 8. O-O-O { [%eval 0.42] } 8... Bb4 { [%eval 0.61] } 9. f3 { [%eval 0.52] } 9... d5 { [%eval 0.68] } (9... O-O 10. g4 d5) 10. exd5?! { [%eval 0.0] } { Inaccuracy. a3 was best. } (10. a3 Ba5 11. Nb3 Bxc3 12. Qxc3 O-O 13. Bg5 dxe4 14. Bxf6 Qf4+ 15. Rd2 Qxf6) 10... Nxd5 { [%eval -0.03] } 11. Bc4? { [%eval -1.22] } { Mistake. Nxc6 was best. } (11. Nxc6 Qxc6) 11... Nxd4?! { [%eval -0.26] } { Inaccuracy. Nxc3 was best. } (11... Nxc3 12. bxc3 Ba3+ 13. Kb1 Ne7 14. Bb3) 12. Bxd5 { [%eval -0.24] } 12... Nb5 { [%eval -0.17] } 13. Bc4? { [%eval -1.71] } { Mistake. Bf4 was best. } (13. Bf4 Qd7 14. Qe1 Nxc3 15. bxc3 Ba3+ 16. Kb1 O-O 17. Bb3 Qc6 18. Qg3 a5) 13... O-O? { [%eval -0.45] } { Mistake. Nxc3 was best. } (13... Nxc3 14. bxc3 Ba3+ 15. Kb1 O-O 16. Bd3 e5 17. c4 Be6 18. Qc3 Be7 19. c5) 14. Bxb5 { [%eval -0.42] } 14... axb5 { [%eval -0.44] } 15. a3 { [%eval -0.41] } 15... Bxc3 { [%eval -0.41] } 16. Qxc3 { [%eval -0.31] } 16... Qxc3 { [%eval -0.4] } 17. bxc3 { [%eval -0.33] } 17... Rxa3 { [%eval -0.27] } 18. Bc5 { [%eval -0.4] } 18... Ra1+ { [%eval -0.32] } 19. Kb2 { [%eval -0.32] } 19... Rxd1 { [%eval -0.37] } 20. Rxd1 { [%eval -0.45] } 20... Re8 { [%eval -0.45] } 21. Kb3 { [%eval -0.46] } 21... e5 { [%eval -0.48] } 22. Kb4 { [%eval -0.45] } 22... Bf5 { [%eval -0.33] } 23. Rd2 { [%eval -0.52] } 23... e4 { [%eval -0.01] } 24. fxe4 { [%eval -0.43] } 24... Bxe4 { [%eval -0.43] } 25. Kxb5 { [%eval -0.48] } 25... f5 { [%eval -0.28] } 26. g3 { [%eval -0.36] } 26... Bc6+ { [%eval -0.4] } 27. Kb4 { [%eval -0.44] } 27... Re4+ { [%eval -0.18] } 28. Kb3 { [%eval -0.32] } 28... Kf7 { [%eval -0.28] } 29. Rd6 { [%eval -0.32] } (29. h4) 29... Re2 { [%eval -0.26] } 30. h4 { [%eval -0.32] } 30... Rg2 { [%eval -0.39] } 31. Rd3 { [%eval -0.47] } 31... Be4 { [%eval 0.0] } 32. Rd7+ { [%eval 0.0] } 32... Kg6 { [%eval 0.08] } 33. Bd4 { [%eval 0.03] } 33... Bxc2+ { [%eval 0.0] } (33... f4 34. Rxg7+ Kh5 (34... Kh6 35. Rg5 Bxc2+ 36. Kb4 Bg6)) 34. Kc4 { [%eval 0.0] } 34... Be4?? { [%eval #5] } { Checkmate is now unavoidable. f4 was best. } (34... f4 35. Rxg7+ Kf5 (35... Kh5) 36. Rg5+ (36. Rf7+ Ke4 (36... Kg4 37. Rxf4+ Kxg3)) 36... Ke4 37. gxf4 Rxg5 38. fxg5 Kf5 39. Kc5 Kg4 40. Bf2) 35. Rxg7+ { [%eval #4] } 35... Kh6 { [%eval #4] } 36. Rg5 { [%eval #3] } 1-0
+
+
+[Event "2025 OTB: Montemor R1"]
+[Date "2025.09.20"]
+[Round "1"]
+[White "João Álvaro Ferreira"]
+[Black "Liam Gomes"]
+[Result "1-0"]
+[WhiteElo "1789"]
+[BlackElo "0"]
+[Variant "Standard"]
+[ECO "D07"]
+[Opening "Queen's Gambit Declined: Chigorin Defense"]
+[StudyName "2025 OTB"]
+[ChapterName "Montemor R1"]
+[ChapterURL "https://lichess.org/study/9jBCfbSD/ApdK8J9v"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.09.20"]
+[UTCTime "09:57:50"]
+
+1. d4 { [%eval 0.17] } 1... d5 { [%eval 0.18] } 2. c4 { [%eval 0.18] } 2... Nc6 { [%eval 0.42] } 3. cxd5 { [%eval 0.53] } (3. Nc3 dxc4 4. d5 Na5 5. Qa4+ c6 6. b4 cxb3 7. axb3) 3... Nxd4?? { [%eval 4.09] } { Blunder. Qxd5 was best. } (3... Qxd5 4. e3 e5 5. Nc3 Bb4 6. a3 Bxc3+ 7. bxc3 Nf6 8. c4) 4. Qxd4 { [%eval 4.06] } 4... Bf5 { [%eval 4.84] } 5. Nc3 { [%eval 4.82] } 5... g6?! { [%eval 7.1] } { Inaccuracy. Bd7 was best. } (5... Bd7 6. e4 e6 7. Nf3 Nf6 8. dxe6 Bxe6 9. Be2 c6 10. O-O) 6. Qxh8 { [%eval 6.86] } 6... Bh6 { [%eval 9.71] } 7. Qxg8+ { [%eval 9.64] } 7... Kd7 { [%eval 10.3] } 8. Qxf7 { [%eval 9.21] } 8... Bxc1 { [%eval 9.21] } 9. Rxc1 { [%eval 8.96] } 9... a5 { [%eval 10.32] } 10. e4 { [%eval 10.17] } 10... Bxe4 { [%eval 12.25] } 11. Qe6+ { [%eval 12.0] } 11... Ke8 { [%eval 12.02] } 12. Nxe4 { [%eval 10.91] } 12... c6?! { [%eval #2] } { Checkmate is now unavoidable. Kf8 was best. } (12... Kf8 13. Qe5 Kg8 14. f3 b5 15. Bxb5 Rb8 16. Bc4 Rb4 17. Qc3 e6 18. dxe6) 13. Nf6+ { [%eval #1] } 13... Kf8 { [%eval #1] } 14. Qg8# 1-0
+
+
+[Event "Montemor-o-Velho"]
+[Date "2025.09.20"]
+[Round "2"]
+[White "Edivaldo Gama"]
+[Black "João Álvaro Ferreira"]
+[Result "1-0"]
+[WhiteElo "2122"]
+[BlackElo "1789"]
+[Variant "Standard"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[ECO "A46"]
+[Opening "Indian Defense: Knights Variation"]
+[StudyName "2025 OTB"]
+[ChapterName "Montemor R2"]
+[ChapterURL "https://lichess.org/study/9jBCfbSD/MGwTPzhA"]
+
+1. d4 { [%eval 0.17] } 1... Nf6 { [%eval 0.19] } 2. Nf3 { [%eval 0.11] } 2... e6 { [%eval 0.14] } 3. g3 { [%eval 0.0] } 3... c5 { [%eval 0.1] } 4. Bg2 { [%eval 0.15] } 4... Nc6 { [%eval 0.33] } 5. O-O { [%eval 0.29] } 5... cxd4 { [%eval 0.28] } 6. Nxd4 { [%eval 0.24] } 6... Be7 { [%eval 0.48] } 7. c4 { [%eval 0.53] } 7... O-O { [%eval 0.53] } 8. Nc3 { [%eval 0.55] } 8... a6 { [%eval 0.67] } 9. e3 { [%eval 0.33] } 9... Qc7 { [%eval 0.33] } 10. b3 { [%eval 0.29] } 10... Rb8 { [%eval 0.29] } 11. Bb2 { [%eval 0.3] } 11... b6 { [%eval 0.69] } 12. Qe2 { [%eval 0.43] } 12... Bb7 { [%eval 0.4] } 13. Rfd1?! { [%eval -0.08] } { Inaccuracy. Nc2 was best. } (13. Nc2) 13... Rfd8?! { [%eval 0.65] } { Inaccuracy. Nxd4 was best. } { Inaccuracy. Nxd4 was best. } (13... Nxd4 14. Rxd4) 14. Rac1?! { [%eval 0.14] } { Inaccuracy. Nc2 was best. } (14. Nc2) 14... Rbc8 { [%eval 0.57] } (14... Nxd4 15. Rxd4 Bxg2 16. Kxg2 Bc5 17. Rd2 Qb7+ 18. Kg1 Ne4 (18... Bb4 19. a3 Bxc3 20. Bxc3 Ne4 21. Rd3 Ng5) 19. Nxe4 Qxe4 20. Rcd1 a5) 15. Rd2 { [%eval 0.2] } 15... Qb8 { [%eval 0.5] } 16. a3 { [%eval 0.06] } (16. Rcd1 Nxd4 17. Rxd4 Bxg2 18. Kxg2 Bc5 19. R4d2 Qb7+ 20. Kg1 Ne4 21. Nxe4 Qxe4 22. Rxd7 Rxd7 23. Rxd7 Qb1+ 24. Kg2) 16... Qc7 { [%eval 0.2] } 17. Rcd1 { [%eval 0.13] } 17... Nxd4 { [%eval 0.13] } 18. Rxd4 { [%eval 0.09] } 18... Bxg2 { [%eval 0.15] } 19. Kxg2 { [%eval 0.19] } 19... Qb7+ { [%eval 0.19] } 20. Kg1 { [%eval 0.13] } 20... Bc5 { [%eval 0.24] } 21. R4d2 { [%eval 0.24] } 21... Ne4?? { [%eval 3.45] } { Blunder. Be7 was best. } (21... Be7 22. Rd4 d5) 22. Nxe4? { [%eval 1.6] } { Mistake. Qf3 was best. } (22. Qf3 Nd6 23. Qxb7 Nxb7 24. Rxd7 Rb8 25. Na4 Bd6 26. Nxb6 Rxd7 27. Nxd7 Rd8) 22... Qxe4 { [%eval 1.45] } 23. Rxd7 { [%eval 1.65] } 23... Rxd7 { [%eval 1.6] } 24. Rxd7 { [%eval 1.63] } 24... Qb1+ { [%eval 2.13] } 25. Rd1?! { [%eval 1.48] } { Inaccuracy. Kg2 was best. } (25. Kg2 a5 26. Rd2 e5 27. Qg4 Re8 28. h4 f6 29. h5 g6 30. Qf3 Kf7) 25... Qa2 { [%eval 1.4] } 26. b4 { [%eval 1.24] } 26... Bf8 { [%eval 0.98] } 27. Rc1 { [%eval 0.54] } 27... a5 { [%eval 0.53] } 28. Qc2 { [%eval 0.56] } 28... axb4?! { [%eval 1.33] } { Inaccuracy. f6 was best. } (28... f6) 29. axb4 { [%eval 1.35] } 29... h6 { [%eval 1.56] } 30. Bd4 { [%eval 1.15] } 30... Qxc2 { [%eval 1.13] } 31. Rxc2 { [%eval 1.28] } 31... Bxb4 { [%eval 1.2] } 32. Bxb6 { [%eval 1.09] } 32... Bc5?! { [%eval 1.72] } { Inaccuracy. Kf8 was best. } (32... Kf8) 33. Bxc5 { [%eval 1.76] } 33... Rxc5 { [%eval 1.61] } 34. Kf1 { [%eval 1.87] } 34... Kf8 { [%eval 1.81] } 35. Ke2 { [%eval 1.77] } 35... Ke7 { [%eval 1.89] } 36. Kd3 { [%eval 1.79] } 36... e5?! { [%eval 2.72] } { Inaccuracy. Ra5 was best. } (36... Ra5 37. Rb2 Ra7 38. f4 Kd6 39. Rb8 e5 40. Rd8+ Ke7 41. Rd5 exf4 42. exf4) 37. Kc3 { [%eval 2.78] } 37... Kd7?! { [%eval 3.91] } { Inaccuracy. Rc8 was best. } (37... Rc8 38. h4 Kd6 39. Rd2+ Ke6 40. Ra2 h5 41. Ra6+ Kd7 42. Ra5 Re8 43. Ra7+) 38. Rd2+ { [%eval 3.87] } 38... Kc7 { [%eval 4.33] } 39. Rd5 { [%eval 4.22] } 39... Kc6 { [%eval 4.97] } 40. e4 { [%eval 4.81] } 40... g6?! { [%eval 6.56] } { Inaccuracy. Rxd5 was best. } (40... Rxd5 41. exd5+ Kc5 42. g4 h5 43. gxh5 f5 44. h4 Kd6 45. Kd3 Kc5 46. Kd2) 41. Kb4 { [%eval 6.52] } 41... Rxd5 { [%eval 6.17] } 42. exd5+ { [%eval 6.83] } 42... Kd6 { [%eval 7.0] } 43. Kb5 { [%eval 6.32] } 43... f5 { [%eval 7.33] } 44. c5+ { [%eval 6.89] } { 1-0 White wins. } 1-0
+
+
+[Event "2025 OTB: Montemor R3"]
+[Date "2025.09.20"]
+[Round "3"]
+[White "João Álvaro Ferreira"]
+[Black "Oleksandr Poliuk"]
+[Result "1-0"]
+[WhiteElo "1789"]
+[BlackElo "1527"]
+[Variant "Standard"]
+[ECO "A41"]
+[Opening "Rat Defense: English Rat"]
+[StudyName "2025 OTB"]
+[ChapterName "Montemor R3"]
+[ChapterURL "https://lichess.org/study/9jBCfbSD/bDTpKGLq"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.09.20"]
+[UTCTime "11:46:47"]
+
+1. d4 { [%eval 0.17] } 1... d6 { [%eval 0.48] } (1... e6 2. c4) 2. c4 { [%eval 0.21] } 2... e5 { [%eval 0.33] } 3. d5 { [%eval 0.24] } 3... c6 { [%eval 0.64] } 4. Nc3 { [%eval 0.59] } 4... cxd5 { [%eval 0.79] } 5. cxd5 { [%eval 0.69] } 5... Nf6 { [%eval 0.73] } 6. e4 { [%eval 0.66] } 6... h6 { [%eval 0.89] } 7. f4 { [%eval 0.43] } 7... Na6 { [%eval 0.98] } 8. Bxa6 { [%eval 0.92] } 8... bxa6 { [%eval 0.81] } 9. Nf3 { [%eval 0.81] } 9... Qb6 { [%eval 0.92] } 10. h3 { [%eval 0.46] } 10... Nh5?! { [%eval 1.3] } { Inaccuracy. a5 was best. } (10... a5 11. Qb3) (10... Bd7 11. Qe2 Bb5 12. Nxb5 axb5 13. Be3 Qa5+ 14. Bd2 Qb6 15. fxe5 dxe5 16. Nxe5 Bc5 17. O-O-O O-O 18. Ng4 Nxg4 19. hxg4 (19. Qxg4 Bd4 20. Bb4 Rfc8+ 21. Kb1 Rc4 22. Bd2 Qc5 23. Rc1 Bxb2 24. Kxb2 Qd4+)) 11. Nxe5 { [%eval 1.27] } (11. fxe5 Ng3 12. Rh2 dxe5) 11... Nxf4?? { [%eval 5.4] } { Blunder. dxe5 was best. } (11... dxe5) (11... Ng3 12. Qa4+ Kd8 (12... Ke7 13. Nc4 Qd8 14. Rg1) 13. Nxf7+ Ke7 14. Nxh8 Nxh1 15. Qc6 Qg1+ 16. Kd2 Qxg2+ 17. Ke3 Qg3+ 18. Kd4) 12. Qa4+ { [%eval 5.53] } 12... Ke7 { [%eval 5.54] } 13. Nc6+ { [%eval 5.4] } 13... Kf6 { [%eval 5.78] } 14. Bxf4 { [%eval 5.88] } 14... g5 { [%eval 5.99] } 15. Bd2 { [%eval 5.96] } 15... Kg6 { [%eval 5.91] } 16. e5 { [%eval 5.22] } 16... Bb7?! { [%eval 6.84] } { Inaccuracy. dxe5 was best. } (16... dxe5 17. Qc2+ Kg7 18. Rf1 f5 19. g4 fxg4 20. Ne4 Bb4 21. Nxb4 gxh3 22. Qc3) 17. Qe4+ { [%eval 7.03] } 17... Kg7 { [%eval 6.76] } 18. Nd4?! { [%eval 5.16] } { Inaccuracy. Be3 was best. } (18. Be3 Qc7 19. e6 fxe6 20. Qxe6 Bxc6 21. dxc6 Qe7 22. Bd4+ Kh7 23. Qxe7+ Bxe7) 18... dxe5 { [%eval 5.29] } 19. Qxe5+ { [%eval 5.19] } 19... Qf6 { [%eval 5.72] } 20. Nf5+ { [%eval 5.84] } 20... Kg6 { [%eval 5.73] } 21. Qxf6+ { [%eval 5.74] } 21... Kxf6 { [%eval 5.68] } 22. O-O { [%eval 5.67] } 22... Bc5+ { [%eval 6.05] } 23. Kh1 { [%eval 5.9] } 23... Rad8 { [%eval 7.21] } (23... Rae8 24. Nd6+ Kg6) 24. Nd6+ { [%eval 7.21] } 24... Kg6 { [%eval 7.22] } 25. Nxb7 { [%eval 7.21] } 25... Rd7 { [%eval 8.59] } 26. Nxc5 { [%eval 8.63] } 26... Rc7 { [%eval 8.67] } 27. Nd3 { [%eval 8.59] } 27... Rc4 { [%eval 10.29] } 28. Ne5+ { [%eval 10.33] } 28... Kg7 { [%eval 10.09] } 29. Nxc4 { [%eval 10.12] } 1-0
+
+
+[Event "2025 OTB: Montemor R4"]
+[Date "2025.09.20"]
+[Round "4"]
+[White "Ricardo Araújo"]
+[Black "João Álvaro Ferreira"]
+[Result "1-0"]
+[WhiteElo "2088"]
+[BlackElo "1789"]
+[Variant "Standard"]
+[ECO "B49"]
+[Opening "Sicilian Defense: Taimanov Variation, Bastrikov Variation"]
+[StudyName "2025 OTB"]
+[ChapterName "Montemor R4"]
+[ChapterURL "https://lichess.org/study/9jBCfbSD/7sGs6LvJ"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.09.20"]
+[UTCTime "14:27:14"]
+
+1. e4 { [%eval 0.18] } 1... c5 { [%eval 0.24] } 2. Nf3 { [%eval 0.2] } 2... e6 { [%eval 0.28] } 3. d4 { [%eval 0.4] } 3... cxd4 { [%eval 0.29] } 4. Nxd4 { [%eval 0.35] } 4... Nc6 { [%eval 0.28] } 5. Be3 { [%eval 0.0] } 5... Qc7 { [%eval 0.41] } 6. Nc3 { [%eval 0.31] } 6... a6 { [%eval 0.34] } 7. Be2 { [%eval 0.16] } (7. Bd3 Nf6 8. Qe2 (8. O-O b5 (8... Nxd4)) (8. Qd2 b5 9. O-O Bb7 10. f3 Nxd4 11. Bxd4)) 7... Nf6 { [%eval 0.32] } 8. a3 { [%eval 0.3] } 8... b5 { [%eval 0.43] } 9. Qd2?! { [%eval -0.16] } { Inaccuracy. Nxc6 was best. } (9. Nxc6 dxc6 10. f4 Be7 11. e5 Nd5 12. Nxd5 exd5 13. O-O Bf5 14. Bd3 Qd7) 9... Bb7 { [%eval -0.24] } 10. O-O { [%eval -0.29] } 10... Be7 { [%eval -0.12] } (10... Bd6 11. f4 Nxd4 12. Bxd4 Nxe4 13. Nxe4 Bxe4 14. Bxg7) 11. f3 { [%eval -0.37] } 11... O-O { [%eval -0.21] } (11... Ne5 12. Bf4 d6 13. Bxe5 dxe5) 12. Rae1 { [%eval -0.65] } (12. Rad1 Nxd4 13. Bxd4 Bc5 14. Kh1 (14. Bxc5 Qxc5+ 15. Kh1 d5 16. e5 Nd7 17. f4 Nb6 (17... Rfc8 18. Bd3 Nb6) 18. Bd3 (18. Qd4) 18... Rfc8 19. Ne2 Nd7) 14... Bxd4 15. Qxd4 d5 16. e5 Nd7 17. f4 Rfc8 (17... Qc5 18. Bd3) 18. Bd3 Qc5 19. Ne2 Nb6 20. b3 Nd7 21. f5 Qc7 22. fxe6 fxe6 23. Qh4 h6 24. Nd4) 12... Nxd4 { [%eval -0.12] } 13. Bxd4 { [%eval -0.16] } 13... Bc5 { [%eval 0.06] } 14. Kh1 { [%eval 0.04] } 14... Bxd4 { [%eval 0.01] } 15. Qxd4 { [%eval -0.04] } 15... d5 { [%eval 0.23] } (15... e5 16. Qb4 d5 17. exd5 Bxd5 18. a4 bxa4 19. Qxa4 Bc6 20. Qa3 a5) 16. e5 { [%eval 0.2] } 16... Nd7 { [%eval 0.25] } 17. f4 { [%eval -0.1] } 17... Rfc8 { [%eval 0.37] } (17... Qb6) (17... Qc5) 18. Bd3 { [%eval 0.46] } 18... Qc5 { [%eval 0.47] } 19. Ne2 { [%eval 0.52] } 19... Nb6?! { [%eval 1.55] } { Inaccuracy. g6 was best. } (19... g6 20. g4) (19... Qxd4 20. Nxd4 Nc5 21. Kg1 g6 22. g4 Bc6) 20. b3?! { [%eval 0.95] } { Inaccuracy. f5 was best. } (20. f5 Qxd4 21. Nxd4 Re8 22. fxe6 fxe6 23. b3 Nd7 24. h4 Nc5 25. Kg1 Ne4) 20... Nd7 { [%eval 0.94] } 21. f5 { [%eval 1.04] } 21... Qc7?? { [%eval 4.19] } { Blunder. Qxd4 was best. } (21... Qxd4 22. Nxd4) 22. fxe6 { [%eval 3.98] } (22. Qh4) 22... fxe6 { [%eval 4.19] } 23. Qh4 { [%eval 4.18] } 23... h6 { [%eval 3.66] } 24. Nd4 { [%eval 3.46] } 24... Rf8?? { [%eval 7.87] } { Blunder. Nc5 was best. } (24... Nc5 25. Bg6 Re8 26. Bxe8 Rxe8 27. Qh5 Re7 28. Rf3 Ne4 29. Ref1 Kh7 30. Rf7) 25. Nxe6 { [%eval 5.63] } 25... Rxf1+ { [%eval 5.62] } 26. Bxf1 { [%eval 5.51] } (26. Rxf1) 26... Qxc2 { [%eval 5.48] } 27. Qe7 { [%eval 5.55] } 27... Qg6 { [%eval 5.61] } 28. Qxd7 { [%eval 5.56] } 28... Re8 { [%eval 7.17] } 29. Nf4 { [%eval 6.3] } 29... Qf7 { [%eval 7.49] } 30. e6 { [%eval 6.56] } 30... Qxf4?? { [%eval #10] } { Checkmate is now unavoidable. Qxd7 was best. } (30... Qxd7 31. exd7 Rxe1 32. d8=Q+ Kf7 33. Kg1 d4 34. Kf2 Re8 35. Qc7+ Re7 36. Qd6) 31. Qxe8+ { [%eval #9] } 31... Kh7 { [%eval #8] } 32. Bd3+ { [%eval #7] } 1-0
+
+
+[Event "Montemor-o-Velho"]
+[Date "2025.09.20"]
+[Round "5"]
+[White "João Álvaro Ferreira"]
+[Black "Filipe Oliveira Jr."]
+[Result "1-0"]
+[WhiteElo "1789"]
+[BlackElo "1541"]
+[Variant "Standard"]
+[ECO "D53"]
+[Opening "Queen's Gambit Declined"]
+[StudyName "2025 OTB"]
+[ChapterName "Montemor R5"]
+[ChapterURL "https://lichess.org/study/9jBCfbSD/cq6NG1q5"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.09.20"]
+[UTCTime "15:16:08"]
+
+1. d4 { [%eval 0.17] } 1... d5 { [%eval 0.18] } 2. c4 { [%eval 0.18] } 2... e6 { [%eval 0.17] } 3. Nc3 { [%eval 0.18] } 3... Nf6 { [%eval 0.24] } 4. Bg5 { [%eval 0.0] } 4... Be7 { [%eval 0.14] } 5. cxd5 { [%eval 0.13] } 5... exd5 { [%eval 0.25] } 6. Qc2 { [%eval 0.19] } 6... h6 { [%eval 0.14] } 7. Bh4 { [%eval 0.0] } 7... O-O { [%eval 0.19] } 8. e3 { [%eval 0.17] } 8... Be6 { [%eval 0.3] } 9. Nf3 { [%eval 0.3] } 9... Qd6 { [%eval 0.43] } 10. Bd3 { [%eval 0.35] } 10... c5 { [%eval 0.41] } 11. O-O { [%eval 0.39] } 11... Nc6 { [%eval 0.44] } 12. a3 { [%eval -0.01] } 12... cxd4 { [%eval 0.45] } 13. exd4 { [%eval 0.18] } 13... Nxd4?? { [%eval 4.71] } { Blunder. Nh5 was best. } (13... Nh5) 14. Nxd4 { [%eval 4.64] } 14... Ng4 { [%eval 5.18] } 15. Bg3 { [%eval 5.56] } 15... Qb6 { [%eval 5.48] } 16. Nxe6 { [%eval 5.48] } 16... fxe6 { [%eval 5.39] } 17. Qe2 { [%eval 5.29] } 17... h5 { [%eval 5.3] } 18. Na4 { [%eval 5.21] } 18... Qd4 { [%eval 5.7] } 19. Qxe6+ { [%eval 5.66] } 19... Rf7 { [%eval 5.64] } 20. Bg6 { [%eval 5.53] } 20... Rf8 { [%eval 5.83] } 21. Nc3 { [%eval 5.56] } 21... h4 { [%eval 5.85] } 22. Rad1 { [%eval 5.7] } 22... Qb6 { [%eval 5.76] } 23. Bxf7+ { [%eval 5.84] } 23... Rxf7 { [%eval 5.79] } 24. Qxb6 { [%eval 5.5] } 24... axb6 { [%eval 5.47] } { Resigns } 1-0
+
+
+[Event "2025 OTB: Montemor R6"]
+[Date "2025.09.20"]
+[Round "6"]
+[White "Guilherme Piza"]
+[Black "João Álvaro Ferreira"]
+[Result "0-1"]
+[WhiteElo "0000"]
+[BlackElo "1789"]
+[Variant "Standard"]
+[ECO "B44"]
+[Opening "Sicilian Defense: Taimanov Variation"]
+[StudyName "2025 OTB"]
+[ChapterName "Montemor R6"]
+[ChapterURL "https://lichess.org/study/9jBCfbSD/NuyqHOYu"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.09.20"]
+[UTCTime "16:14:46"]
+
+1. e4 { [%eval 0.18] } 1... c5 { [%eval 0.24] } 2. Nf3 { [%eval 0.2] } 2... e6 { [%eval 0.28] } 3. d4 { [%eval 0.4] } 3... cxd4 { [%eval 0.29] } 4. Nxd4 { [%eval 0.35] } 4... Nc6 { [%eval 0.28] } 5. Be3 { [%eval 0.0] } 5... Nf6 { [%eval 0.0] } 6. Bd3 { [%eval 0.0] } 6... Qc7 { [%eval 0.31] } 7. O-O { [%eval 0.32] } 7... a6 { [%eval 0.52] } 8. a3?! { [%eval -0.28] } { Inaccuracy. Nxc6 was best. } (8. Nc3 b5 9. f3 Bb7 10. Nxc6 Bxc6 11. Qd2 (11. Qe1 d5 (11... Be7 12. b3 O-O 13. Qg3 (13. Bd4 d5 14. exd5 Bxd5 15. Ne4 Rac8 (15... Rfd8) 16. Qg3 Qxg3 17. hxg3 Rfd8 (17... Bxe4 18. fxe4 Ng4)) 13... Qxg3) 12. exd5 Bxd5 13. Ne4 Be7 14. Qg3 Qxg3 15. hxg3) 11... d5 12. exd5 Bxd5 13. Ne4 Be7 14. b3 (14. a3) 14... O-O 15. Qf2 Rfd8 16. Qg3 Qxg3 17. hxg3 Bxe4 (17... Rac8 18. Bb6 Rd7) 18. fxe4 Ng4 19. Bb6 Rd7 20. Ba5 Rc8 21. Be2 Ne3 22. c4 (22. a3 Nxf1 23. Rxf1) 22... Nxf1 23. Rxf1) (8. Nxc6 dxc6 9. Nd2 e5 10. Nc4 Be6 11. Bb6 Qb8 12. Qf3 Nd7) 8... b5?! { [%eval 0.45] } { Inaccuracy. d5 was best. } (8... d5) 9. Nd2 { [%eval 0.28] } 9... Bb7 { [%eval 0.4] } 10. Nxc6 { [%eval 0.62] } 10... Bxc6 { [%eval 0.54] } 11. f3?! { [%eval -0.36] } { Inaccuracy. c4 was best. } (11. c4) 11... d5 { [%eval -0.3] } 12. exd5 { [%eval -0.7] } 12... Bxd5?! { [%eval -0.13] } { Inaccuracy. Nxd5 was best. } (12... Nxd5) 13. Qe1 { [%eval -0.28] } 13... Be7 { [%eval -0.03] } 14. Ne4 { [%eval -0.4] } 14... O-O { [%eval -0.31] } 15. Qg3 { [%eval -0.35] } 15... Qxg3 { [%eval -0.37] } 16. hxg3 { [%eval -0.59] } 16... Rfd8 { [%eval -0.11] } 17. Bb6 { [%eval -0.31] } (17. Bc5) 17... Rd7 { [%eval -0.37] } 18. b3?? { [%eval -2.23] } { Blunder. Nd2 was best. } (18. Nd2 Rc8) 18... Rc8?? { [%eval -0.28] } { Blunder. Bxb3 was best. } (18... Bxe4 19. fxe4) (18... Bxb3 19. Bxb5 axb5 20. cxb3 Nxe4 21. fxe4) 19. Ba5?? { [%eval -2.77] } { Blunder. Nxf6+ was best. } (19. Nxf6+ Bxf6 20. Rab1 Be7 21. Be3 h5 22. Rfd1 Rd6 23. Kf2 g6 24. Ra1 Rdc6) 19... Bxe4 { [%eval -2.78] } 20. fxe4 { [%eval -2.68] } 20... Ng4 { [%eval -2.14] } 21. Be2 { [%eval -2.16] } 21... Ne3 { [%eval -1.71] } 22. c4? { [%eval -3.28] } { Mistake. Rfc1 was best. } (22. Rfc1 Bc5 23. Kh2 Rd4 24. a4 Rxe4 25. Bf3 Rd4 26. Be1 g6 27. c3 Rd3) 22... Nxf1 { [%eval -3.35] } 23. Rxf1?! { [%eval -4.22] } { Inaccuracy. Kxf1 was best. } (23. Kxf1 bxc4 24. Bxc4 Rd4 25. Bb4 Bxb4 26. axb4 Rxe4 27. Rxa6 Kf8 28. b5 Ke7) 23... bxc4 { [%eval -4.13] } 24. Bxc4 { [%eval -4.13] } 24... Bxa3 { [%eval -4.17] } 25. Bxa6 { [%eval -4.16] } 25... Rc1 { [%eval -4.16] } 26. Rxc1 { [%eval -4.41] } 26... Bxc1 { [%eval -4.41] } 27. Kf2?! { [%eval -6.13] } { Inaccuracy. Bc3 was best. } (27. Bc3 Bd2 28. Be5 Be3+ 29. Kf1 Rd2 30. Be2 f6 31. Bc3 Rc2 32. Be1 Kf7) 27... Ra7 { [%eval -5.97] } 28. b4 { [%eval -6.17] } 28... Rxa6 { [%eval -5.77] } 29. Ke2 { [%eval -5.64] } 29... Bb2 { [%eval -5.8] } 30. Kd3 { [%eval -6.19] } 30... Be5 { [%eval -6.06] } 31. g4 { [%eval -6.24] } (31. Kc4) 31... Rd6+ { [%eval -5.62] } 32. Ke2 { [%eval -6.56] } (32. Ke3 Bc3 33. g3 (33. Kf4) (33. Kf2 Rd2+ 34. Ke3) 33... Rd2 34. Kf3) 32... Bc3 { [%eval -6.49] } 33. g3 { [%eval -6.73] } 33... Rd2+ { [%eval -6.62] } 34. Ke3 { [%eval -6.6] } 34... Rb2 { [%eval -6.61] } 35. Kd3 { [%eval -6.84] } 35... Bxb4 { [%eval -6.83] } 36. Bc7 { [%eval -6.84] } (36. Bb6) 36... Be7 { [%eval -6.72] } 0-1
+
+
+[Event "2025 OTB: Montemor R7"]
+[Date "2025.09.20"]
+[Round "7"]
+[White "João Álvaro Ferreira"]
+[Black "Marta Almeida"]
+[Result "0-1"]
+[WhiteElo "1789"]
+[BlackElo "1972"]
+[BlackTitle "WCM"]
+[Variant "Standard"]
+[ECO "D43"]
+[Opening "Semi-Slav Defense"]
+[StudyName "2025 OTB"]
+[ChapterName "Montemor R7"]
+[ChapterURL "https://lichess.org/study/9jBCfbSD/hIUBmUeZ"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.09.20"]
+[UTCTime "16:58:20"]
+
+1. d4 { [%eval 0.17] } 1... d5 { [%eval 0.18] } 2. c4 { [%eval 0.18] } 2... c6 { [%eval 0.21] } 3. Nc3 { [%eval 0.17] } 3... Nf6 { [%eval 0.2] } 4. Nf3 { [%eval 0.16] } 4... e6 { [%eval 0.12] } 5. cxd5 { [%eval 0.04] } 5... exd5 { [%eval 0.06] } 6. Bg5 { [%eval 0.0] } 6... Bf5 { [%eval 0.07] } 7. Qb3 { [%eval 0.12] } 7... b6? { [%eval 1.68] } { Mistake. Qb6 was best. } (7... Qb6 8. Bxf6 gxf6 9. e3 Qxb3 10. axb3 a5 11. Be2 Bb4 12. Kd2) (7... Nbd7 8. Qxb7 Rb8 9. Qxc6 Rxb2 10. Bxf6 (10. Nxd5) 10... Qxf6 11. Qc8+ Qd8 12. Qxd8+ Kxd8 13. a3) 8. e3? { [%eval 0.27] } { Mistake. e4 was best. } (8. e4 Bxe4 (8... Bd7 9. e5 h6 10. Be3 Ng8 11. Bd3 g6 12. O-O Bg7) 9. Nxe4 dxe4 10. Ne5 Qc7) 8... Bd6 { [%eval 0.25] } 9. Be2 { [%eval 0.2] } 9... O-O { [%eval 0.6] } 10. O-O { [%eval 0.34] } 10... Nbd7 { [%eval 0.25] } 11. Rac1 { [%eval 0.01] } 11... Re8 { [%eval 0.3] } 12. Ba6 { [%eval 0.31] } 12... b5?? { [%eval 2.08] } { Blunder. Rb8 was best. } (12... Qe7) (12... Rb8 13. Ne2) 13. Bb7 { [%eval 2.06] } 13... Rb8?! { [%eval 3.22] } { Inaccuracy. Qb6 was best. } (13... Qb6 14. Bxa8 Rxa8 15. Ne2 Ne4 16. Bf4 Be7 17. Qd1 h6 18. Ne1 Bh7 19. f3) 14. Bxc6 { [%eval 3.31] } 14... Bd3 { [%eval 3.51] } 15. Bxd5 { [%eval 3.1] } 15... Bxf1 { [%eval 3.42] } 16. Bxf7+ { [%eval 3.39] } 16... Kh8 { [%eval 3.46] } 17. Kxf1 { [%eval 3.48] } 17... Re7 { [%eval 3.4] } 18. Nh4 { [%eval 2.73] } (18. Be6 b4 19. Ne2 Nb6 (19... Qb6 20. e4) 20. Bxf6) 18... Qf8 { [%eval 3.2] } 19. Bg6 { [%eval 2.87] } 19... b4 { [%eval 2.73] } 20. Bxh7?? { [%eval -0.19] } { Blunder. Ne2 was best. } (20. Nd5 Nxd5 (20... Ne4 21. Bxe4 Rxe4 22. Qd3 Rbe8) 21. Qxd5) (20. Ne2 Ne4 21. Bxe4 Rxe4 22. Qd3 Re6 23. Nf5 Rc8 24. e4 Rxc1+ 25. Bxc1 Qc8) 20... Kxh7 { [%eval -0.2] } 21. Qc2+ { [%eval -0.27] } 21... Kg8 { [%eval -0.23] } 22. Ng6 { [%eval -0.23] } 22... Qf7 { [%eval -0.38] } 23. Nxe7+ { [%eval -0.3] } 23... Bxe7 { [%eval -0.19] } 24. Ne2?! { [%eval -0.75] } { Inaccuracy. Nd1 was best. } (24. Nd1) 24... Ng4?! { [%eval -0.06] } { Inaccuracy. Nd5 was best. } (24... Ne4 25. Bf4) (24... Nd5) 25. Bf4 { [%eval -0.14] } 25... g5 { [%eval -0.14] } (25... g6) 26. Bg3?? { [%eval -5.15] } { Blunder. h3 was best. } (26. h3 gxf4 27. hxg4 fxe3 28. Qf5) 26... Nxe3+ { [%eval -5.0] } 0-1
+
+
+[Event "2025 OTB: Natal 0"]
+[Date "2025.12.20"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "A01"]
+[Opening "Nimzo-Larsen Attack: Modern Variation"]
+[StudyName "2025 OTB"]
+[ChapterName "Natal 0"]
+[ChapterURL "https://lichess.org/study/9jBCfbSD/YRApDJ1p"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.12.20"]
+[UTCTime "10:36:33"]
+
+1. b3 e5 2. Bb2 Nc6 3. e3 d6 4. f4 Bd7 5. fxe5 dxe5 6. Nf3 Bd6 7. Bb5 Qe7 8. Nc3 f5 9. O-O Nf6 10. Qe2 O-O 11. Ng5 (11. Qe1) 11... Kh8 12. Qf2 *
+
+
+[Event "2025 OTB: Natal 1"]
+[Date "2025.12.20"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "A45"]
+[Opening "Indian Defense"]
+[StudyName "2025 OTB"]
+[ChapterName "Natal 1"]
+[ChapterURL "https://lichess.org/study/9jBCfbSD/WnRg4nH4"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.12.20"]
+[UTCTime "11:28:32"]
+
+1. d4 Nf6 2. Bf4 c5 3. e3 cxd4 4. exd4 Qb6 5. Nc3 a6 6. Rb1 d6 7. Qd2 (7. Nf3 g6 8. h4 Nc6 9. Qd2 Bg7 10. d5 Nb8 (10... Ne5) (10... Nb4 11. a3) 11. Bd3 (11. a3 Nbd7) (11. Ng5) (11. Nd4 Nbd7 12. f3 Ne5 13. Bxe5 dxe5)) (7. Nge2) 7... Nc6 (7... g6 8. f3) 8. Nge2 g6 9. h4 (9. f3) 9... Bg7 10. d5 (10. f3) 10... Nb8 11. f3 Nbd7 12. g4 Ne5 13. Bxe5 dxe5 14. Ng3 Bd7 15. Nge4 (15. Bg2) 15... Qd4 16. Bg2 (16. Nxf6+ Bxf6 17. Qf2) 16... Nxe4 (16... Rc8 17. Qf2 (17. Rd1) 17... Nxe4 (17... Qc4 18. Nxf6+ Bxf6) 18. Nxe4) 17. Nxe4 Qb6 18. Qf2 Qa5+ *
+
+
+[Event "2025 OTB: Natal Frois"]
+[Date "2025.12.20"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "A43"]
+[Opening "Benoni Defense: Benoni-Indian Defense"]
+[StudyName "2025 OTB"]
+[ChapterName "Natal Frois"]
+[ChapterURL "https://lichess.org/study/9jBCfbSD/jnCl6H8S"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.12.20"]
+[UTCTime "11:57:24"]
+
+1. d4 c5 (1... c6) 2. d5 Nf6 3. Nc3 d6 4. e4 g6 5. f4 a6 6. a4 (6. Nf3 Bg7 7. Be2 O-O 8. O-O e6) 6... Bg7 7. Nf3 O-O 8. Be2 e6 9. O-O (9. dxe6) 9... exd5 10. exd5 Bf5 11. Nh4 Be4 (11... Ne4) 12. Nxe4 Nxe4 13. Nf3 Qb6 14. Bc4 Re8 15. Re1 Nd7 16. Qd3 f5 17. Ng5 Nxg5 18. Rxe8+ Rxe8 19. fxg5 Re4 (19... Ne5) 20. Rb1 Ne5 21. Qb3 Nxc4 22. Qg3 Be5 23. Qd3 (23. Qf3) 23... Bd4+ 24. Kf1 Ne5 25. c4 *
+
+
+[Event "2025 OTB: Natal Margarido"]
+[Date "2025.12.20"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "B40"]
+[Opening "Sicilian Defense: Delayed Alapin Variation, with e6"]
+[StudyName "2025 OTB"]
+[ChapterName "Natal Margarido"]
+[ChapterURL "https://lichess.org/study/9jBCfbSD/H6YRxncc"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.12.20"]
+[UTCTime "13:16:30"]
+
+1. e4 c5 2. Nf3 e6 3. c3 d5 4. e5 d4 5. d3 Nc6 6. g3 Nge7 7. Bg2 Ng6 8. Qe2 Be7 (8... dxc3) 9. O-O O-O 10. h4 f6 11. exf6 Bxf6 12. Ng5 (12. c4 Qc7) 12... Bxg5 13. Bxg5 Qc7 14. c4 Bd7 15. Nd2 Rae8 16. Ne4 b6 17. h5 Nge7 18. h6 Nf5 19. hxg7 Kxg7 20. Qh5 Rf7 21. Bf4 e5 22. Ng5 Ref8 23. Qxh7+ Kf6 24. Nxf7 Rxf7 25. Qh8+ (25. Qh4+) (25. Qh6+) 25... Ke7 (25... Ke6) 26. Bg5+ Kd6 *
+
+

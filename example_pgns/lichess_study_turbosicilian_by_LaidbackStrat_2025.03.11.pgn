@@ -1,0 +1,698 @@
+[Event "TurboSicilian: Open: Introduction"]
+[Date "2025.06.13"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "B47"]
+[Opening "Sicilian Defense: Taimanov Variation, Bastrikov Variation"]
+[StudyName "TurboSicilian"]
+[ChapterName "Open: Introduction"]
+[ChapterURL "https://lichess.org/study/ho9FNoLP/EPe7K43w"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.06.13"]
+[UTCTime "14:25:14"]
+
+1. e4 { The first category is the smallest and easiest to deal with: it comprises only one chapter, which shows how Black should deal with White's assorted alternatives to the two main options of 5. Nb5 and 5.Nc3. The second section is where the more serious work begins } 1... c5 2. Nf3 e6 3. d4 cxd4 4. Nxd4 Nc6 (4... a6 5. c4 Nf6 6. Nc3 Bb4 7. Bd3) 5. Nc3 (5. Nb5 d6! { Preventing Nd6 } 6. Bf4 (6. c4 { is more common, when... } 6... Nf6 7. N1c3 a6 { is the main line. Black is theoretically fine, although the game has a completely different character from most of the variations in this book, so I recommend a careful study of Chapters 3 and 4 to ensure that you will be ready to handle it. }) 6... e5 7. Be3 { sees White force a change in the pawn structure, but develops his bishop a little earlier than he would ideally want to. See Chapter 2 for full details }) 5... Qc7 { Where the real fun begins. Why Qc7:
+- Allows dxc6 without exchanging queens
+- Makes a6 b5 better
+- Prepares Nf6 by preventing e5
+Chapters 1-4 deal with a lot of interesting options, excluding the absolute main lines. } { [%cal Ga7a6,Gb7b5] } 6. Be2 (6. f4 { Chapter 5 }) (6. Qd3 { Chapter 6 }) (6. g4 { Chapter 7 }) (6. g3 { Chapter 8 }) (6. Ncb5 { Chapter 7 }) (6. Be3 a6 { The final group of chapters will deal with this important tabiya. First we look at } 7. Qd2 { Most aggressive and theoretical lines of the whole book } (7. Bd3 Nf6 8. O-O b5 9. Nxc6 Qxc6 10. a3 { Chapter 16 } (10. Be2!? { Chapter 15 })) (7. Qf3 { New move! } 7... Nf6 8. O-O-O Ne5 9. Qg3 b5 { Chapter 20 } 10. Ndxb5!? (10. f4 Neg4 11. Bd2 { Chapter 21 } (11. Bg1 { Chapter 20 } 11... h5 12. e5 b4 13. Na4 Nd5 14. h3 Nh6 { Chapter 22 }))) (7. Bc4? { matthieu_dambrain - LaidbackStrat, 0-1, -, https://lichess.org/swhqNgCN } 7... b5 8. Nxc6 (8. Bb3 Nf6)) (7. a3) 7... Nf6 8. f4!? { Chapter 17 } (8. f3 Ne5 9. O-O-O) (8. O-O-O Bb4 9. f3 Ne5! 10. Nb3 b5 { Covered in chapter 18 } 11. Qe1 { Chapter 19 }) (8. Bc4 b5 9. Bb3 (9. Bd3 Bb7 10. Nxc6))) (6. a3) 6... a6 7. O-O Nf6 { Chapter 9 } 8. Be3 (8. Kh1 { Chapter 10 }) 8... Bb4 9. Na4 (9. Nxc6 bxc6 { Chapter 11 } 10. Qd4!?) 9... Be7 10. Nxc6 bxc6 11. Nb6 (11. Bb6 { Chapter 12 }) 11... Rb8 12. Nxc8 Qxc8 13. e5 { Chapter 13 } (13. Bd4 { Chapter 14 }) *
+
+
+[Event "TurboSicilian: Open: Chapter 1 - Rare 5th Moves"]
+[Date "2025.06.13"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "B44"]
+[Opening "Sicilian Defense: Taimanov Variation"]
+[StudyName "TurboSicilian"]
+[ChapterName "Open: Chapter 1 - Rare 5th Moves"]
+[ChapterURL "https://lichess.org/study/ho9FNoLP/i1TlVzMF"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.06.13"]
+[UTCTime "20:09:11"]
+
+1. e4 c5 2. Nf3 e6 3. d4 cxd4 4. Nxd4 Nc6 { We shall start our journey in the Taimanov gently, with rare 5th moves. The rest of the book will be about the more common and critical 5. Nb5 and Nc3 } { [%csl Gc5][%cal Gf8c5] } 5. a3 { A3 is a common theme to stop Bb4, but it's a key tempo loss } (5. g3 { This line is potentially problematic as we need to make sure we avoid transposing to a version of the real Fianchetto variation that is outside our repertoire (see Chapter 8) } 5... Bc5!? { This is a fighting option, and avoids any transpositional tricks; so it's in similar style to the previous variation } 6. Nb3 Bb6 { Similar to a3 } 7. Bg2 Nf6 { The goal is to develop into a Sveshnikov structure with d6 and e5, but with the bishop on b6 instead of e7 } 8. O-O O-O 9. Nc3 a5 10. a4 h6 { highly playable and in our style }) (5. c4 { This line can be reached via other move orders, so it's a good one to know. } 5... Nf6 6. Nc3 Bb4 { Equalized } 7. Nxc6 { Other moves are harmless } (7. Nb5 Nxe4 8. Qg4 { is not sound }) (7. f3 d5!) 7... bxc6 8. Bd3 { Only sensible move as... } (8. e5 Ne4 { Favors black }) 8... e5! (8... d5 9. exd5 exd5 10. cxd5 Qe7+ 11. Qe2 Nxd5 12. Qxe7+ Kxe7 13. O-O Nxc3 14. bxc3 Bxc3 15. Ba3+) 9. O-O Bc5!! { now any Na6 ideas are met with Bd4, staying on the right diagonal } 10. Qe2 d6 11. Be3 Bxe3 12. Qxe3 Qb6 { Logical follow-up. Without queens, the king is comfortable on e7 } 13. Qd2 (13. c5 Qxb2) 13... O-O { Sjugirov, S. - Hou Yifan, 1/2-1/2, Qatar Masters Open 2015, https://lichess.org/DWFp4UEZ } { [%csl Gd6] }) (5. Be3 { An odd move to commit to at this stage. The simple reaction is rapid development, not allowing White to transpose to the more logical Be3 ideas of chapters 15-22 } 5... Nf6 6. Bd3 { Trying to make sense of Be3 by avoiding the more natural Nc3, as white still dreams of C4 } { [%csl Gc4][%cal Gc2c4] } (6. Nc3 Bb4 { This is no longer a Taimanov, it's a four knights with a bad bishop on e3 } 7. Bd3 d5) 6... d5 { The traditional break } 7. Nc3 { White heading towards a more popular position, but it's unpromising against the four knights } 7... Bb4 { Not a Taimanov, but we can play active Taimanov-style moves without preparing them with a6 } 8. Nxc6 bxc6 9. e5 { a famous GM line } 9... d4! 10. exf6 dxe3 { Taking the bishop is better because the black queenside will be weak on the dark squares } { [%csl Ge3,Gg7] } 11. fxg7 exf2+ 12. Kf1 (12. Kxf2 Qd4+) 12... Rg8 13. Qg4 Bxc3 14. bxc3 e5!! $146 { [%cal Gh4c4] } 15. Qc4 Qd5 { Simple, and black is slightly better }) (5. Nxc6 bxc6 { Not dangerous for black at all, but it's instructive as this structure will come up often. } 6. Bd3 { See chapter 9 for more on this structure but with Be2. } 6... d5 { When possible, challenge white's center directly. } 7. O-O Nf6 8. Nd2 (8. e5 Nd7 { I consider this move to be harmless when black's pawn is already on d5, as it becomes more difficult for white to put pressure on black's center } 9. Re1 g6 10. Nd2 Bg7 11. Nf3 O-O 12. Bg5 Qb6 { [%cal Gc8a6,Ga6d3] }) 8... Be7 9. Qe2 O-O 10. c4 Bb7 11. Rd1 Qc7 { This is a sensible set-up for both sides. Here the engines prefer the feeble cxd5 with a pretty comfortable game for Black. However, in practice the usual continuation is... } 12. e5 Nd7 13. Nf3 { Now Black's task is to activate the light squared bishop, which can happen in two ways... } 13... c5 (13... dxc4 14. Bxc4 c5 { [%csl Gb6][%cal Gd7b6] }) 14. cxd5 Bxd5) (5. Bb5 Nf6 { Just ignore it }) (5. Nc3 Qc7 6. f4) 5... Bc5! { An idea borrowed from the Kan. Avoids transposition to other a3 systems, as after a neutral move like Nf6 black would need to consider transpositions. } 6. Nb3 { [%csl Gc5][%cal Gb3c5] } (6. Nxc6 bxc6 7. e5 { is the critical line } (7. Bd3 { is very pleasant for black } 7... e5!) 7... Qc7 8. f4 Nh6!? { The following line is not forced but shows a useful idea } { [%cal Gh6f5] } 9. Bd3 O-O 10. Nc3 d5! 11. exd6 Bxd6 12. O-O Ba6 13. Bxa6 Qb6+ 14. Kh1 Qxa6 { And the black knight can go to f5 } { [%csl Gf5][%cal Gh6f5] }) (6. Be3 Qb6) 6... Bb6 { [%cal Gb6f2,Gg8e7] } 7. Bd3 (7. Nc3 Nge7 8. Be2 O-O 9. O-O f5! { with very active play for black }) 7... Nge7 8. Nc3 O-O { The plan is to go for f5 } { [%cal Gf7f5] } 9. Qe2! { This is white's best move, with the idea of Be3 } { [%cal Gc1e3] } 9... d5! { We switch plans, as now } (9... f5 10. Be3 { and black's dark squares would be weak }) 10. exd5 Nxd5 { The solid option } 11. Bd2 Nxc3 12. Bxc3 e5 { Black has equalized
+Conclusion The rare fifth moves against the Taimanov are not threatening, so this chapter was an easy start to building our repertoire.
+A) 5.a3 and B) 5.g3!? can both be met in a similar style with 5...Bc5 6.Nb3 Bb6, avoiding any worries about transpositional tricks to other chapters. Then one common plan is ...Nge7 with ideas of ...f7-f5 or ...d7-d5. In the 5.g3 variation we also saw ideas of ...Nf6, ...d6 and ...e5, with an improved Kalashnikov.
+C) 5.c4 looks a logical space-gainer, but Black can reply actively with 5...Nf6 6.Nc3 Bb4. There usually follows 7.Nxc6 bxc6 8.Bd3 when the move to remember is 8...e5!. Our b4-bishop then belongs on c5, getting a grip on the hole on d4.
+D) 5.Be3 is a strange move to commit to so soon, and the main line transposes to the Four Knights variation. Objectively Black has no problems, but learning the antidote to Hector's old pet line would be wise, as it would be tough to work out over the board.
+E) 5. Nxc6 is not a theoretical threat, but it leads to our first look at a vital structure, so the typical ideas are well worth a look } *
+
+
+[Event "TurboSicilian: Open: Chapter 2 - 5. Nb5 d6 6. Bf4"]
+[Date "2025.06.14"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "B44"]
+[Opening "Sicilian Defense: Taimanov Variation, Szén Variation"]
+[StudyName "TurboSicilian"]
+[ChapterName "Open: Chapter 2 - 5. Nb5 d6 6. Bf4"]
+[ChapterURL "https://lichess.org/study/ho9FNoLP/7P8wPgE1"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.06.14"]
+[UTCTime "04:00:31"]
+
+1. e4 c5 2. Nf3 e6 3. d4 cxd4 4. Nxd4 Nc6 5. Nb5 d6 6. Bf4 { With this, White aims co provoke Black into committing his central pawns co a rigid formation } 6... e5 { We are happy to oblige as the weakness on d5 is counter-balanced with the tempo loss } 7. Be3 { This move introduces the 'serious' part of the chapter. The position on the board is a version of the so-called Kalashnikov Variation } (7. Bg5? { This gives Black the chance to make an excellent exchange sacrifice } 7... Qxg5! 8. Nc7+ Kd8 9. Nxa8 Nf6 { Black has a lead and the initiative, plus good chances to trap the knight. } 10. Nc3 Nd4! 11. Qd3 d5! { The last critical move to know in this line, the rest is relatively straight forward } 12. Rd1 { best, alternatives make things easier } (12. exd5 { Example line } 12... Bf5 13. Qc4 Nxc2+ 14. Kd1 Qg4+ 15. Qxg4 Nxg4) 12... Bd6 13. Rd2 Qg6 { [%cal Ge4d5] } 14. f4 { White can try to muddy the waters, but black remains in control } 14... Qh6! 15. Nxd5 Nxd5 16. exd5 Re8) 7... Be7! { This is an unpopular option but it's solid and the idea is simple: black continues development while avoiding the early a6 and the Bg5 pin. We'll wait until N1c3 for a6. This is a branching point: } 8. c4 (8. Nd2 Nf6! 9. Nc4 (9. Bg5 O-O 10. Bxf6 Bxf6 11. Nc4 { This has a good score for white but it's actually dubious } 11... Be6! { We ignore for development. } 12. Qxd6 Rc8! $146 13. c3 { White has nothing better } (13. Qxd8 Rfxd8) 13... Be7! 14. Qxd8 Rfxd8) 9... O-O! { As we have already seen, it is absolutely thematic for Black to sacrifice the d6-pawn in the 6.Bf4 line. White has spent several tempos in creating the backward pawn weakness and moving his knights into position to attack it, so it is quite reasonable for Black to sacrifice it to increase his lead in development } 10. Nbxd6 Be6! { Keeps the pressure on the e pawn and will take advantage of the open D file. } { [%cal Gf6e4] } 11. c3!? { [%csl Gd5] } 11... Qc7 12. Nf5 (12. Nb5 Qb8! { And black has initiative }) 12... Nxe4 13. Qg4 Bxf5 14. Qxf5 Nf6 $10) (8. N1c3 Nf6 (8... a6 { Doesn't work now due to concrete reasons - Nd5 is an instant refutation. } 9. Nd5!) 9. Bg5 { White's best move } (9. Nd5 Nxd5 10. exd5 { This gives black good practical chances. } 10... Nb8 { Retreating the knight to its original square is no problem. On the contrary: we have actually transposed to a well-known variation of the Sveshnikov Sicilian. } 11. c4 a6) 9... O-O 10. Bxf6 Bxf6 { Sacrifice the E pawn again. } 11. Qxd6 Be6! 12. Qxd8 Raxd8 13. a3!? $146 { What I really enjoy about these positions is that, despite being a pawn down, Black has full compensation and realistic prospects of playing for a win. It is fitting that the dark-squared bishop goes from being the worst minor piece on the board (when stuck behind the d6-e5 pawn wall) to the most active one! } 13... Bg5! { [%cal Gg5c1] }) (8. Bc4 { A rare sideline } 8... Nf6 9. O-O (9. Bg5? Nxe4) (9. f3?! { Is inaccurate as the e4 pawn wasn't under fire }) 9... Nxe4?? (9... Be6 10. Bxe6 fxe6) 10. Qd5) 8... Nf6 9. f3! { Protecting e4 and controlling g4 } (9. Qd3? Ng4!) 9... O-O { White has made a lot of pawn moves and black wants to take advantage. An interesting idea } { [%cal Ga7a6] } 10. N1c3 a6! { We play a6 when the b1 knight gets developed } 11. Na3 Be6 12. Be2 b5!? { We want to break with b5 as soon as possible } 13. Nd5! (13. cxb5 Nb4! 14. O-O (14. bxa6 d5 15. exd5 Nbxd5) 14... d5! 15. Nxd5) 13... bxc4 14. O-O Bxd5 15. exd5 Nb4 16. Bxc4 Qa5! { Black has a fine position and the next plan is to trade the dark squared bishops with Bd8 Bb6 } { [%cal Ge7d8,Gd8b6] } 17. Qd2 { After 5.Nb5 d6 this chapter focused on 6.Bf4 (in the next two chapters, we will see 6.c4). Following 6...e5 we started with an easy move in 7..Bg5? which allows Black an excellent exchange sacrifice.
+Far more serious is 7..Be3, when I recommend the relatively unusual 7...Be7!. For a Taimanov player, the challenge of the lines that follow is that White often induces us to play a different Sicilian - sometimes a Kalashnikov, sometimes a Sveshnikov. The plus side is that we will not face the most critical lines of these openings. And the lines I give in this chapter should give you a solid understanding of how co play the resulting positions. } *
+
+
+[Event "TurboSicilian: Open: Chapter 3 - 5. Nb5 d6 6. c4"]
+[Date "2025.06.27"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "B44"]
+[Opening "Sicilian Defense: Taimanov Variation, Modern Line"]
+[StudyName "TurboSicilian"]
+[ChapterName "Open: Chapter 3 - 5. Nb5 d6 6. c4"]
+[ChapterURL "https://lichess.org/study/ho9FNoLP/5cs25Urp"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.06.27"]
+[UTCTime "01:11:02"]
+
+1. e4 c5 2. Nf3 e6 3. d4 cxd4 4. Nxd4 Nc6 5. Nb5 d6 6. c4 { Here we have White giving up two tempos with his knight in order to provoke d6 and establish the Maroczy pawn center. Personally, I have never regarded this variation as harmful for Black, although White may claim that the characteristic Maroczy space advantage has never been connected with speed of development. } 6... Nf6 7. N1c3 { This is the main line. } (7. N5c3 { The point of this move is that White wants to avoid the suffering of the misplaced knight on a3 } { [%csl Gd2][%cal Gb1d2] } 7... Be7 { White needs to consider the kingside development } 8. Be2 { More popular than the previous line } (8. g3 { Bobby Fischer played this against Spassky in 92, but black doesn't have anything to fear from the opening. } 8... h5! 9. h3 h4 10. g4 Nd7 11. Be3 g5! { Espineira Gonzalez, D. - Lopez Martinez, Josep, 0-1, 79th ch-ESP 2014, https://lichess.org/KxnLy71B }) 8... O-O 9. O-O b6 10. Be3 (10. Bf4!? { For some reason, this move has been played more than Be3 which seems more logical. The bishop is not particularly threatening on F4 and white loses control over the D4 square compared to Be3. } 10... Bb7 11. Nd2 { White has scored over 60% with this move so it is worth seeing how Black should handle the ensuing positions. } { [%csl Gd4] } (11. Re1 Rc8 12. Nd2 { Is an easier time for black. }) 11... Nd4! { Several other moves have been tried, but this one is the most interesting. } 12. Bd3 Nd7 { [%cal Gd7c5,Ge7f6] } 13. Rc1 (13. Nb3 Nc6 { And white wasted time. }) 13... Nc5 14. Bb1 a5!) 10... Bb7 11. Nd2 d5! { Thematic push, breaking the Maroczy center, also available in other variations. Equalizes immediately. } 12. exd5 exd5 13. cxd5 Nb4! 14. Bf3 Nbxd5 15. Nxd5 Bxd5 { Di Fonzo, Valerio - Sbarra, Marco, 1/2-1/2, Corsico 2nd, 2004, https://lichess.org/pHCNO8zA }) (7. Bg5 Be7 8. Bxf6 Bxf6 9. Nxd6+ Ke7 10. Nxc8+ Rxc8 { Is good for black }) (7. Bd3 { White wants to delay developing knights. } 7... Be7 8. O-O O-O 9. N1c3 a6 10. Na3 Ne5 11. Be2 b6 { [%cal Gc8b7,Gb7e4,Gf2f4] } 12. f4 Ned7 13. Be3 Bb7 { Black has a pleasant version of a popular variation, white has lost a tempo with Bd3-e2 }) 7... a6 8. Na3 { This is the clear main line. There are a few reasons for choosing the A3 square: white keeps control of D5, knight over-protects C4 preventing potential counter-play with Rc8 and Ne5. Once White is fully developed, the knight will re-route via C2. } (8. Nd4 { Too slow to just return the knight to where it was } 8... d5!? { There are other good moves, but we should always break with D5 when we can. } 9. Qa4 (9. cxd5 exd5 { exd5 or Nxc6 will transpose to the other lines now, so we'll analyze the only alternative in this move order. } 10. Qa4!? (10. Bg5 { Has been tried a couple of times but after the accurate } 10... Be7! 11. exd5 Nxd5 12. Nxc6 bxc6 13. Bd2 Rb8 14. Na4 { Black has won the opening battle } 14... Bb4! 15. a3 { Kudischewitsch, D. - Zifroni, D., 0-1, Herzliya Summer 2016, https://lichess.org/i0CEDv3E }) 10... Bd7 { Pawn sacrifice! } 11. exd5 b5! $146 (11... Nb4 { Studen, D. - Costigan, R., 1/2-1/2, US Chess League 2014, https://lichess.org/kjT3Vo0N }) 12. Qd1 Nxd4 13. Qxd4 Bd6 { Black has a development lead for the pawn, a blockade on d6 and an easy target. } { [%cal Ge8g8] }) (9. exd5 exd5 10. cxd5 Nxd5 11. Nxc6 bxc6 12. Bc4! { This forces Black to be careful. } (12. Nxd5 Qxd5! { Nothing to fear here }) 12... Qe7+! 13. Kf1!? { Is the only white move that keeps the pressure on D5 } 13... Be6! 14. Nxd5 cxd5 15. Bxd5 Qd7! 16. Bb3 Qxd1+ 17. Bxd1 Bc5 { With compensation for the lost pawn. Bring rooks to C8 and B8, bishop can go to d4 at the right moment. } { [%cal Gh8c8,Ga8b8] }) 9... Nxe4 10. Nxc6 Nxc3 11. bxc3 bxc6 12. cxd5 (12. Qxc6+ Bd7 13. Qb7 Rb8 14. Qxa6 Qf6)) 8... Be7 (8... d5! { Gary Gambit is an interesting option that led to the famous Octupus Knight game in the next slide. } 9. cxd5 exd5 10. exd5 Nb4 11. Bc4) 9. Be2 { Other moves exist, but don't require much attention. } (9. Nc2 O-O 10. Be2 b6 11. O-O { Is the best white has, transposing to the main line with 11. Nc2 }) (9. Be3 O-O 10. Be2 { Is an inferior move order. If black develops normally, we'll transpose to the main lines after white castles. But this gives Black the chance to play the thematic break... } 10... d5! { Dahl, Trygve - Vovk, Y., 0-1, Fagernes GM Open 2016, https://lichess.org/19r7fJrJ }) (9. g3 { Interesting alternative, but leads to a similar response as an earlier variation } 9... h5! 10. h3 h4 11. g4 Nd7 { [%cal Gd7e5,Gd7c5] }) 9... O-O 10. O-O b6 { White's best and most popular continuation is 11. Be3, which is analysed separately in the next chapter. } 11. Bf4 (11. f4 d5 { Works again }) (11. Be3 { See Chapter 4 }) 11... Bb7 12. Qd2 Ne5 { The typical nonsense } 13. f3 { And black is better } (13. Qd4 Nc6 14. Qd2 { Would repeat }) (13. Bxe5 dxe5 14. Qxd8 Rfxd8 15. f3) 13... Ng6 14. Be3 d5! 15. exd5 exd5 16. cxd5 b5! { There will be time to re-capture d5 later. First, black safeguards the B pawn and plays against the misplaced enemy knights. } 17. Rad1 { Threatening d6 } { [%cal Gd5d6] } 17... Qc8! { Black keeps the upper hand. B4 is a strong threat and once D5 falls, the black pieces will be more active. } 18. d6 Rd8 { Conclusion:
+This version of the Maroczy offers white some space advantage in the early stages, but it comes at a price as he must waste time managing his misplaced knight. After 6... Nf6, we consider the sideline 7. N5c3 which does not offer White much, especially after Be7 g3, when h5 gives black great counterplay.
+More common is 7. N1c3 a6, when White has two options. 8. Nd4 gives Black a lot of freedom, where we can liquidate the center immediately with d5 and equalize. We then began coverage of the most popular 8. Na3 line, the main line of which will be analysed in the following chapter. } *
+
+
+[Event "TurboSicilian: Open: Chapter 3.1 - 5. Nb5 d6 6. c4 Nf6 7. Nc3 a6 8. Na3 d5 - Gary Gambit"]
+[Date "2025.10.29"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "B44"]
+[Opening "Sicilian Defense: Taimanov Variation, Gary Gambit"]
+[StudyName "TurboSicilian"]
+[ChapterName "Open: Chapter 3.1 - 5. Nb5 d6 6. c4 Nf6 7. Nc3 a6 8. Na3 d5 - Gary Gambit"]
+[ChapterURL "https://lichess.org/study/ho9FNoLP/sQqRuoVw"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.10.29"]
+[UTCTime "00:19:09"]
+
+1. e4 c5 2. Nf3 e6 3. d4 cxd4 4. Nxd4 Nc6 5. Nb5 d6 6. c4 Nf6 7. N1c3 a6 8. Na3 (8. Nd4) 8... d5 { Karpov, Anatoly - Kasparov, Garry, 0-1, World Championship 32th-KK2, 1985, https://lichess.org/8ENETNzW } (8... Qa5) 9. cxd5 exd5 10. exd5 Nb4 11. Be2 (11. Bd3 Nbxd5 12. Nxd5 Qxd5) 11... Bc5 12. O-O (12. Be3) 12... O-O *
+
+
+[Event "TurboSicilian: Open: Chapter 3.2 - Alternate Maroczy Refutation"]
+[Date "2025.10.29"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "B44"]
+[Opening "Sicilian Defense: Taimanov Variation, Szén Variation"]
+[StudyName "TurboSicilian"]
+[ChapterName "Open: Chapter 3.2 - Alternate Maroczy Refutation"]
+[ChapterURL "https://lichess.org/study/ho9FNoLP/GIbW7l0Z"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.10.29"]
+[UTCTime "00:27:46"]
+
+1. e4 c5 2. Nf3 e6 3. d4 cxd4 4. Nxd4 Nc6 5. Nb5 d6 6. c4 Nf6 7. N1c3 a6 8. Na3 Qa5 9. Bd2 Be7 10. Be2 O-O 11. O-O Qe5 12. Bd3 Nb4 13. Bb1 d5 *
+
+
+[Event "Karpov - Kasparov World Championship Match"]
+[Site "Moscow URS"]
+[Date "1985.10.15"]
+[Round "16"]
+[White "Anatoly Karpov"]
+[Black "Garry Kasparov"]
+[Result "0-1"]
+[Variant "Standard"]
+[ECO "B44"]
+[Opening "Sicilian Defense: Taimanov Variation, Gary Gambit"]
+[StudyName "TurboSicilian"]
+[ChapterName "Karpov vs Kasparov: Octupus Knight (Gary Gambit)"]
+[ChapterURL "https://lichess.org/study/ho9FNoLP/eTE4RAup"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+
+1. e4 c5 2. Nf3 e6 3. d4 cxd4 4. Nxd4 Nc6 5. Nb5 d6 6. c4 Nf6 7. N1c3 a6 8. Na3 d5! { Karpov, Anatoly - Kasparov, Garry, 1/2-1/2, World Championship 32th-KK2, 1985, https://lichess.org/Zw2l8C8g } 9. cxd5 exd5 10. exd5 Nb4 11. Be2 Bc5 12. O-O O-O 13. Bf3 Bf5 14. Bg5 Re8 15. Qd2 b5 16. Rad1 Nd3 17. Nab1 h6 18. Bh4 b4 19. Na4 Bd6 20. Bg3 Rc8 21. b3 g5 22. Bxd6 (22. Be2 Ne4 23. Qxd3 Nxg3 24. Qxg3) 22... Qxd6 23. g3 Nd7 24. Bg2 Qf6 25. a3 (25. Rfe1) 25... a5 26. axb4 axb4 27. Qa2 Bg6 28. d6 g4 29. Qd2 Kg7 30. f3 Qxd6 31. fxg4 Qd4+ 32. Kh1 Nf6 33. Rf4 Ne4 34. Qxd3 Nf2+ 35. Rxf2 Bxd3 36. Rfd2 Qe3 37. Rxd3 Rc1 38. Nb2 Qf2 39. Nd2 Rxd1+ 40. Nxd1 Re1+ { 0-1 Black wins. } 0-1
+
+
+[Event "TurboSicilian: Open: Chapter 4 - 5. Nb5 d6 6. c4... 11. Be3"]
+[Date "2025.06.27"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "B44"]
+[Opening "Sicilian Defense: Taimanov Variation, Modern Line"]
+[StudyName "TurboSicilian"]
+[ChapterName "Open: Chapter 4 - 5. Nb5 d6 6. c4... 11. Be3"]
+[ChapterURL "https://lichess.org/study/ho9FNoLP/kohmBQPx"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.06.27"]
+[UTCTime "01:11:59"]
+
+1. e4 c5 2. Nf3 e6 3. d4 cxd4 4. Nxd4 Nc6 5. Nb5 d6 6. c4 Nf6 7. N1c3 a6 8. Na3 Be7 (8... d5) 9. Be2 O-O 10. O-O b6 11. Be3 { As mentioned in the previous chapter, this is the most popular way for white to develop. } 11... Bb7 { The last black piece is developed. It is worth mentioning that this makes the c6 knight slightly misplaced, so in some lines we'll re-route it to D5 or G6 via E5. The database shows practically every legal move from white in this position, we'll focus on the more popular options: } { [%cal Gc6e5,Ge5d7] } 12. Qb3 (12. Qd2) (12. f3) (12. Rc1) (12. f4!?) (12. Nc2 { Minor alternative and slight inaccuracy, as white needs to improve his queen and rooks before spending time moving the knight around. It's a good showcase of how, when given enough time, Black can get B5 or D5 in, which equalizes or gives advantage. } 12... Rc8 13. b3) *
+
+
+[Event "TurboSicilian: Open: Chapter 5 - Nc3 Qc7 6. f4"]
+[Date "2025.06.27"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "B47"]
+[Opening "Sicilian Defense: Taimanov Variation, Bastrikov Variation"]
+[StudyName "TurboSicilian"]
+[ChapterName "Open: Chapter 5 - Nc3 Qc7 6. f4"]
+[ChapterURL "https://lichess.org/study/ho9FNoLP/41WteZ7V"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.06.27"]
+[UTCTime "01:23:54"]
+
+1. e4 c5 2. Nf3 e6 3. d4 cxd4 4. Nxd4 Nc6 5. Nc3 Qc7 6. f4 { Less popular than the main lines, it has achieved a higher percentage score than almost all other sixth move. It is relatively unexplored and offers good attacking chances for white. } (6. a3 { This chapter is focused on 6. f4, but first there is a related system with 6. a3 a6 inserted that needs to be taken into account. We already saw the early a3 in chapter 1 with 5. a3. We will see more a3 ideas in later chapters, as White's set-up will often be defined by piece placement and not based on when he plays a3. This can be unpleasant for move orders, with the exception of our earlier 5. a3 line that prevents any transpositions. } 6... a6 { Of course, white here has options other than the F4 line. These include... } 7. f4 (7. g3 { The fianchetto is harmless in this move order 2 } 7... Nf6 8. Bg2 b5! { And there are no tactical problems to the usual Taimanov style. If white played 0-0 instead of a3, like in Chapter 7, then B5 would lose to e5. } 9. Nxc6 (9. e5 Qxe5+ { Drops the pawn with check... }) 9... dxc6 10. O-O e5 11. Be3 Be6) (7. Be3 { Lenta vs Sandro Baptista: https://lichess.org/study/9jBCfbSD/YVdW09pw } 7... b5 8. Nxc6 { for F4 see the next line } (8. Bd3 { Transposes to a variation of chapter 15 }) 8... Qxc6 9. Be2 Bb7 { Harmless version of the a3 line from chapter 9 }) 7... b5 8. Be3 (8. Be2 Bb7 9. Be3 Na5! 10. Qd3 Nc4 11. Bc1 { Black is clearly happy }) (8. Nf3 Bb7 9. Bd3 Bc5! 10. Qe2 Nd4 { Trkulja, Goran - Zivanic, Marko, 0-1, Subasic Memorial 3rd, 2004, https://lichess.org/XEuuBQY5 }) (8. Nxc6 dxc6! { The right recapture } 9. Be2 Bb7 10. O-O Rd8 11. Qe1 Bc5+ 12. Kh1 Ne7 { Black is ready to castle, dominates the only open file and will soon have both bishops hitting the center. Dynamic equality. }) 8... Nxd4! { The safest choice. } (8... Bb7!? 9. Nb3! Na5!? 10. Nxa5 Qxa5 11. Bd3 Qc7 12. O-O Nf6 13. Qe2 Bc5 14. Bxc5 Qxc5+ { Ends up in a line that is fabourable for White. } { Nakamura, Hi - Harikrishna, P., 1/2-1/2, Palma De Mallorca GP 2017, https://lichess.org/2Mn62UbK }) 9. Qxd4 Bb7 10. Be2 (10. O-O-O Rc8 11. Bd3 { Is a fun position for Taimanov players }) 10... Rc8 11. Bf3 { This position shows up in chapter 9 } 11... h5!) 6... Nxd4!? { It's a slightly unusual move, but it offers black a path to safer positions that are in the spirit of the Taimanov without having to know a lot of theory. The more popular choice is a6, which is very complex. } 7. Qxd4 b6! { Once again, a6 is the popular choice and gives white a lot of options.
+What are the ideas behind the text move? The most obvious of them is to develop the bishop to b7 as fast as possible. An important point is that the immediate attempt to harass the black queen with 8. Nb5 is not at all dangerous. (There are some other instances, most notably variations D2 and E2, when the 8. Nb5 move should be taken more seriously, but Black always has enough resources to maintain the balance.).
+It is worth mentioning that this chapter contains some variations in which Black follows up with a later ...a6 and ...b5, apparently losing a tempo. However, matters are not that simple, since we will only resort to ...b5 in certain situations, usually having already developed quickly with ...Bb7, ...Nf6 and ...Bc5. Note that the pawn on b6 supports a possible ...Bc5 even if the white bishop goes to e3, which would not have been the case if Black had gone for a straightforward ...a6/...b5 plan. When checking the database I noticed something interesting: when sorting by the rating of the White player, the top six games all ended in wins for White, some of them against similarly strong opponents. However, a closer inspection reveals that Black had the advantage in a number of those games and generally had no problems out of the opening } 8. Nb5?! { By choosing b6 instead of a6, we give white the option of harassing our queen with Nb5. In some positions, this idea in combination with Bf4 can be dangerous, but here it is premature. } (8. Be3) (8. Bd2) (8. Bd3) (8. Be2) (8. f5!?) 8... Qc6! { Key move to remember. } 9. Qc4 (9. Be3 Bb7 10. Nc3 Nf6 { This kind of casual development gives black a good game. }) *
+
+
+[Event "TurboSicilian: Open: Chapter 6 - Nc3 Qc7 6. Qd3"]
+[Date "2025.06.27"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "B47"]
+[Opening "Sicilian Defense: Taimanov Variation, Bastrikov Variation"]
+[StudyName "TurboSicilian"]
+[ChapterName "Open: Chapter 6 - Nc3 Qc7 6. Qd3"]
+[ChapterURL "https://lichess.org/study/ho9FNoLP/SSt9EYNl"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.06.27"]
+[UTCTime "01:24:40"]
+
+1. e4 c5 2. Nf3 e6 3. d4 cxd4 4. Nxd4 Nc6 5. Nc3 Qc7 6. Qd3 *
+
+
+[Event "TurboSicilian: Open: Chapter 7 - Nc3 Qc7 6. Ndb5 & 6. g4!?"]
+[Date "2025.06.27"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "B47"]
+[Opening "Sicilian Defense: Taimanov Variation, Bastrikov Variation, Ponomariov Gambit"]
+[StudyName "TurboSicilian"]
+[ChapterName "Open: Chapter 7 - Nc3 Qc7 6. Ndb5 & 6. g4!?"]
+[ChapterURL "https://lichess.org/study/ho9FNoLP/ivUwrxBG"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.06.27"]
+[UTCTime "01:25:09"]
+
+1. e4 c5 2. Nf3 e6 3. d4 cxd4 4. Nxd4 Nc6 5. Nc3 Qc7 6. Ndb5 (6. Nxc6 { is harmless and doesn't require special analysis } 6... bxc6) (6. Ncb5 Qb8 { worse than the other knight }) (6. g4!? { STILL NEEDS WORK } 6... a6 7. Be3 b5 8. Nxc6 Qxc6 9. Qd2 b4 10. Ne2 Qxe4) 6... Qb8 7. Be3 { This is the only move that requires serious attention. } (7. g3 a6 8. Nd4 Be7 { transposing to chapter 8 but with the queen on B8 }) (7. f4 { also harmless } 7... a6 8. Nd4 b5! 9. Nxc6 dxc6) 7... a6 8. Bb6!? { This sacrifice is what gives White's set-up a unique character } (8. Nd4 Nf6 { is harmless as well } 9. f3 b5 10. Qd2 Be7 11. O-O-O O-O 12. g4 Nxd4 13. Bxd4 Bb7 { [%cal Gf6h5,Gh5f4,Ge6e5] }) 8... axb5 9. Nxb5 Bb4+ 10. c3 Ba5 11. Nc7+ (11. Nd6+ Kf8! { is bad for white } 12. Bc5 Nge7 13. Qh5 Nd8 $15 { Lugo, Bl - Gulamali, K., 0-1, PRO League Atlantic 2017, https://lichess.org/ix8LwDxL }) 11... Qxc7 12. Bxc7 Bxc7 13. Qg4 { Other moves fail to put any pressure on black, who can follow the same plan regardless of what white does } (13. g3 Nf6 14. Bg2 O-O 15. O-O d5! $146 { Opens the position with at least equal changes for black }) 13... g6 { [%csl Gc7] } *
+
+
+[Event "TurboSicilian: Open: Chapter 8 - 5. Nc3 Qc7 6. g3"]
+[Date "2025.06.19"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "B47"]
+[Opening "Sicilian Defense: Taimanov Variation, Bastrikov Variation"]
+[StudyName "TurboSicilian"]
+[ChapterName "Open: Chapter 8 - 5. Nc3 Qc7 6. g3"]
+[ChapterURL "https://lichess.org/study/ho9FNoLP/bs4UOZFj"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.06.19"]
+[UTCTime "17:35:55"]
+
+1. e4 c5 2. Nf3 e6 3. d4 cxd4 4. Nxd4 Nc6 5. Nc3 Qc7 6. g3 { The Fianchetto variation is a serious test of the Taimanov.
+White's plan is quite simple: we will see in many variations with the white bishop on e2 that he usually plays f2-f4, g2-g4 and then maneuvers with Bf3-g2 in order to attack with his queen from h5.
+So in the Fianchetto variation if Black plays in traditional Scheveningen style with ...Nf6, ...d6, ...Be7 then short castling is now dangerous. With the bishop sent directly to g2, many new ideas are possible for White; for example, he often takes on c6 and plays a quick e4-e5. This is particularly successful if Black has played a quick ...d6 and ...Nf6, but even with the pawn on d7 then Nxc6 and e4-e5 is an idea worth remembering.
+Now, what are the drawbacks of White's setup? White leaves the c4-square unprotected and this is relevant in many cases, especially if White plays slowly, then Black's usual queenside counterplay is stronger. Also, with the white pawn already on g3, Black may launch his own h-pawn as a counterattacking weapon. In practice, this plan can be dangerous } 6... a6! { The safe choice } (6... Nf6 { Allows } 7. Ndb5 Qb8 8. Bf4 e5 9. Bg5 a6) 7. Bg2 { [%csl Gc4] } 7... Nf6! (7... d6 { The other common alternative } 8. Nxc6! bxc6 9. O-O Nf6) 8. O-O Nxd4 { Black's most solid variation and has been widely recommended. } (8... b5?? { The move to avoid } 9. e5! { Crushing }) 9. Qxd4 Bc5 10. Qd1 { Simplistic approach but has some venom with Bg5 } (10. Qd3 { White's second most popular option. The goal is to play Rd1 and put pressure on d6 } { [%csl Gd1,Ge3][%cal Gf1d1,Gc1e3] } 10... Ng4! { But this is the drawback of the queen move. Putting pressure on e5 with tempo } { [%cal Gg4e5] } 11. Qe2 (11. h3 Ne5 12. Qe2 b5 { Is good for black })) (10. Bf4) 10... d6 11. Bf4 (11. Bg5! Nd7 { "Forced" } 12. Na4 Ba7 13. c4 Qb8 14. e5 Nxe5 15. c5 f6 16. Be3 O-O 17. Qxd6 Qxd6 18. cxd6 Bxe3 19. fxe3 Rb8 20. Nb6 Nd7 21. Nxd7 Bxd7) 11... h6! { [%cal Ge6e5] } (11... Bd7) 12. Na4 e5 13. Nxc5 exf4 14. Nd3 fxg3 15. hxg3 Be6 { Wanting to castle long } *
+
+
+[Event "Bled"]
+[Site "Bled YUG"]
+[Date "1961.09.04"]
+[Round "2"]
+[White "Robert James Fischer"]
+[Black "Mikhail Tal"]
+[Result "1-0"]
+[Variant "Standard"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[ECO "B47"]
+[Opening "Sicilian Defense: Taimanov Variation, Bastrikov Variation"]
+[StudyName "TurboSicilian"]
+[ChapterName "Fischer - Tal"]
+[ChapterURL "https://lichess.org/study/ho9FNoLP/VBaANaqA"]
+
+{ The moral victor
+After an early lapse by Tal on move 6, Fischer relentlessly presses home his advantage. He misses several opportunities to shorten Tal’s resistance, but the outcome is never really in doubt.
+
+“Finally, he has not escaped me!” exulted Fischer.
+
+“It is difficult to play against Einstein’s theory,” sighed Tal, who went on to capture first prize.
+
+But it was Fischer, finishing a strong second, who had the consolation of scoring 3½ out of 4 against the Russian contingent, and of being the only player (in a field of twenty) to emerge undefeated. }
+1. e4 c5 2. Nf3 Nc6 3. d4 cxd4 4. Nxd4 e6 5. Nc3 Qc7 6. g3 Nf6 7. Ndb5 Qb8 8. Bf4 Ne5 9. Be2 Bc5 10. Bxe5 Qxe5 11. f4 Qb8 12. e5 a6 13. exf6 axb5 14. fxg7 Rg8 15. Ne4 Be7 16. Qd4 Ra4 17. Nf6+ Bxf6 18. Qxf6 Qc7 19. O-O-O Rxa2 20. Kb1 Ra6 21. Bxb5 Rb6 22. Bd3 e5 23. fxe5 Rxf6 24. exf6 Qc5 25. Bxh7 Qg5 26. Bxg8 Qxf6 27. Rhf1 Qxg7 28. Bxf7+ Kd8 29. Be6 Qh6 30. Bxd7 Bxd7 31. Rf7 Qxh2 32. Rdxd7+ Ke8 33. Rde7+ Kd8 34. Rd7+ Kc8 35. Rc7+ Kd8 36. Rfd7+ Ke8 37. Rd1 b5 38. Rb7 Qh5 39. g4 Qh3 40. g5 Qf3 41. Re1+ Kf8 42. Rxb5 Kg7 43. Rb6 Qg3 44. Rd1 Qc7 45. Rdd6 Qc8 46. b3 Kh7 47. Ra6 { 1-0 White wins. } 1-0
+
+
+[Event "TurboSicilian: Open: Chapter 9 - Nc3 Qc7 6. Be2: Various 7th Moves"]
+[Date "2025.06.27"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "B47"]
+[Opening "Sicilian Defense: Taimanov Variation, Bastrikov Variation"]
+[StudyName "TurboSicilian"]
+[ChapterName "Open: Chapter 9 - Nc3 Qc7 6. Be2: Various 7th Moves"]
+[ChapterURL "https://lichess.org/study/ho9FNoLP/tYLMPD8T"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.06.27"]
+[UTCTime "01:25:50"]
+
+1. e4 c5 2. Nf3 e6 3. d4 cxd4 4. Nxd4 Nc6 5. Nc3 Qc7 6. Be2 { White's second-most common move, some way behind 6.Be3. With 6.Be2 White hints that he will castle short and try to play a controlled classical game } 6... a6 { This is a vital tabiya in the Taimanov. } 7. Nxc6 { I wish to explain some basic considerations regarding White's capture on c6. Firstly, and most obviously, how should Black recapture? Before we start debating the advantages and disadvantages of each recapture, I would like to give a name to each of them that describes the kind of positions that arise later.
+In this specific position, of course, you only need to have one recapture prepared to have a reliable repertoire, but you will face captures on c6 in many different positions, so it is wise to be familiar with the characteristics of all three recaptures.
+First of all, the "Strategic Capture" is ...dxc6, as the play after ...dxc6 usually consists of typical knight manoeuvres. Black will probably have to play ...e5 and accept a symmetric position. There is nothing wrong with this capture, but usually it's the one I would choose last, as it is not so flexible. The second capture I will call the "Taimanov Capture". Black captures on c6 with the queen and then plays ...b5, ...Bb7, ...Nf6 (or ...Ne7), ...Be7 or ...Bc5) and the game continues in typical Taimanov style; Black combines both ...d5 and ...b4 breaks. It is also quite typical that Black will play ...Qc7 to defend against the e4-e5 push and to protect himself against Bf3, Re1 and Nd5 tricks.
+So, as this book is a Taimanov repertoire, I would normally propose the "Taimanov Capture" and then continue the analysis. But I personally believe more in the "Dynamic Capture" which is ...bxc6. One can very easily understand the name of this capture; Black creates an imbalance in the pawn structure and wishes to build a strong centre with ...d7-d5. We will go into further details in the analysis } (7. f4 b5!?) (7. a3 { White's idea is to prevent Black from playing the standard move ...Bb4. The only drawback is that White gives away precious time for development. Black has two ways to continue. In general I like to play the standard move } 7... Nf6! (7... b5) 8. Be3 (8. f4 Nxd4! 9. Qxd4 Bc5 10. Qd3 d5! 11. exd5 { Opening the position with exd5 looks risky for white with the king stuck in the middle } (11. e5 Nd7 12. Qg3 O-O 13. Bd3 Ba7! $146) 11... exd5 12. Be3 Bf5! 13. Qxf5 Bxe3 14. Qe5+ Qe7)) (7. a4 Nf6 { Transposes to the 0-0 lines sooner or later, covered in the following five chaptes. }) (7. Be3 Nf6 8. f4 (8. a3 b5 9. f4 (9. O-O) (9. Nxc6)) (8. Qd2) 8... Bb4 9. e5 Nd5) (7. O-O) 7... bxc6 { The Dynamic Capture. In this chapter, we will study the basic concepts of this pawn structure. For a start, White's pieces are not ideally placed. The light-squared bishop would be better placed on d3, as it can do more to help the attack from that square; probably White will have to move the bishop again to d3. So we will not consider this position to be the tabiya. We will just explain here the basic plans for Black and White } (7... Qxc6 { The Taimanov Capture }) (7... dxc6 { The Strategic Capture }) 8. O-O (8. Qd3 { Annoying modern trend in the Taimanov to offer a queen exchange on g3 } { [%csl Gg3][%cal Gd3g3] } 8... d5 9. Qg3 Qxg3 10. hxg3 Nf6! $146 { The most flexible development } 11. Be3 Bb4 { Black has good chances }) (8. Be3 Rb8 (8... Nf6) 9. Rb1 d5! { And Black is comfortable: Friedrich - Tydecks 1998 }) 8... Nf6 9. f4 d5 { White's light squared bishop would be better on d3 } 10. Bd3 (10. e5 Nd7 11. Qe1) 10... Be7 { White has two different plans. The first involves the e4-e5 push and in the second White tries to hold the tension in the centre. } 11. e5 { A) White plays e4-e5. White usually tries to combine attacking ideas on the kingside with a queenside breakthrough. White will try:
+1) To keep the light-squared bishop in order to be able to attack on the kingside.
+2) To exchange the dark-squared bishops. This exchange will let him have a better blockade on the c5-square if Black has not pushed his c-pawn, or attack the c5-pawn more effectively if Black has pushed the c-pawn. Moreover if Black has played the move ...g6 in order to defend his king, the f6-square will become even weaker.
+3) White's basic plan is to play Na4, b2-b3, c2-c4. If Black has played ...c5 and ...d4 then there is a powerful manoeuvre with ie4 and Nb2-d3 coming. The dark-squared bishop might be developed to a3 in order to attack the c5-pawn. White's knight is ideally placed on b2 as it both blockades the passed d4-pawn and prevents the ...a5-a4 pawn breakthrough.
+Black has to try to defend against White's above-mentioned plans.
+1) Black will try to defend his king by playing ...g6 or .. .f5 at the appropriate moment. It is also quite possible to defend with the manoeuvre ...Rfd8 and ... Nf8 (or ...if8 and then ...g6, ...ig7).
+2) Black should try to put some pressure on the b2-pawn. If White goes b2-b3, then try to attack on the queenside with the typical minority attack ...a5-a4 or even ...c5-c4. The light-squared bishop should be placed either on b7 in order to put long-term pressure on g2, or should be exchanged from a6. One key point is that if Black wants to go for ...f5 (or .. .f6 in some cases) the bishop should be placed on c8 to defend e6.
+3) A final very important detail is that Black should try to exchange the knights. It may not seem obvious why Black should try to exchange the knights (in contrast, all of us would try to exchange the light-squared bishops immediately, as we understand that White's light-squared bishop is more useful than Black's). But to understand why Black should try to exchange knights requires some experience of playing the position. If you have not been tortured playing a position with the above-mentioned set-up b3, c4, ie4, Nd3 then you will not fully appreciate why exchanging the knights frees Black's hands. } (11. Qe2 { B) In the second plan White doesn't push the e-pawn and tries to keep the tension. In this situation there is no single standard plan for White or Black, as the position remains flexible and there are many possible plans for each side. We will give some typical examples.
+White's plans are:
+1) White usually plays standard waiting moves in order to improve his pieces. Moves such as Kh1 , Qe2, b3, Bb2, Rae1 . 2) After having playing most (or all) of the waiting moves above, White usually continues with e4-e5 and tries to enter a better version of Plan A, or plays exd5 and tries to continue the attack with f4-f5. Black's standard plans are:
+1) Black could continue with standard moves such as ...Be7, ...0-0, ...Bb7, ...Rfe8 and ...c5.
+2) Black should always be prepared to meet the e5-push with the plans described under Plan A. 3
+3) Black could always think about playing ...dxe4, exchange the knights, and then play ...g6, ...Bf6 and slowly go for ...c5-c4 or ...a5-a4. }) *
+
+
+[Event "TurboSicilian: Open: Chapter 10 - Nc3 Qc7 6. Be2 a6 7. 0-0"]
+[Date "2025.06.27"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "B47"]
+[Opening "Sicilian Defense: Taimanov Variation, Bastrikov Variation"]
+[StudyName "TurboSicilian"]
+[ChapterName "Open: Chapter 10 - Nc3 Qc7 6. Be2 a6 7. 0-0"]
+[ChapterURL "https://lichess.org/study/ho9FNoLP/CPo8eznG"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.06.27"]
+[UTCTime "01:27:21"]
+
+1. e4 c5 2. Nf3 e6 3. d4 cxd4 4. Nxd4 Nc6 5. Nc3 Qc7 6. Be2 a6 7. O-O { Having looked at several non-threatening alternatives in the previous chapter, we now take a look at the main line. } 7... Nf6 { Be3 is by far white's most popular continuation, but let's look at some other moves also. Our four main branches will be... } 8. Be3 (8. Kh1!? { Signals a quick attacking plan with f4. We have seen in other variations that we go for Bd6, but that plan is pointless now. } { [%csl Gc5] } 8... Nxd4 9. Qxd4 Bc5 10. Qd2 { Looks strange to block the D1 bishop, but White's queen has prospects on the queen-side. } (10. Qd3 b5! 11. Bg5 (11. f4 Bb7 12. Bf3 d5! 13. e5 (13. exd5 O-O! { The safest continuation } 14. dxe6 (14. d6 Qb8 15. Bxb7 Qxb7 { Savanovic, A. - Finek, Vaclav, 1/2-1/2, Vienna IM Feb 2022, https://lichess.org/8StwNw7E }) 14... Rad8 15. Qe2 Rde8 16. f5 fxe6 17. fxe6 Bxf3 18. Rxf3 Ng4! { White has to be accurate to survive. } 19. Bf4 Rxf4 20. Nd5 Rxf3 21. Nxc7 Nf2+ 22. Kg1 Nh3+ 23. Kh1 Nf2+ $7 $10) 13... Nd7 14. Ne2 { Thematic french structure } 14... b4! { Black needs to activate the light square bishop, and won't do it via D4 } { [%cal Gb7c6,Gc6b5] }) 11... Bb7 12. a3 { Secures the knight on c3 but gives away enough time to justify the following reaction } (12. f4 h6!? { More challenging than the previous variation as white is going on the offensive faster. } 13. Bh4 (13. Bxf6 gxf6 14. Bh5 { Prevents h5 and wins a pawn on 0-0-0 } 14... O-O-O 15. Bxf7 { Black is better } 15... Kb8 { [%cal Gb7g2,Gc5g1] }) 13... b4!) 12... h5! 13. f4 (13. Bh4 Bd6) 13... Ng4! 14. Bh4 Rc8! { Getting ready for counter-play against the C3 knight } { [%cal Gb5b4,Gc5b4] }) (10. Bf4 Bxd4 11. Bxc7 Bxc3 12. bxc3 Nxe4 { Is a thematic Taimanov position where White sacks a pawn, but it's not very good here as white lacks a knight to exploit black's dark squares. } 13. c4) 10... O-O 11. Qg5 d6 12. Qh4!? { Making space for Bg5 } 12... b5 13. Bd3 Bb7 14. e5!? { The critical move to check. } (14. Bg5 Nd7 15. Be7 Rfe8 16. e5 { Kravtsiv, M. - Neiksans, A., 1/2-1/2, Riga Tech Open A 2016, https://lichess.org/53qR6Ugc }) 14... dxe5 15. Bg5 Rfd8! 16. Bxf6 gxf6 17. Qxf6 (17. Qxh7+ Kf8 { [%cal Gc3e4] } 18. f3 Ke7 19. Bg6 Rf8 20. Ne4 Be3 21. Rae1 Bxe4 22. fxe4 Bg5 $13 { This is a pretty unclear position, but black doesn't have bad chances. })) (8. Bg5 { Employed in a rapid game by Pavel Eljanov against Judit Polgar } { Eljanov, Pavel - Polgar, Judit, 0-1, Netanya Riordan, 2009, https://lichess.org/D9lA1F2w } 8... Bd6 9. Kh1 (9. Bxf6 gxf6 { Is good for black }) (9. g3 Nxd4 10. Qxd4 Be5 { Gavrilovic, L. - Pavlovic, G1., 0-1, ch-Central SRB Ind 2014, https://lichess.org/B4B3hV5E }) 9... Nxd4 10. Qxd4 Be5 11. Qd3 { This position is roughly equal, but black's pieces are well positioned so he has good chances. } 11... b5! $146 12. f4 Bxc3 13. bxc3 Bb7 14. Bxf6 gxf6 15. Rad1 Rg8 16. Bf3 Rd8! { The chances are balanced. This move prepares d6 } { [%cal Gd7d6] }) (8. a4 { White fights against the B4 push but gives away the b4 square forever. The thematic Na4-Nb6 plan is also now not possible. } 8... Bd6!? (8... Bb4 { Is the main line but it gives white too many options }) 9. Kh1 (9. f4 { Is a blunder after } 9... Nxd4) (9. h3 Nxd4 10. Qxd4 O-O { Is similar to the mainline, with Be5 coming next }) (9. Nxc6 bxc6 10. Kh1 Bf4!? 11. Bxf4 Qxf4 12. Qd4 O-O 13. Bf3 { Sidorenko, Ilya - Smirin, Ilia, 0-1, ISR-chT 08, 2008, https://lichess.org/6GjGrZg3 }) 9... Nxd4 10. Qxd4 O-O! 11. Qd3 Be5 12. f4 Bxc3 13. bxc3 d5 14. e5 Ne4 15. Bf3 { Seems to be white's best } 15... Bd7! 16. c4! Rfd8 { Black's position is fine thanks to the following tactical point } 17. cxd5 exd5 18. Qxd5 Bb5 19. Qxe4 Bxf1 20. Ba3! Qc3 21. Qe1 Qxe1 22. Rxe1 Bc4 23. Bd6! (23. Bxb7 Rab8 { Would activate the rooks }) 23... Rac8 24. Bxb7 Be6 25. Bxc8 Rxc8 26. Rb1 Rxc2 27. Rb8+ Rc8 28. Rxc8+ Bxc8 { Is an easy draw }) (8. a3 Nxd4 9. Qxd4 { With this move, white invested a tempo to prevent the typical Bb4 } 9... Bd6 { The bishop should be placed on d6 in these types of positions, when possible. } 10. Kh1! { It's important to understand the possible replies white has to this battery:
+- Move the attacked pawn with h3
+- Block the diagonal with g3
+- Defend indirectly with Kh1
+- In some lines, f4 is possible, but here it would lose the queen.
+Kh1 is the "correct" way to play. It avoids weakening the structure and prepares f4 to challenge the bishop. H3 weakens the G3 square and G3 weakens the light squares. White can then fianchetto the bishop to counter-act that, but it would've been better to do that from the start. It is also a target for h4. } 10... Be5 { The bishop is good on e5 in these lines. } 11. Qe3 O-O 12. f4 (12. Bd2 { Allows black to take the initiative with... } 12... d5! { Equalizing }) 12... Bxc3 13. bxc3 d5 14. exd5 exd5) (8. Nxc6 bxc6 { Leads to a variation in the previous chapter }) (8. Nb3 b5 9. a3 { Is the kind of passive set-up that black should be happy to face. }) (8. Bf3 Bd6 9. g3 Nxd4 10. Qxd4 Be5 11. Qd3 b5 { Gives black good play, similar to other lines of this chapter. }) 8... Bb4 { Will be looked at in the next chapter in more depth. } 9. f3 { This chapter deals with a number of interesting sidelines after 7. 0-0 Nf6. Conveniently, we can meet the first three of them, Bg5, a3, and a4, with the same plan of Bd6 (before or after exchanging on d4), attacking the h2 pawn, followed by Be5.
+8. Kh1 is more challenging, as white defends the h2 pawn in advance. So we change plans to Nxd4! Qxd4 Bc5, leading to a position rich in possibilities. Black has a full share of the chances though, and a number of attractive resources. } *
+
+
+[Event "Karpov - Kasparov World Championship Match"]
+[Site "Moscow URS"]
+[Date "1985.11.09"]
+[Round "24"]
+[White "Anatoly Karpov"]
+[Black "Garry Kasparov"]
+[Result "0-1"]
+[Variant "Standard"]
+[ECO "B84"]
+[Opening "Sicilian Defense: Scheveningen Variation, Classical Variation"]
+[StudyName "TurboSicilian"]
+[ChapterName "Karpov - Kasparov 1985: Game 24"]
+[ChapterURL "https://lichess.org/study/ho9FNoLP/4mPZcK1i"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+
+1. e4 c5 2. Nf3 d6 3. d4 cxd4 4. Nxd4 Nf6 5. Nc3 a6 6. Be2 e6 7. O-O Be7 8. f4 O-O 9. Kh1 Qc7 10. a4 Nc6 11. Be3 Re8 12. Bf3 Rb8 13. Qd2 Bd7 14. Nb3 b6 15. g4 Bc8 16. g5 Nd7 17. Qf2 Bf8 18. Bg2 Bb7 19. Rad1 g6 20. Bc1 Rbc8 21. Rd3 Nb4 22. Rh3 Bg7 23. Be3 Re7 24. Kg1 Rce8 25. Rd1 f5 26. gxf6 Nxf6 27. Rg3 Rf7 28. Bxb6 Qb8 29. Be3 Nh5 30. Rg4 Nf6 31. Rh4 g5 32. fxg5 Ng4 33. Qd2 Nxe3 34. Qxe3 Nxc2 35. Qb6 Ba8 36. Rxd6 Rb7 37. Qxa6 Rxb3 38. Rxe6 Rxb2 39. Qc4 Kh8 40. e5 Qa7+ 41. Kh1 Bxg2+ 42. Kxg2 Nd4+ { 0-1 Black wins. } 0-1
+
+
+[Event "TurboSicilian: Open: Chapter 11 - Nc3 Qc7 6. Be2 a6 7. 0-0 Nf6 8. Be3 Bb4 9. Nxc6"]
+[Date "2025.06.27"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "B47"]
+[Opening "Sicilian Defense: Taimanov Variation, Bastrikov Variation"]
+[StudyName "TurboSicilian"]
+[ChapterName "Open: Chapter 11 - Nc3 Qc7 6. Be2 a6 7. 0-0 Nf6 8. Be3 Bb4 9. Nxc6"]
+[ChapterURL "https://lichess.org/study/ho9FNoLP/56A3YAF6"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.06.27"]
+[UTCTime "01:50:03"]
+
+1. e4 c5 2. Nf3 e6 3. d4 cxd4 4. Nxd4 Nc6 5. Nc3 Qc7 6. Be2 a6 7. O-O Nf6 8. Be3 Bb4 9. Nxc6 (9. Na4 { Analysed in the next three chapters }) (9. f3 { Doesn't understand the position. What do we do when White is slow? D5 } 9... d5 10. exd5 exd5 11. Qd2 O-O) 9... bxc6 { Many moves have been tried, but most neutral options offer Black comfortable play with a strong pawn center after D5 } 10. Qd4 { This variation became famous when Wei Yi beat Murali with it. Black needs some accurate moves to not be worse. } (10. f4 O-O! { Flexibility, with D5 incoming. Meaning the strongest move by white is... } { [%csl Gd5][%cal Gd7d5] } 11. e5 Nd5 12. Nxd5 cxd5 13. Qd4 (13. Bd3 d6! { Black's plan is simple - let's just exchange all the bishops in order to secure the safety of his king and then try to advance the A pawn and create counter-play against B2. If for some reason the light-squared bishops cannot be exchanged, Black can shut down the activity of the D3-bishop with g6. } 14. Kh1 g6 15. Qg4 Bc5 16. Bxc5 dxc5! 17. Rf3 { [%cal Gf3h3,Gg4h4] } 17... c4 18. Be2 Qe7! { Black will follow-up with Rb8 to hit b2. It is hard to believe that White will be able to attack on the Kingside using only two pieces. }) (13. c3 Be7! 14. f5!? exf5 15. Qxd5! (15. Rxf5 d6 16. e6 fxe6 17. Rxf8+ Bxf8) 15... Bb7 16. Qd4 g6 { Stabilizing the kingside and preparing for a re-route } 17. Rad1 Rfe8 18. Bc4 (18. Qxd7 Qxe5 { Helps black }) 18... Bf8 $10) 13... a5! { Quite logical and requires an accurate response. To understand the importance of this move, we should look at the alternative... } (13... Rb8 14. a3 Ba5 15. b4 Bb6 16. Qd3 Qa7 { Might be playable but after } 17. Bxb6 Qxb6+ 18. Kh1 Bb7 19. c3 { Black's position looks stuck, and white's side appears easier to play. }) 14. c4 (14. a3 Be7 15. b4 { Is not as effective as in the note above. } 15... axb4 16. axb4 Rxa1 17. Rxa1 Qxc2 18. Bd3 Qb3 19. b5 f6 $13 { Offers black decent play. } 20. Rb1 Qa3 21. Ra1 Qb3 22. Rb1 Qa3) 14... dxc4 15. Rac1 d5 { Pulkkinen, Kari - Bergstrom, Christer, 1/2-1/2, Stockholm-Helsinki m, 1994, https://lichess.org/JEOdCvfN } 16. exd6 Qxd6 17. Bf3 Qxd4 18. Bxd4 Rb8 19. Ba7 Rb5 20. Rxc4 Be7 21. b3 Bb7 { With an equal endgame. }) (10. Na4 { Is the most common moves, but transposes to a variation in the next chapter }) (10. h3 O-O 11. Bf3 d5 { For example }) 10... c5! 11. Qc4 (11. Qd3 { Is another idea, claiming C5 is positionally bad for black as it is harder to play D5, and A5 would trap the bishop. However, the queen is bad on D3 and Bb7 is fine for black. } 11... Bb7 12. a3 c4! { The point }) 11... O-O 12. Na4 (12. Bf3 d6! 13. a3 Bxc3 14. Qxc3 Bb7 { e5 has been played many times in this position but Black's results have been poor. Black is under no obligation to fix the central structure. Although the text move is a novelty, it transposes to an older game. } 15. e5 { The critical continuation } { Van Baarle, John - Janssen, Han, 1/2-1/2, NED-ch35 sf-A, 1980, https://lichess.org/GapBw6FO } 15... dxe5 { At first glance, White's position may seem more pleasant since Black has doubled pawns and white has a queen-side majority. However, the doubled e-pawns are actually quite common in the sicilian and black often goes for such structures as the e6 pawn covers the hole on d5 and may lead to opportunities along the open D file.
+An important point about this specific position is that White's bishop is passively placed. If White had time to carry out the plan of Be2, f3, Qc3 and Bc4 he could claim an edge, but there is no time because Black is threatening to double rooks on the D file. } 16. Qxc5 Rfc8 17. Qxc7 Rxc7 18. Bb6! $146 (18. Bxb7 Rxb7 19. Rab1 Rc8 20. Rfc1 Rbc7 21. c3 { Gave black an advantage in the game we were following }) 18... Rd7 19. Bd1 Nd5 20. Ba5 Rc8 { It is important to prevent white from pushing the C pawn. } 21. Re1 f6 22. Rc1 Rc5 23. Bd2 Kf7 { [%cal Gg7g6] } 24. g3 { Preventing knight jumps } { [%csl Ge3,Gf4][%cal Gd5f4,Gd5e3] } 24... Rc8 $10 { White keeps the bishop pair and superior pawn structure, but there's no convincing way to improve the position. It is hard to move the C pawn without creating weaknesses and it is hard to find good squares for the bishops, while black has an easy plan of improving the knight. } { [%cal Gd5e7,Ge7c6,Gc6d4] }) (12. a3 Bxc3 13. bxc3 Bb7 { Following the themes. }) 12... a5! { Threatening Ba6 } { [%csl Ga6][%cal Gc8a6] } 13. Qb3 (13. Qd3 { Nothing wrong here, but black equalizes. } 13... d5! 14. c4 Bd7 15. a3 d4! { Vital intermediate move } 16. axb4 Bxa4 17. Bxd4 (17. b5! dxe3 18. f3 Bxb5 19. cxb5) 17... axb4 18. Bxf6 gxf6 19. f4 Qd8 { The simplest way to kill white's attacking chances } 20. Qe3 Qd4! 21. Qxd4 cxd4 22. e5!? Bc2 { Activity is more important than material } 23. exf6 b3! 24. Rxa8 Rxa8 25. c5 Rc8 26. Ra1 h6 { Black collects the C pawn and then pushes the D pawn to force the draw. } { [%csl Gc5][%cal Gc8c6,Gc8c5] }) 13... d5! { Preparing C5 so that the bishop can return to d6 } { [%cal Gc5c4] } 14. exd5 (14. c4 { Interesting pawn sacrifice. } 14... Nxe4! 15. a3 (15. Qc2 Bd7 16. Bf3 Nd2! { Not the only playable move, but the simplest way to avoid danger. } 17. Bxd2 Bxa4 18. Qxa4 Bxd2 { White will restore material equality and then place his bishop on C4. } { [%cal Gc4d5,Ge6d5,Gf3d5,Gd5c4] }) 15... Bd2 16. cxd5 exd5 17. Qxd5 Bb7) 14... exd5 15. c4! { This might seem quite dangerous for black, with a3 threatening to trap the bishop and possibly extracting some positional concession. Here, a novelty by Pavlidis } { Mastrovasilis, D. - Pavlidis, Ant, 1/2-1/2, Greek Final 8 Team Cup, 2018, https://lichess.org/zWSyOa1X } 15... Bg4! { [%csl Gg4][%cal Gf6g4] } 16. Bd1! { This might seem surprising but it is the most challenging choice of all. It keeps control over the g4 square to prevent Ng4, and d1 is defended. } (16. Bd3 { [%csl Gg4] } 16... Bd7 17. h3 { [%csl Gg4] } 17... Rfd8 { [%csl Gd2,Ga4][%cal Gd5c4,Gd3c4,Gd8d2,Gd7a4,Gb3a4] } 18. Rad1 d4! 19. Bg5 Rab8 20. Qc2 Qc6! 21. Bxf6 gxf6 { White has ruined Black's kingside and the H pawn is under-fire. But black has compensation } { [%csl Gb6,Gc3][%cal Ga4c5] } 22. b3 Kg7! 23. Qc1 Rg8 { [%csl Gg2][%cal Gg7f8,Gg8g2] } 24. a3 Kh8 25. f3 Bxa3! 26. Qxa3 Bxh3 27. Rd2 Qe6 { [%csl Ge3][%cal Ge6e3] } 28. Be4 f5 29. Nxc5 Qe7 { The best idea for white is to give back material to simplify } 30. Qb2 fxe4 31. Qxd4+ f6 32. Qe3 Rbd8 { The position is objectively balanced, but black has practical chances }) (16. f3 Bd7! { Black is better } 17. Bd3 Rae8) 16... dxc4! 17. Qc2 Bxd1 18. Raxd1 Ng4 19. g3 Rad8 20. Bf4 Qc6 21. h3 Nf6 22. Rxd8 Rxd8 23. a3 h6 24. axb4 cxb4 25. Ra1 { Now black has several ways to maintain the balance, but I like the following weird idea } 25... Nh5! 26. Be5 Re8 27. Bd4 Qf3 { [%csl Ge2][%cal Ge8e2] } 28. Qd1 Re2! 29. Qf1 { Otherwise Nxg3 wins } 29... Nxg3 30. Qg2 Qe4! 31. Qxe4 Nxe4 { Black has three pawns for the piece and all three results are possible, but a draw is the most correct and probable outcome. } 32. Kg2 { CONCLUSION:
+This chapter on 9. Nxc6 bxc6 proved to be more demanding than antiicpated. First we analysed the sideline of 10. f4 0-0 11. e5 Nd5 12. Nxd5 cxd5, when Black's position is fine but there are three main lines to check.
+Then there's the more challenging option of 10. Qd4 c5 11. Qc4 0-0, when Na4 a5 is critical. Black has plenty of dynamic counter-chances but his b4-bishop is under constant threat of being trapped, so it is essential to know our lines and remain alert at the board. We analysed a few options but the main line continues 13. Qb3! d5! 14. exd5 exd5 15, c4! after which Bg4 is my improvement which I was able to test in a practical game. Black is in good shape theoretically, and there are plenty of attacking resources in the ensuing lines which could be used to catch an unsuspecting opponent. } *
+
+
+[Event "TurboSicilian: Open: Chapter 12 - Nc3 Qc7 6. Be2 a6 7. 0-0 Nf6 8. Be3 Bb4 9. Na4"]
+[Date "2025.06.27"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "B47"]
+[Opening "Sicilian Defense: Taimanov Variation, Bastrikov Variation"]
+[StudyName "TurboSicilian"]
+[ChapterName "Open: Chapter 12 - Nc3 Qc7 6. Be2 a6 7. 0-0 Nf6 8. Be3 Bb4 9. Na4"]
+[ChapterURL "https://lichess.org/study/ho9FNoLP/BsI8Ohd1"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.06.27"]
+[UTCTime "01:50:16"]
+
+1. e4 c5 2. Nf3 e6 3. d4 cxd4 4. Nxd4 Nc6 5. Nc3 Qc7 6. Be2 a6 7. O-O Nf6 8. Be3 Bb4 9. Na4 Be7 10. Nxc6 bxc6 11. Nb6 Rb8 12. Nxc8 Qxc8 *
+
+
+[Event "TurboSicilian: Open: Chapter 13 - Nc3 Qc7 6. Be2 a6 7. 0-0 Nf6 8. Be3 Bb4 9. Na4 ... 13. Nd5"]
+[Date "2025.06.27"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "B49"]
+[Opening "Sicilian Defense: Taimanov Variation, Bastrikov Variation"]
+[StudyName "TurboSicilian"]
+[ChapterName "Open: Chapter 13 - Nc3 Qc7 6. Be2 a6 7. 0-0 Nf6 8. Be3 Bb4 9. Na4 ... 13. Nd5"]
+[ChapterURL "https://lichess.org/study/ho9FNoLP/PJB9y2C3"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.06.27"]
+[UTCTime "01:51:09"]
+
+1. e4 c5 2. Nf3 e6 3. d4 cxd4 4. Nxd4 Nc6 5. Nc3 Qc7 6. Be3 a6 7. Be2 Nf6 8. O-O Bb4 9. Na4 Be7 { [%cal Gd4c6] } *
+
+
+[Event "TurboSicilian: Open: Chapter 14 - Nc3 Qc7 6. Be2 a6 7. 0-0 Nf6 8. Be3 Bb4 9. Na4 ... 13. Bd4"]
+[Date "2025.06.27"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "?"]
+[Opening "?"]
+[StudyName "TurboSicilian"]
+[ChapterName "Open: Chapter 14 - Nc3 Qc7 6. Be2 a6 7. 0-0 Nf6 8. Be3 Bb4 9. Na4 ... 13. Bd4"]
+[ChapterURL "https://lichess.org/study/ho9FNoLP/pbGOuq2M"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.06.27"]
+[UTCTime "01:51:53"]
+
+ *
+
+
+[Event "TurboSicilian: Open: Chapter 15 - 6. Be3 7. Bd3: Introduction"]
+[Date "2025.06.27"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "B48"]
+[Opening "Sicilian Defense: Taimanov Variation, Bastrikov Variation, English Attack"]
+[StudyName "TurboSicilian"]
+[ChapterName "Open: Chapter 15 - 6. Be3 7. Bd3: Introduction"]
+[ChapterURL "https://lichess.org/study/ho9FNoLP/7hZcPJNs"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.06.27"]
+[UTCTime "01:53:04"]
+
+1. e4 c5 2. Nf3 e6 3. d4 cxd4 4. Nxd4 Nc6 5. Nc3 Qc7 6. Be3 { White's most common and aggressive 6th move. } 6... a6 7. Bd3 { Designed to counter Scheveningen set-ups. In the classical set up, the bishop starts on e2 as seen in previous chapters and then goes to d3. } (7. a3) 7... Nf6 { The most common move, the natural development. B5 is also an option, but it often transposes.
+In later chapters, we'll see white's other three main options that require specific ideas: Qd2, Qf3, and the English attack.
+There are two main lines: Nb3 and 0-0. } 8. O-O (8. Nb3 { This move is designed to avoid the lines with 8.0-0 Nxd4 9.Bxd4 Bc5. In this case however, the Scheveningen set-up is not so dangerous for Black. If White wishes to attack on the kingside, then relocating a centralized knight from d4 to the more passive b3-square is not helpful. } 8... Be7 (8... b5 9. f4 Bb7 10. O-O d6 11. Qf3 { Is another possible move order, and now Black can even play g6 and fianchetto. }) 9. f4 d6 10. O-O (10. g4 b5 11. g5 (11. e5) (11. f5 Ne5 12. g5 Nfg4 13. Bg1) 11... Nd7) 10... O-O 11. Qf3 b5 { White has achieved his desired set-up, but how should he continue? } 12. Rae1!? { [%cal Ge4e5] } (12. g4 Re8!! 13. g5 (13. Qh3 Nd7 14. e5 Nf8 { [%csl Gh7][%cal Gf8h7] }) 13... Nd7 14. h4 { Typical sicilian position. White will try to break in the center or attack in the queenside with a5 } { [%cal Ga6a5,Gb5b4,Ga5a4] }) (12. a4 b4 13. Ne2 e5 14. f5 Na5! (14... d5!? { Spassky - Tal })) 12... Bb7 13. Qh3 Nb4 { The d3 bishop is white's most dangerous attacking piece } { [%csl Gd3] } 14. a3 Nxd3 15. cxd3 a5! { Shanava, Konstantine - Kotanjian, Tigran, 0-1, Jermuk Asrian Memorial 4th, 2011, https://lichess.org/RfYdCmc9 } 16. Nd4 b4 17. Ncb5 Qd7 18. a4 Rfc8 19. Re2 Ba6! 20. g4 Ne8 21. g5 d5 $132) (8. Nxc6 bxc6 { The knight exchange is pointless, now black has an easy d5. It makes sense to exchange after b5, not before. } { [%cal Gd7d5] }) (8. Qe2 { Gives white ideas of long castle, but it shouldn't work out well after
+Game vs Frutuoso: https://lichess.org/study/9jBCfbSD/zp9Hkrd8 } 8... b5 9. Nxc6 (9. O-O-O Bb4!? 10. Nd5? { Unsound in this case, but black should always be ready for the Nd5 sacrifice. } (10. Nxc6 dxc6 { is strong for black }) 10... exd5 11. exd5 Nxd4 12. Bxd4+ Kf8 { Safarli, Eltaj - Volodin, Aleksandr, 0-1, World Youth Stars 4th, 2006, https://lichess.org/9Nxp9j0t }) (9. h3 Bb7) 9... Qxc6 10. O-O-O { is very risky } (10. a3 Bb7 { And white still can't really castle long. } 11. O-O-O Bxa3!) 10... b4 11. Nd5 exd5 12. exd5 Nxd5 13. Rhe1 Be7 14. Bg5 O-O 15. Bxe7 Nxe7 16. Qxe7 Bb7) (8. Qd2 { Another queen move that has been seen in practice is Qd2 } 8... b5 9. f3 { [%csl Ge5] } 9... Bb7 10. O-O-O Ne5 { Black enjoys excellent counterplay with the immediate threat being . . .b4 followed by . . .d5
+This is why in one high-level encounter White tried to change the course of the game with a typical Sicilian sacrifice: } 11. Bxb5?! axb5 12. Ndxb5 Qc6 13. Qd4 Nc4 14. Bf4 { Cao, Sang - Horvath, Adam, 1-0, HUN-ch 56th, 2006, https://lichess.org/gY9Ri3vF } { Here black missed their chance to play... } 14... Ba6! 15. Nd6+ (15. Nc7+ Kd8 { [%csl Gc6] } 16. Nxa8 Bc5!) 15... Kd8) (8. f3 Ne5!) 8... b5 (8... d6 9. f4 Be7 10. Qf3 { Is great for white, do not play Scheveningen-style here }) 9. a3 (9. Nxc6 { Here this move makes a lot of sense and is the most popular response. In general, if White wants to capture on c6 then the appropriate moment to do so is after Black plays . . .b5 and before Black plays ...Bb7. There is a very simple reason for this: White wants Black's queen to be on c6 to leave the e5- square unprotected. If Black's pawn is on b7 then Black can always consider . . .bxc6 after White captures on c6, and if Black's bishop is on b7 then quite often Black will play ...Bxc6 } 9... Qxc6 { Here White has tried many moves. I'll touch upon several rarities, but I'll mainly concentrate on what are considered the three most critical ones. } (9... dxc6 10. f4 e5 11. f5 Bb7 12. a4 { Everything favors white here, taking with the d pawn isn't recommended. }) 10. f3!? (10. Be2!? Bd6!? 11. Qd4! (11. Bf3 Be5! 12. Bd4 d6 13. Bxe5 dxe5) 11... Bb7 12. Rad1 (12. Rfd1 Be7 13. a3 Qc7 14. Bf3 d6 15. a4 O-O 16. axb5 axb5 17. Nxb5 Qxc2 18. Rac1 Qb3 19. Na7!! { [%csl Gc8] } 19... e5 20. Qc4 Qxc4 21. Rxc4 Rfb8 22. b4 Ba6 23. Rc6 Bb7 24. Rc7 Kf8 25. b5 d5 26. exd5 e4 27. Be2 Nxd5 28. b6 Bd8 29. Rxb7 Rxb7 30. Rxd5 Bxb6 31. Nc6 Bxe3 32. fxe3 Rb2 33. Nd4 g6 34. Kf2 h5 35. Re5 f5 36. h3 Ra1 37. g4 hxg4 38. hxg4 Rh1 39. gxf5 Rh2+ 40. Kg3 Rbxe2 41. Nxe2 Rxe2 42. Kf4 gxf5 43. Rxf5+ Ke7 44. Re5+ Kd6 45. Rxe4 { All Black needs to know is the Philidor position, or any other drawing defence in the rook against rook and pawn endgame! I know it's crazy that a line from an opening book finishes in a position from an endgame book, but that's sometimes the case with forcing lines in the computer era }) 12... Bb8 13. Bf3 Qc7 14. g3 Ba7) (10. a3 Bb7 11. Qe2 Be7 12. f4 O-O 13. e5 Nd5 14. Nxd5 Qxd5 15. c4 bxc4 16. Bxc4 Qc6 17. Rac1 Bc5 18. Bxc5 Qxc5+) (10. Re1 b4 { Wins a pawn }) (10. e5 Bb7 { [%csl Gg2][%cal Gb7g2] } 11. f3 Nd5 12. Be4 Nxc3 13. Bxc6 Nxd1 14. Bxb7 Nxe3 15. Bxa8 Nxf1 16. Kxf1 Bc5) 10... b4! { Nothing wrong with Bb7 or Bc5 but this is a more dynamic approach. } 11. Ne2 Bc5 12. Qd2 a5!? $146 { [%csl Ga6][%cal Gc8a6] } 13. Nd4 Qb6 14. Qf2 O-O 15. Nf5 Bxe3 16. Qxe3 Qxe3+ 17. Nxe3 Bb7 { [%cal Gb7e4,Gd7d5] } 18. Bc4 d5 19. exd5 Nxd5 20. Bxd5 Bxd5 21. Nxd5 exd5 22. Rfd1 Rfc8 23. Rd2 Rc5 { Equal endgame }) (9. f4 Bc5!) (9. Nb3 Be7 { Transposing } 10. f4 (10. f3) 10... d6 11. Qf3 Bb7) (9. Qe2 Bb7 10. f4 Nxd4 11. Bxd4 Bc5 12. Bxc5 Qxc5+) 9... Bb7 10. Qe2 { White's 9th move secured the c3-knight against harassment from b4 by either the pawn or bishop, but it's too slow a move to trouble Black, no matter which 10th move White chooses. } 10... Be7 (10... Nxd4 11. Bxd4 Bc5 12. Bxc5 Qxc5 13. e5 { Is good for white } { [%csl Gd6] }) 11. f4 d6 { This is a great Scheveningen for Black as the queen is misplaced on e2 and it will have to move again to f3 or h5 in order to create attacking chances, or White can try something original. Let's follow a high-level game for a while } 12. Nf3!? O-O 13. Rae1 b4 { As I am not sure how White wants to build her attack, I might have considered more neutral moves such a } (13... Rac8) (13... Nd7) 14. Nd1 { We do not need to analyse in detail the moves below, bur I do think it is worth playing through how top-class players handle a messy Sicilian middlegame } 14... bxa3 15. bxa3 e5 16. Nf2 exf4 17. Bxf4 Ne5 18. Nxe5 dxe5 19. Bg5 h6 20. Bxf6 Bxf6 21. Ng4 Be7 22. Bc4 { Polgar, Judit - Ljubojevic, Ljubomir, 0-1, Buenos Aires Sicilian, 1994, https://lichess.org/WSZVh1Ca } 22... Rad8 { Conclusion
+6.Be3 a6 7.Bd3 is a sensible anti-Taimanov line, and one I have played regularly with both colours.
+After 7...Nf6 we started with A) 8.Nb3 when play takes on a Scheveningen flavour. But we Taimanov players should not be concerned, as it's a rather harmless version with the knight passive on b3.
+The usual move is B) 8.0-0 when I recommend 8...b5. Then B1) 9.a3 Bb7 tends to lead to another comfortable Scheveningen set-up, as White's options are limited on move 10 by Black's tactical ideas, which often involve ...Bc5. 10.Qe2 avoids the tricks, but will later prove to be an uninspired square for the queen.
+Thus the toughest test is B2) 9.Nxc6 Qxc6 when White has three main options. 1O.a3 will be seen in the next chapter, so we started with B21) 10.f3!? and B22)10.Be2!?. Against B2 1 ) 1 0.f3!? I recommend the rare 10 ...b4! as an effective antidote.
+B22) 10.ie2!? has some poisonous ideas involving e4-e5 and if3, so I recommend 10 ...id6!? covering the key square. Following 1 1 .�d4! ib7 we have a split, depending on which rook White places on d1. Black's choice of bishop retreat should be different in each variation. Go to b8 against the former and go to e7 against the latter. The point is that with a rook still on A1, the ...Bb8-a7 idea runs into a nasty a2-a4. I analysed the final variation in painstaking depth, as forcing play can last all the way to a simple endgame. This is not what a Sicilian fighter dreams of, but sometimes we need to be ready with deep theory. } { [%csl Gd4][%cal Gd8d4] } *
+
+
+[Event "Spassky - Tal Candidates Final"]
+[Site "Tbilisi URS"]
+[Date "1965.11.03"]
+[Round "2"]
+[White "Boris Spassky"]
+[Black "Mikhail Tal"]
+[Result "0-1"]
+[Variant "Standard"]
+[ECO "B43"]
+[Opening "Sicilian Defense: Kan Variation, Knight Variation"]
+[StudyName "TurboSicilian"]
+[ChapterName "Spassky - Tal"]
+[ChapterURL "https://lichess.org/study/ho9FNoLP/fw8529Kp"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+
+1. e4 c5 2. Nf3 e6 3. d4 cxd4 4. Nxd4 a6 5. Nc3 Qc7 6. Bd3 Nc6 7. Be3 Nf6 8. O-O b5 9. Nb3 Be7 10. f4 d6 11. Qf3 O-O (11... Bb7) 12. a4 b4 13. Ne2 e5 14. f5 d5 15. Ng3 Na5 16. exd5 Bb7 17. Ne4 Nc4 18. Bg5 Nxb2 19. d6 Qxd6 20. Nxd6 Bxf3 21. Rxf3 Bxd6 22. Bxf6 gxf6 23. Be4 Rac8 (23... Nc4) 24. a5 Bb8 25. g3 Rfd8 26. Re1 Ba7+ 27. Kg2 Rd6 28. Rff1 Nc4 29. Kh3 Ne3 30. Rf3 Nxc2 31. Rc1 Rc4 32. Rd3 Bd4 33. Rxc2 Rxc2 34. Rxd4 exd4 35. Bxc2 d3 36. Bd1 Rd5 37. Kg4 Re5 38. Kf4 Re2 39. h4 h5 40. Nc5 Re1 { 0-1 Black wins. } 0-1
+
+
+[Event "TurboSicilian: Open: Chapter 16 - 6. Be3 7. Bd3: Main Line"]
+[Date "2025.06.27"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "B48"]
+[Opening "Sicilian Defense: Taimanov Variation, Bastrikov Variation, English Attack"]
+[StudyName "TurboSicilian"]
+[ChapterName "Open: Chapter 16 - 6. Be3 7. Bd3: Main Line"]
+[ChapterURL "https://lichess.org/study/ho9FNoLP/9fBcj7Y7"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.06.27"]
+[UTCTime "01:53:46"]
+
+1. e4 c5 2. Nf3 e6 3. d4 cxd4 4. Nxd4 Nc6 5. Nc3 Qc7 6. Be3 a6 7. Bd3 Nf6 8. O-O (8. Qe2) 8... b5 9. Nxc6 (9. Qe2) 9... Qxc6 10. a3 { Strangely enough, this is the most popular move in this position. Objectively I believe the best move for White is 10. Be2!?, as examined in the previous chapter, but that move has not gained as much popularity as it deserves.
+White's plan after 1 0.a3 is simple - he wants to continue with Qe2. Kh1, f4 and then play for an e4-e5 break. Quite often White does not need all these moves in order to continue his attack } 10... Bb7! { Keeping the pressure on the a8-h1 diagonal and leaving the f8-a3 diagonal open for now, as Black's main strategic idea is to exchange the dark-squared bishops. } (10... d6 11. Qe2! { [%cal Gc3b5] } 11... Qc7 12. Bf4!? Nd7 { [%cal Ge4e5] }) 11. Re1 (11. Qf3!? Bd6! (11... Bc5? 12. Qg3) 12. Bd4! { White striving for e5 while stopping Be5 } (12. Qh3 h5!) (12. Rfe1 Be5) (12. Rae1 Bxa3) (12. Bf4 Bxf4 13. Qxf4 O-O { Black exchanges bishops and castles, the goal } { [%csl Gc8,Gd8][%cal Gf8d8,Ga8c8,Gf6d7,Gd7c5] }) 12... Qc7 { [%csl Ge5] } 13. Kh1! Be5 14. Bxe5 Qxe5 15. Qe2 Qf4 16. f3 O-O 17. e5 Nd5 18. Qe4 Qxe4 19. Nxe4 Nf4) (11. Qe2 { Stops d6 } 11... Rc8 12. f4 Bc5! 13. Bxc5 Qxc5+ 14. Kh1 d5 15. exd5 Nxd5 16. Ne4 Qb6 17. f5 e5 18. f6 (18. Nc3 f6 19. Qh5+ Ke7 20. Nxd5+ Bxd5 21. Rad1 Bf7) (18. Rae1 Nf6) 18... Nxf6 19. Nxf6+ gxf6) (11. Kh1 Bc5! { [%cal Gc5e3] } 12. Qe2 Bxe3 13. Qxe3 d6 { We are always happy to get this type of position }) (11. f3 Bc5! { Same story }) (11. f4 Bc5 12. Bxc5 Qxc5+ 13. Kh1 d6 14. Qe2 Nd7 { Stopping e5 }) 11... Be7 12. Qf3 d6 13. Qh3 { White is trying to play typical Scheveningen moves without worrying about the tempo-loss with Re1. Okay, this is a decent attempt, but what I like in the following example is the dynamic idea Polgar came up with } 13... h5! { For a Scheveningen player, playing the move ...h5 (or . . .g6) is quite typical to protect his castled king from a potential checkmate on h7. For a Taimanov player, playing . . .h5 is very typical WITHOUT castling. We quite often see that Black's king is safer on e8 than on the kingside! Moreover, White's queen now looks badly placed on h3, and the queen could soon be under pressure. There is also nothing wrong with 13 . . .0-0. After 14.f4 the threat of e4-e5 can be met simply with 14...Qc7 although I can understand that many players would feel a bit anxious about having to display a high level of accuracy to avoid getting mated. } 14. Bg5 Qc5!? 15. Be3 Qc7 16. f3 g5!? 17. Bxg5 (17. a4 b4 18. Na2 g4! 19. fxg4 d5! { Topalov - Polgar, Novgorod 1996 }) 17... Ng4! *
+
+
+[Event "TurboSicilian: Open: Chapter 17 - 6. Be3 7. Qd2 Nf6 8. f4"]
+[Date "2025.06.14"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "B48"]
+[Opening "Sicilian Defense: Taimanov Variation, Bastrikov Variation, English Attack"]
+[StudyName "TurboSicilian"]
+[ChapterName "Open: Chapter 17 - 6. Be3 7. Qd2 Nf6 8. f4"]
+[ChapterURL "https://lichess.org/study/ho9FNoLP/BkLbjDRS"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.06.14"]
+[UTCTime "16:24:23"]
+
+1. e4 c5 2. Nf3 e6 3. d4 cxd4 4. Nxd4 Nc6 5. Nc3 Qc7 6. Be3 a6 7. Qd2 Nf6 { I always called this the "road to the English Attack". That well-known system continues with 8.0-0-0 (or 8.f3?!, if White takes the inaccurate route) and you can find it analysed in the next two chapters. Before then, we will consider the following alternative } 8. f4!? { This is quite an interesting hybrid system, combining the Be3 and Qd2 moves, which are normally characteristic of the English Attack, with the active f2-f4. Black also has to take into consideration the fact that White may castle on either side. } 8... Bb4 9. Bd3 { No other sensible way to guard e4 } (9. O-O-O?? { https://lichess.org/i7HmQf15/ }) (9. Nxc6 Qxc6 { White loses a pawn by force } 10. e5 Ne4 11. Qd4 Bxc3+ 12. bxc3 Nxc3 (12... Qxc3+ 13. Qxc3 Nxc3 14. Bd3 b5 { [%cal Gc8b7] } 15. Kd2 Nd5 16. Be4 Bb7)) 9... b5! { The main move is Na5, but it is very complicated, leads to grindy games and white has a way to lead it into a slightly better endgame (book explains it, but it is 5 pages to transcribe here). So the author recommends b5 } 10. a3 (10. O-O-O!? Na5 { [%cal Gc3b5] } 11. Nde2! Nc4 12. Bxc4 Qxc4 { And black can claim a small advantage }) (10. a4!? { White not castling gives some flexibility } 10... bxa4 11. Rxa4 Rb8! 12. h3 (12. O-O?! Ng4!) 12... O-O) 10... Be7 11. e5 { This pawn advance is white's only dangerous idea. He can also play Nxc6 first, which transposes. } (11. h3 { Prevents Ng4 but makes e5 less scary } 11... Bb7 12. e5 Nxd4 13. Bxd4 Nd5 14. Ne4 f5!? $146 { [%csl Gg3][%cal Gh7h5] }) 11... Ng4 12. Nxc6 dxc6 { We have reached a critical moment, where White must make an important choice. Interestingly, GM Solak reached this position twice against GM Ashwin in 20 14 } 13. Bg1 (13. Ne4 Nxe3 14. Qxe3 Bb7! (14... c5?! { leads to problems after } 15. Nd6+) 15. b4 (15. Nc5!? { Forces black to react immediately or after b4, the b7 bishop will be stuck forever } 15... Bxc5 16. Qxc5 Qe7 17. Qxe7+ Kxe7) 15... c5! { An excellent pawn sacrifice } { [%cal Gb7f3] } 16. Nxc5 (16. bxc5 Bxe4 17. Qxe4 Rc8 18. a4 $10) 16... Bd5!? { Trading everything leads to a drawn endgame, so it's preferable to keep material on the board for a middle-game with the bishop pair. } 17. O-O O-O 18. Ne4 Rfd8 $44 { Black has long term compensation for the pawn }) (13. Rf1 { is playable but not dangerous } 13... Nxe3 14. Qxe3 Bb7 15. O-O-O O-O-O 16. g3 g6 17. Be4 c5 { leaves black with no real problems }) 13... O-O! $146 (13... Bb7? { Black must avoid this error. It has been played in two GM games, but White failed to capitalize. } 14. h3 Bh4+ 15. Kf1 Nh6 16. Bc5 Be7 17. Ne4 $14 { Black is getting squeezed }) (13... c5 { is interesting but let's not invite Ne4 }) 14. O-O-O!? { The most dangerous option, but the next few moves are natural. } (14. Qe2 Nh6 15. Be4 Bb7 16. Bf2 c5 17. O-O Nf5! { [%csl Gd4][%cal Gf5d4] } 18. Rad1 Rad8 19. Bxb7 Qxb7 20. Qe4 Qc7! 21. Ne2 h5 { Preventing g4 } { [%csl Gg4][%cal Gg2g4] } 22. g3 c4 { is an example of how to play this line } { [%cal Ge7c5] }) 14... c5 15. h3 Nh6 16. g4 Bb7 17. Rh2 { This is the sharpest position in the chapter, with a lot of chances for both sides. } 17... Kh8! { Giving the knight a square to retreat, while keeping the queenside attacking options alive. } { [%cal Gh6g8] } 18. Qe3 { Kunzmann, Hector A. - Scott, Paul, 1/2-1/2, VWC11/SF  2, 2020, https://lichess.org/IcA8baE2 } 18... Rab8 19. Bf1 Qa5 20. Ne4 Bxe4 21. Qxe4 b4 22. a4! Qxa4 23. Kb1 Rb5!! 24. Qc6 { only way to stop the attack (this line needs further study if it ever comes up, but it won't) } 24... b3! 25. Bxb5 Qa2+ 26. Kc1 axb5 27. cxb3 c4! 28. bxc4 Qa1+ 29. Kc2 Qa4+ 30. b3!? { White's safest move is to take a perpetual with Kc1, but this move is also playable } 30... Qa2+ 31. Kd3 Qxb3+ 32. Ke2 bxc4 33. Be3 Ng8 $44 { I would prefer black if this ever occurred over the board, it seems easier for black to play.
+8.f4!? is an interesting move and I would not be surprised to see it become more popular, as it leads to lively and relatively unexplored positions. After the standard continuation of 8. Bb4 9.Bd3, Black already has to make an important decision with Na5 or B5, which is the recommended move, when 10.a3 Be7 11. e5 Ng4 12. Nxc6 dxc6 reaches a critical position. 13. Ne4 is one serious option and 13.Bg1 the other, when it is important to remember that 13. . .0-0!N is the correct move order. A rich middlegame lies in store, with 14.0-0-0!? the critical test, and 17. Kh8! the key idea for Black a few moves later. } *
+
+
+[Event "TurboSicilian: Open: Chapter 18 - 6. Be3: English Attack"]
+[Date "2025.06.27"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "B48"]
+[Opening "Sicilian Defense: Taimanov Variation, Bastrikov Variation, English Attack"]
+[StudyName "TurboSicilian"]
+[ChapterName "Open: Chapter 18 - 6. Be3: English Attack"]
+[ChapterURL "https://lichess.org/study/ho9FNoLP/5w8eADua"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.06.27"]
+[UTCTime "01:54:56"]
+
+1. e4 c5 2. Nf3 e6 3. d4 cxd4 4. Nxd4 Nc6 5. Nc3 Qc7 6. Be3 a6 7. Qd2 { The English attack. It is impressive that White can employ this system with against almost all the Sicilians. It is especially popular against the Dragon since there it is the most promising line for White. Sometimes it is combined with the move Bc4 in order to secure better control of the d5-square.
+In general it is considered to be one of White's most aggressive approaches. White usually opts for opposite-sides castling and often tries to attack with g2-g4, h4-h5, then g5 , gaining the initiative on the kingside. On the other hand, Black usually tries to exploit the queenside with . . .b5-b4 and . . .a5-a4, or tries to increase the pressure along the c-file against the c3-knight and the c2-pawn. Keep in mind that Black usually has more targets for his attack, but White is usually faster with his pawn-storm attack and has more pieces defending his king than Black } 7... Nf6 { After Black's obvious developer, we have a split: } 8. O-O-O (8. f3 { Interesting and tricky line } 8... Ne5 { Seeking to transpose to mainline } (8... Bb4? { The E pawn is already defended... } 9. a3 Be7 10. g4 { And the attack can continue without castling first }) 9. g4!? (9. O-O-O Bb4 { Is a transposition to the main line }) (9. Nb3 b5 10. Qd4 Be7 11. O-O-O d6 { Black is fine }) (9. Bf4 Bb4 10. O-O-O d6 { Should lead to a stable position, let's just not get too eager with B5 }) 9... h6 { In this move order, White's g-pawn is arriving earlier than usual, so Black is well-advised to slow it down with . . .h7-h6. This will not be our usual response to a g4-advance } 10. O-O-O { It is very interesting for White to go for long castling right now, since Black has played the move h6 (which he usually tries to avoid) } { [%csl Gh6] } (10. h4 b5 (10... Bb4) 11. Rg1! Bb7 12. g5 hxg5 13. hxg5 b4 14. Na4 Nxf3+ 15. Nxf3 Nxe4) 10... b5 11. h4 (11. Kb1 b4!) 11... b4 12. Na4 d5 { The last three moves are thematic and obvious. Black wishes to expand on the queenside and break with d5 if possible. } 13. Be2 { The position after the text move has been employed with White by strong GMs such as Cheparinov, Robson and Kovchan. In all the above-mentioned games Black reacted either with . . .Bb7 or . . .Bd7. Instead Black can opt for a very interesting sacrifice with } (13. Bf4 { Borisek, Jure - Cvek, Robert, 0-1, Turin ol (Men) 37th, 2006, https://lichess.org/W2JirPux } { gives black a dangerous initiative } 13... Bd6 14. Bxe5 Bxe5 15. Qxb4 Bd7 16. Nc5 Rb8 17. Qa3 Bxd4 18. Rxd4 Rc8 19. b4 a5 $36) 13... Nexg4! (13... Bd7 14. g5 { And white is winning }) (13... Be7? 14. g5 { And white is winning }) 14. fxg4 (14. Bf4 e5 { Solves this trick for black } 15. fxg4 exf4 16. exd5 Bd6! 17. Rhg1 Ne4! 18. Qe1 O-O 19. Bf3 Ng3 { Once our knight lands on g3 it will be hard for White to create any play. On the other hand, it will be much easier for Black to continue his attack with . . .Bd7 and then advancing the a-pawn, or instead play positionally with Bb7 and Re8 } { [%cal Gc8d7,Gd7a4,Gf8e8] }) 14... Nxe4 15. Qd3 Bd7! { The idea to sacrifice on g4 is based on the misplacement of the a4 knight. Black wins back the piece with interest. } 16. Nxe6! { Is the critical way to fight back } (16. b3?! { Is uninspired } 16... Bxa4 17. bxa4 Nc5 18. Qd2 Nxa4 { Gives black three pawns and a powerful initiative for the piece. } 19. Bf4 (19. Nb3 Nc3) 19... Qc3 20. Qxc3 Nxc3) 16... Bxe6 17. g5!? (17. Nb6 { Must be met with total percision in the next two moves. } 17... Rd8 18. Qxa6 Bc5! { The only move, but safe enough. } 19. Qb5+ Ke7 20. Bxc5+ Qxc5 21. Qxc5+ Nxc5 $10 { The position is equal but dynamic. }) 17... hxg5 18. hxg5 Rxh1 19. Rxh1 Ng3 20. Rh8 d4!! { A brilliant move followed by a brilliant variation. } 21. Bd2 (21. Bxd4 Rd8 { Would be lost for white, as there is no way to unpin. }) 21... Bf5 22. Qc4 (22. Bxb4!? { An interesting try, but a few accurate moves can give black a pleasant endgame. } 22... Qf4+ (22... Bxd3 { Leads to repetition } 23. Rxf8+ Kd7 24. Rxf7+ Kd8 25. Rf8+ Kd7 26. Rf7+) 23. Qd2 Nxe2+ 24. Kd1 O-O-O 25. Qxf4 Nxf4 26. Rxf8 Rxf8 27. Bxf8 Ne6 28. Bb4 Nxg5 29. Nc5 { White will regain the pawn, but the connected passers on the kingside are dangerous. }) 22... Nxe2+ { Leads to a drawish position, as does Rc8, but here at least white needs to find some harder moves. } 23. Qxe2+ Kd7 24. Bxb4 Rc8 25. Rxf8 Qf4+ 26. Bd2 (26. Qd2) 26... Rxc2+ 27. Kd1 Rxd2+ 28. Qxd2 Qf1+ 29. Qe1 Qd3+ { And a perpetual on the light squares. }) 8... Bb4 { Not the modern main line (now Be7 is more common) but the most dynamic try for black. } (8... Be7) 9. f3 (9. a3) 9... Ne5! { This move was the main line for many years. Lately, many black players switched to 0-0, which is also very interesting. Some top players who still employ Ne5 include MVL, Giri and Potkin, who was the inspiration for the following line. } (9... O-O) (9... d5 10. a3 (10. Bf4) 10... Bxc3 11. Qxc3 dxe4 12. Nxc6 Qxc6 13. Qe5 O-O) 10. Nb3 { Overwhelmingly the most common move. } (10. g4!? { Is underrated and deserves its own section.
+A rare but super-critical continuation! In fact, after trying my best, I couldn't find a fully dynamic solution for Black. I think we should place our hopes in an endgame a pawn down, but with clear counterplay. Such endgames might seem dry, but I have witnessed many cases (especially in dub-level play) where players get frustrated and lose such positions with White by simply trying to "do something" } 10... b5! 11. a3! { The critical move. } (11. Rg1 { This is a useful move in order to gain better control of the g4-square after the kingside advance with f4 and g5 . } 11... Bb7 12. a3 Bxc3 13. Qxc3 Qxc3 14. bxc3 { This endgame could easily go wrong for White since his structure looks rather suspicious. }) (11. g5 Nh5 12. Be2 Ng6 13. Rdf1) 11... Bxc3 12. Qxc3 Qxc3 13. bxc3 { Another version of the queenless positions we saw in the move 11 alternatives above; in this case Black should answer with particular care. } 13... h6 { Black plans d5 with a great game, and in order to do so, Black needs to secure f6 for his knight. } (13... Bb7 14. g5 Nh5 15. Nb3 { Heading for the dark squares, this is an improvement for white. }) 14. Bf4! (14. Rg1 d5 15. Bf4 Ng6 { Gives black at least equality, with the e4 pawn as a clear target. } 16. Bd6 dxe4 17. fxe4 Nxe4 18. Bb4 Bb7 19. Nxb5 axb5 20. Bxb5+) 14... d6 (14... Ng6 15. Bd6 { And white is crushing }) 15. c4 { After this clever move, white has annoying pressure. } (15. Bxe5 dxe5 16. Nc6 Bb7 17. Nxe5 Ke7 { White has an extra pawn but Black can create easy counterplay with . . .Rhc8-c5 and . . .Rac8, then go for the c3-pawn. It is also important that after White plays Rd3 in order to defend on c3 his centralized knight on e5 doesn't have any retreat square. c4 is the most challenging try, bur White opens the position around his king and Black will definitely develop counterplay. }) 15... bxc4 16. Bxe5 dxe5 17. Nc6 { Compared to the previous more direct sideline, White has managed to get rid of the doubled C pawns and will collect the c4 pawn later. } 17... Bd7 18. Nxe5 c3! { The key move. It is important for Black to hold the c-pawn as long as possible in order to gain activity with his other pieces. Until this point White played active chess and managed to create a target, which will later lead him to win a pawn. Now it is Black's turn to gain the initiative and it is White's turn to defend, if he wants to maintain any kind of winning chances. } 19. Rd3 (19. h4 Ke7 20. Rd3 Rhc8 { Is easier for black. }) 19... Rc8 20. Rd6! { The only critical move! } 20... Ke7 21. Rxa6 Ra8! { White captured the A pawn, but his king is almost in a mating net. } 22. Kd1! (22. h3 { Let's see what happens if white doesn't react quickly. } 22... Rxa6 23. Bxa6 Ra8 24. Bd3 Rxa3 25. Kb1 { And black is pushing a little. The white king is stuck and the rook won't get to the queen-side. }) 22... Ba4 { Keeping the king stuck on d1 for now, pressuring against c2. } 23. Rxa8 (23. Bd3 { Illustrates black's idea } 23... Rxa6 24. Bxa6 Rd8+ 25. Nd3 Nd7 26. Ke2 Bxc2 27. Rc1 Bxd3+ 28. Bxd3 Rc8 { Black wants to continue with g5 and Ne5 }) 23... Rxa8 24. Bd3 Nd7! { An important move to get rid of the e5 knight and open the path for our rook to infiltrate. } 25. Nxd7 Bxd7 26. Ke2 Rxa3 { This endgame offers a lot of counter-play for black, even if it is slightly better for white. }) (10. Kb1 { Not very dangerous as black becomes active after } 10... Bxc3 11. Qxc3 Qxc3 12. bxc3 d5 { Black is totally fine. White can't really waste time here. }) (10. Qe1 Bxc3 11. Qxc3 Qxc3 12. bxc3 d5 { The thematic break. The endgame can continue in many ways, such as: } 13. exd5 Nxd5 14. Bd2 b5 15. Re1 Nc4 16. Bxc4 bxc4 17. Nf5 O-O 18. Nd6 $10 { Black's position is very stable. }) (10. Bf4 d6 (10... d5 11. Bg3) 11. Nb3 Ke7!! { When I first found this move, I thought it would be a novelty, but strangely enough it was played back in 2003, as well as in a few more recent email games. Black's idea is to offer protection to the d6-pawn and since Black will soon continue with . . .Bxc3, his king will be more useful in the centre than on the kingside. One typical line is } 12. Be3 Bxc3 13. Qxc3 Qxc3 14. bxc3 Bd7 { With an equal endgame. } 15. c4) (10. a3 Bxc3 11. Qxc3 Qxc3 12. bxc3 { [%cal Gd7d5] } 12... d5 13. Bf4 (13. exd5 Nxd5 14. Bf2 (14. Bd2 b5 15. Re1 Nc4 16. Bxc4 bxc4 17. Nf5 O-O 18. Nd6 Bd7 19. Nxc4 Rfc8)) 13... Ng6 14. Bd6 dxe4) (10. h4) 10... b5 { Black continues with his normal plans, expanding on the queenside. We need to examine a variety of moves. } 11. Qf2 { Although this move is not very popular, it was employed by the top GM Dominguez. I figured out that Dominguez and Quesada really like the idea of manoeuvring White's queen to f2 and getting rid of the pin. White tries to control the dark squares but on the other hand leaves the c3-knight unprotected. So it becomes clear that White cannot afford to employ a slow plan with g4-g5, h4-h5 since Black will capture on c3 at some point } (11. Qd4 Nc6 12. Qb6 (12. Qd2 Ne5 { Repetition! }) 12... Qxb6 13. Bxb6 Bxc3 14. bxc3 d5 { Black ruins White's queen-side structure and takes over the initiative. } 15. Be2 { This is the most common choice but there is no need to memorize every move, it is a fairly harmless endgame. } 15... dxe4 16. fxe4 Nd7 { The nature of the position has changed. It is equal, with white having better pieces but blakc having a better structure. } (16... Nxe4?? 17. Bf3 f5 18. Nc5) 17. Be3 Bb7 18. Rhf1 Nce5 { Blauhut, Holger - Coleman, Peter L, 1/2-1/2, CL/2007/A1, https://lichess.org/lvQ57TSc }) (11. Bd4 { A solid move. White avoids the doubling of the pawns for the time being. } 11... Be7 { White's last move makes the pin redundant, so it's pointless to keep bishop on B4 where it can be a target later. } 12. Qf2 (12. Qg5 Ng6 13. Qe3 { Dangerous, used succesfully by Cheparinov } { Cheparinov, Ivan - Iotov, Valentin, 1-0, BUL-ch 67th, 2003, https://lichess.org/dlOOw28v } (13. Qg3 e5 14. Be3 { is nothing special for white }) 13... d6 { Allowing Nd7 if needed. } 14. g4 (14. Kb1 { Kasparov's move in 2002 }) 14... O-O 15. g5 Nd7 { Black has good counter-play in this type of position. The following is an example line. } 16. Rg1 { Too slow! } 16... b4 17. Na4 e5 18. Nb6 Bb7 19. Nxa8 Rxa8 20. Kb1 exd4) (12. f4 Nc4 13. Bxc4 bxc4)) (11. Kb1 { Negi's recommendation for White. The first point to note is that since Bxd2 does not come with check any more, Nxb5 becomes a threat. } 11... Be7! { Retreating is the right choice. } (11... Bxc3 12. Qxc3 Qxc3 13. bxc3 d5 14. Bd4! { Black is clearly worse }) 12. Qf2 Bb7 13. Bb6 { Akopian, Vl - Giri, A., 0-1, Qatar Masters Open 2014, https://lichess.org/nS4vOk6j } { Analysed extensively by Giri in New in Chess 2015 #1 } (13. Na5 { As suggested by Negi. The obvious tactical point is that taking the knight loses the queen after Bb6. White's plan is to start pushing his pawns on the kingside after first slowing down Black's counter-play on the queenside. We must find counter-chances quickly, as otherwise White will gain an advantage with simple play. The lines below are mainly new analysis and not based on practical examples. } 13... Rc8!? $146 { Now Bb6 can be met with Qb8 without blocking the rook in the corner. }) (13. g4? b4 14. Na4 Nxf3!) 13... Qb8 14. Na5!? (14. Bd4 d6 { Once again, black makes room for Nd7 } 15. g4 { The most direct option, but allows tactical ideas on the long diagonal. } (15. Rg1 { Avoids tactical issues but is rather slow. For example... } 15... O-O 16. g4 b4 17. Na4 Nfd7 { Controlling b6 and threatening Bc6 } 18. f4 Ng6 19. f5 Nge5 { Line given by Giri. Black's chances are preferable because the a4 knight is out of play. }) 15... b4 16. Na4 (16. Ne2 { Gives black a lot of time to continue the attack. } 16... O-O) (16. Bxe5 { The safest continuation. } 16... dxe5 17. Na4 Qc7 18. Be2 O-O { The doubled E pawns are actually a safety measure for black. }) 16... Nxf3 17. Qxf3 (17. Bxf6 Bxf6 18. Qxf3 (18. Nb6 Ng5 19. Nxa8 Bxe4 { And black is clearly better }) 18... Bc6) 17... Bxe4 18. Qh3 Bxh1 19. g5 Bc6 { Practically, the best choice to equalize for Black without major concerns. } 20. Nb6 (20. gxf6 { Is good for black since it clears up the situation with the dark squared bishop, ends the attack and the A4 knight is now out of squares } 20... Bxf6 21. Bxf6 gxf6) 20... Nd7 21. Nxa8 (21. Nxd7 Kxd7! { Taking with the bishop effectively traps the H rook after Bxg7 }) 21... e5! { Very important intermediate move. } 22. Nb6 exd4 23. Nc4 { This is equal according to Giri. The most direct route to equality is... } 23... Ne5 24. Nxd4 Bd7 25. Nf5 Bxf5 26. Qxf5 O-O 27. h4 a5! $36 { Black could play g6, trying to fix the pawns for the endgame. }) 14... O-O 15. g4 d6! { It's good to be able to respond to g4-g5 with Nd7 } 16. Rg1 Rc8 $146 { The most natural move, yet untested in practice } 17. g5 Nfd7 18. Bd4 Nc5! { Taking away the a4 square, which prepares b5 } 19. Bg2 { The logical continuation to push the F pawn and break } 19... b4 20. Ne2 Qc7 21. Nxb7 Qxb7 22. f4 Nc4 23. e5 d5 24. f5 { It looks as if wite is ahead in the race, since pushing the black queen-side pawns still takes time. } 24... b3!! { Opening the B and C files at any cost. Thematic for any sicilian with opposite side castling. } 25. cxb3 Nxb3 26. axb3 Qxb3 { With an attack for black that likely leads to a perpetual with Na3 Nc2 } 27. Qf3 Na3+ 28. Ka1 Nc2+ 29. Kb1 Na3+ $10) (11. h4 d5!) (11. Qe1 { The most common move, which will be examined in the next chapter. } 11... Be7 12. f4 Ng6 13. e5) (11. f4) 11... O-O (11... Bxc3? 12. bxc3 (12. Bb6 Qb8 13. bxc3 d6 14. Ba5 { Is a good endgame for white too }) 12... Qxc3 13. Bd4 Qc7 14. Qg3 { Wins for white, AVOID!!! } 14... d6 15. Qxg7) 12. Bc5 (12. Bb6 { Is more popular but less critical } 12... Qb8 13. Bd4 (13. Bc5? { Is bad for white } 13... Bxc5 14. Qxc5 b4 15. Na4 d5 $15) 13... Bb7 { Planning D5 next } { [%csl Gd5][%cal Gd7d5] }) 12... Bxc5 13. Qxc5 Qxc5 14. Nxc5 d5 { Our typical Taimanov pawn break solves any problems. } 15. f4 (15. exd5 { Leads to a drawish endgame after } 15... b4 16. N3a4 Nxd5 $10 { Volokitin, Andrei - Bosiocic, Marin, 1/2-1/2, EU-ch 10th, 2009, https://lichess.org/E1P6cF40 }) 15... Neg4 { The threat of Nf2 is easy to meet but will cost White a tempo. } 16. e5 Nd7 $10 { Black is comfortably level } 17. Nxd7 (17. Nd3 b4! (17... Bb7) 18. Ne2 a5 { It's level, but black is pushing }) 17... Bxd7 *
+
+
+[Event "TurboSicilian: Open: Chapter 19 - 6. Be3: English Attack 11. Qe1"]
+[Date "2025.06.27"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "B48"]
+[Opening "Sicilian Defense: Taimanov Variation, Bastrikov Variation, English Attack"]
+[StudyName "TurboSicilian"]
+[ChapterName "Open: Chapter 19 - 6. Be3: English Attack 11. Qe1"]
+[ChapterURL "https://lichess.org/study/ho9FNoLP/XO5b16R7"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.06.27"]
+[UTCTime "01:55:33"]
+
+1. e4 c5 2. Nf3 e6 3. d4 cxd4 4. Nxd4 Nc6 5. Nc3 Qc7 6. Be3 a6 7. Qd2 Nf6 8. O-O-O Bb4 9. f3 Ne5 10. Nb3 b5 11. Qe1 *
+
+
+[Event "TurboSicilian: Open: Chapter 20 - 6. Be3: The Trendy 7. Qf3"]
+[Date "2025.06.27"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "B48"]
+[Opening "Sicilian Defense: Taimanov Variation, Bastrikov Variation, English Attack"]
+[StudyName "TurboSicilian"]
+[ChapterName "Open: Chapter 20 - 6. Be3: The Trendy 7. Qf3"]
+[ChapterURL "https://lichess.org/study/ho9FNoLP/yVjtjtbZ"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.06.27"]
+[UTCTime "01:56:07"]
+
+1. e4 c5 2. Nf3 e6 3. d4 cxd4 4. Nxd4 Nc6 5. Nc3 Qc7 6. Be3 a6 7. Qf3 Nf6 8. O-O-O Ne5 9. Qg3 b5 10. Bxb5 axb5 11. Ndxb5 Qb8 12. Bf4 d6 13. Nxd6+ Bxd6 14. Rxd6 Nh5 15. Qg5 *
+
+
+[Event "TurboSicilian: Open: Chapter 21 - 6. Be3 10. f4"]
+[Date "2025.06.27"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "?"]
+[Opening "?"]
+[StudyName "TurboSicilian"]
+[ChapterName "Open: Chapter 21 - 6. Be3 10. f4"]
+[ChapterURL "https://lichess.org/study/ho9FNoLP/AToQAErY"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.06.27"]
+[UTCTime "02:20:54"]
+
+ *
+
+
+[Event "TurboSicilian: Open: Chapter 22 - 6. Be3: Main Line with 14. h3"]
+[Date "2025.06.27"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "?"]
+[Opening "?"]
+[StudyName "TurboSicilian"]
+[ChapterName "Open: Chapter 22 - 6. Be3: Main Line with 14. h3"]
+[ChapterURL "https://lichess.org/study/ho9FNoLP/nKVW7PMV"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.06.27"]
+[UTCTime "02:21:30"]
+
+ *
+
+
+[Event "TurboSicilian: Open: Extra Chapter 1 - 6. Be3: The Trendy 7. G4"]
+[Date "2025.08.20"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "B48"]
+[Opening "Sicilian Defense: Taimanov Variation, Bastrikov Variation, English Attack"]
+[StudyName "TurboSicilian"]
+[ChapterName "Open: Extra Chapter 1 - 6. Be3: The Trendy 7. G4"]
+[ChapterURL "https://lichess.org/study/ho9FNoLP/bxpU1Jgi"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.08.20"]
+[UTCTime "19:01:50"]
+
+1. e4 c5 2. Nf3 e6 3. d4 cxd4 4. Nxd4 Nc6 5. Nc3 Qc7 6. Be3 a6 7. g4 (7. Qf3 Ne5 (7... Nf6 8. Qg3 d6)) 7... b5 (7... Nxd4) 8. Nxc6 Qxc6 9. Qd2 b4 10. Ne2 Qxe4 11. Rg1 (11. f3) *
+
+
+[Event "TurboSicilian: Open: Extra Chapter 2 - 6. Be3 7. a3"]
+[Date "2025.06.27"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "B48"]
+[Opening "Sicilian Defense: Taimanov Variation, Bastrikov Variation, English Attack"]
+[StudyName "TurboSicilian"]
+[ChapterName "Open: Extra Chapter 2 - 6. Be3 7. a3"]
+[ChapterURL "https://lichess.org/study/ho9FNoLP/uAmXqG8q"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.06.27"]
+[UTCTime "02:21:47"]
+
+1. e4 c5 2. Nf3 e6 3. d4 cxd4 4. Nxd4 Nc6 5. Nc3 Qc7 6. Be3 a6 7. a3 b5 *
+
+
+[Event "Ch URS"]
+[Site "Minsk (Belarus)"]
+[Date "1979.??.??"]
+[Round "17"]
+[White "Tal Mikhail (LAT)"]
+[Black "Kasparov Garry (RUS)"]
+[Result "1/2-1/2"]
+[WhiteElo "0"]
+[BlackElo "2545"]
+[Annotator "https://lichess.org/@/SupremePatzer"]
+[Variant "Standard"]
+[ECO "B83"]
+[Opening "Sicilian Defense: Scheveningen Variation, Modern Variation"]
+[StudyName "TurboSicilian"]
+[ChapterName "Tal - Kasparov"]
+[ChapterURL "https://lichess.org/study/ho9FNoLP/3W085exB"]
+
+1. e4 c5 2. Nf3 e6 3. d4 cxd4 4. Nxd4 Nf6 5. Nc3 d6 6. Be2 Be7 7. O-O O-O 8. f4 Nc6 9. Be3 a6 10. a4 Re8 11. Kh1 Qc7 12. Qe1 Nxd4 13. Bxd4 e5 14. fxe5 dxe5 15. Qg3 Bd8 16. Be3 Be6 17. Rad1 Kh8 18. Bg5 Ng8 19. Be3 Nf6 20. Bg5 Ng8 21. Be3 { 1/2-1/2  wins. } 1/2-1/2
+
+
+[Event "TurboSicilian: Grand Prix"]
+[Date "2025.03.11"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "B23"]
+[Opening "Sicilian Defense: Closed"]
+[StudyName "TurboSicilian"]
+[ChapterName "Grand Prix"]
+[ChapterURL "https://lichess.org/study/ho9FNoLP/rqQAJjrN"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.03.11"]
+[UTCTime "18:26:47"]
+
+1. e4 c5 2. Nc3 e6 3. f4 d5 4. Bb5+ Bd7 5. Bxd7+ Qxd7 6. d3 *
+
+
+[Event "TurboSicilian: Closed"]
+[Date "2025.03.11"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "B23"]
+[Opening "Sicilian Defense: Closed"]
+[StudyName "TurboSicilian"]
+[ChapterName "Closed"]
+[ChapterURL "https://lichess.org/study/ho9FNoLP/qlrcSSvq"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.03.11"]
+[UTCTime "18:28:11"]
+
+1. e4 c5 2. Nc3 e6 *
+
+
+[Event "TurboSicilian: New Alapin"]
+[Date "2025.12.01"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "B22"]
+[Opening "Sicilian Defense: Alapin Variation, Barmen Defense"]
+[StudyName "TurboSicilian"]
+[ChapterName "New Alapin"]
+[ChapterURL "https://lichess.org/study/ho9FNoLP/qW7EbV1C"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.12.01"]
+[UTCTime "23:51:11"]
+
+1. e4 c5 2. c3 d5 3. exd5 Qxd5 4. Nf3 (4. d4 Nf6 5. Nf3 Bg4) *
+
+
+[Event "TurboSicilian: Open: Fróis Take-out Line"]
+[Date "2025.12.05"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "B44"]
+[Opening "Sicilian Defense: Taimanov Variation"]
+[StudyName "TurboSicilian"]
+[ChapterName "Open: Fróis Take-out Line"]
+[ChapterURL "https://lichess.org/study/ho9FNoLP/cQcrs6uJ"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.12.05"]
+[UTCTime "19:21:27"]
+
+1. e4 c5 2. Nf3 e6 3. d4 cxd4 4. Nxd4 Nc6 5. Nxc6 bxc6 6. Bd3 d5 7. Nd2 Nf6 8. Qe2 (8. O-O Be7 (8... Bd6 9. b3 O-O 10. c4 Qc7 11. h3)) 8... Be7 9. O-O O-O 10. c4 (10. b3 a5 11. Bb2 a4) 10... Qc7 11. Re1 Ba6 12. cxd5 Bxd3 13. Qxd3 cxd5 14. exd5 Nxd5 *
+
+
+[Event "TurboSicilian: Smith Mora Alapin"]
+[Date "2025.12.29"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "?"]
+[Opening "?"]
+[StudyName "TurboSicilian"]
+[ChapterName "Smith Mora Alapin"]
+[ChapterURL "https://lichess.org/study/ho9FNoLP/RUnE6lfe"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.12.29"]
+[UTCTime "00:26:12"]
+
+ *
+
+
+[Event "TurboSicilian: Old Delayed Alapin"]
+[Date "2025.08.20"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "B40"]
+[Opening "Sicilian Defense: Delayed Alapin Variation, with e6"]
+[StudyName "TurboSicilian"]
+[ChapterName "Old Delayed Alapin"]
+[ChapterURL "https://lichess.org/study/ho9FNoLP/XGb0orDE"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.08.20"]
+[UTCTime "18:48:48"]
+
+1. e4 c5 2. Nf3 e6 3. c3 Nf6 4. e5 { Transposes to mainline Alapin. Play d5 against anything other than e5. } (4. Bd3 { All forced until C5 } 4... d5 5. e5 Nfd7 6. Bc2 c4!) (4. Qe2 d5!) (4. Qc2 d5 (4... Qc7 { Leads to a very non-commital, slow game. }) 5. e5 Nfd7 6. d4) (4. d3) *
+
+
+[Event "TurboSicilian: Old Alapin"]
+[Date "2025.03.11"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "B22"]
+[Opening "Sicilian Defense: Alapin Variation"]
+[StudyName "TurboSicilian"]
+[ChapterName "Old Alapin"]
+[ChapterURL "https://lichess.org/study/ho9FNoLP/iKwyiku1"]
+[Annotator "https://lichess.org/@/LaidbackStrat"]
+[UTCDate "2025.03.11"]
+[UTCTime "18:28:22"]
+
+1. e4 c5 2. c3 Nf6 3. e5 (3. Qc2 { Athar variation } 3... Nc6 4. Nf3 a6 5. d4 cxd4 6. cxd4 d5 7. e5 Ne4 8. Bd3 Qa5+ 9. Nbd2 (9. Bd2 Nxd2 10. Nbxd2 Nb4 11. Qb3 Nxd3+ 12. Qxd3 Bg4 13. O-O e6) 9... Nb4) 3... Nd5 4. Nf3 e6 5. d4 cxd4 6. cxd4 d6 { Break ASAP } 7. Bc4 (7. Nc3 Nxc3 8. bxc3 Qc7 { Dream set-up against the Alapin }) *
+
+
