@@ -26,6 +26,10 @@ export const SettingsService = {
       showEvalBar: true,
       showBestMove: false,
       autoAdvanceDelay: 0,
+      lichess: {
+        username: '',
+        importDaysBack: 1,
+      },
     };
   },
 
@@ -42,6 +46,7 @@ export const SettingsService = {
           ...stored,
           engine: { ...this.getDefaults().engine, ...stored.engine },
           thresholds: { ...this.getDefaults().thresholds, ...stored.thresholds },
+          lichess: { ...this.getDefaults().lichess, ...stored.lichess },
         };
       }
     } catch (error) {
@@ -72,6 +77,7 @@ export const SettingsService = {
       ...updates,
       engine: updates.engine ? { ...current.engine, ...updates.engine } : current.engine,
       thresholds: updates.thresholds ? { ...current.thresholds, ...updates.thresholds } : current.thresholds,
+      lichess: updates.lichess ? { ...current.lichess, ...updates.lichess } : current.lichess,
     };
     await this.saveSettings(updated);
     return updated;

@@ -42,6 +42,10 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
   const [showBestMove, setShowBestMove] = useState(reviewSettings.showBestMove);
   const [autoAdvanceDelay, setAutoAdvanceDelay] = useState(reviewSettings.autoAdvanceDelay.toString());
 
+  // Lichess settings
+  const [lichessUsername, setLichessUsername] = useState(reviewSettings.lichess.username);
+  const [lichessImportDaysBack, setLichessImportDaysBack] = useState(reviewSettings.lichess.importDaysBack.toString());
+
   // Update local state when store changes
   useEffect(() => {
     setApiEndpoint(reviewSettings.engine.apiEndpoint);
@@ -53,6 +57,8 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
     setShowEvalBar(reviewSettings.showEvalBar);
     setShowBestMove(reviewSettings.showBestMove);
     setAutoAdvanceDelay(reviewSettings.autoAdvanceDelay.toString());
+    setLichessUsername(reviewSettings.lichess.username);
+    setLichessImportDaysBack(reviewSettings.lichess.importDaysBack.toString());
   }, [reviewSettings]);
 
   const handleTestEngine = async () => {
@@ -128,6 +134,11 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
       return 'Auto-advance delay must be between 0ms and 10000ms';
     }
 
+    const importDaysBackNum = parseInt(lichessImportDaysBack, 10);
+    if (isNaN(importDaysBackNum) || importDaysBackNum < 1 || importDaysBackNum > 365) {
+      return 'Import days back must be between 1 and 365';
+    }
+
     return null;
   };
 
@@ -159,6 +170,10 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
         showEvalBar,
         showBestMove,
         autoAdvanceDelay: parseInt(autoAdvanceDelay, 10),
+        lichess: {
+          username: lichessUsername.trim(),
+          importDaysBack: parseInt(lichessImportDaysBack, 10),
+        },
       });
 
       const msg = 'Settings saved successfully!';
@@ -191,6 +206,8 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
         showEvalBar: true,
         showBestMove: false,
         autoAdvanceDelay: '0',
+        lichessUsername: '',
+        lichessImportDaysBack: '1',
       };
 
       setApiEndpoint(defaults.apiEndpoint);
@@ -202,6 +219,8 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
       setShowEvalBar(defaults.showEvalBar);
       setShowBestMove(defaults.showBestMove);
       setAutoAdvanceDelay(defaults.autoAdvanceDelay);
+      setLichessUsername(defaults.lichessUsername);
+      setLichessImportDaysBack(defaults.lichessImportDaysBack);
     };
 
     if (Platform.OS === 'web') {
@@ -389,6 +408,41 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
               placeholderTextColor="#666"
             />
             <Text style={styles.hint}>0 = manual navigation (default: 0)</Text>
+          </View>
+        </View>
+
+        {/* Lichess Integration */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Lichess Integration</Text>
+          <Text style={styles.sectionDescription}>
+            Configure Lichess username to quickly import your recent games
+          </Text>
+
+          <View style={styles.field}>
+            <Text style={styles.label}>Lichess Username</Text>
+            <TextInput
+              style={styles.input}
+              value={lichessUsername}
+              onChangeText={setLichessUsername}
+              placeholder="your-lichess-username"
+              placeholderTextColor="#666"
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+            <Text style={styles.hint}>Your Lichess account username (case-sensitive)</Text>
+          </View>
+
+          <View style={styles.field}>
+            <Text style={styles.label}>Import Days Back</Text>
+            <TextInput
+              style={styles.input}
+              value={lichessImportDaysBack}
+              onChangeText={setLichessImportDaysBack}
+              placeholder="1"
+              keyboardType="numeric"
+              placeholderTextColor="#666"
+            />
+            <Text style={styles.hint}>How many days of games to import (1-365, default: 1)</Text>
           </View>
         </View>
 

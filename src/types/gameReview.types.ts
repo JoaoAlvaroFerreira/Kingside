@@ -89,10 +89,16 @@ export interface EvalThresholds {
   inaccuracy: number;       // e.g., 50 centipawns
 }
 
+export interface LichessSettings {
+  username: string;
+  importDaysBack: number;  // Number of days to look back (default 1 for last 24h)
+}
+
 export interface ReviewSettings {
   engine: EngineSettings;
   thresholds: EvalThresholds;
   showEvalBar: boolean;
   showBestMove: boolean;
   autoAdvanceDelay: number; // ms, 0 = manual
+  lichess: LichessSettings;
 }
