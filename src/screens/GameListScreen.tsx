@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, FlatList, Alert, Platform, ActivityIndicator } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
 import { useStore } from '@store';
 import { UserGame, MasterGame } from '@types';
 import { PGNService } from '@services/pgn/PGNService';
+import { DatabaseService } from '@services/database/DatabaseService';
+import { useFocusEffect } from '@react-navigation/native';
 
 interface GameListScreenProps {
   navigation: any;
@@ -14,23 +16,74 @@ type TabType = 'my-games' | 'master-games';
 export default function GameListScreen({ navigation }: GameListScreenProps) {
   const [activeTab, setActiveTab] = useState<TabType>('my-games');
   const [importingFromLichess, setImportingFromLichess] = useState(false);
+  const [games, setGames] = useState<(UserGame | MasterGame)[]>([]);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [isLoadingGames, setIsLoadingGames] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
   const {
-    userGames,
-    masterGames,
+    userGamesCount,
+    masterGamesCount,
     deleteUserGame,
     deleteMasterGame,
     deleteAllUserGames,
     deleteAllMasterGames,
     addUserGames,
+    refreshUserGamesCount,
+    refreshMasterGamesCount,
     reviewSettings
   } = useStore();
 
-  const games = activeTab === 'my-games' ? userGames : masterGames;
+  const totalCount = activeTab === 'my-games' ? userGamesCount : masterGamesCount;
 
+  // Load initial page when tab changes
   useEffect(() => {
-    console.log('GameListScreen: User games count:', userGames.length);
-    console.log('GameListScreen: Master games count:', masterGames.length);
-  }, [userGames, masterGames]);
+    loadGames(0, true);
+  }, [activeTab]);
+
+  // Refresh when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      refreshGames();
+    }, [activeTab])
+  );
+
+  const loadGames = async (page: number, replace: boolean = false) => {
+    if (isLoadingGames) return;
+
+    setIsLoadingGames(true);
+    try {
+      const result = activeTab === 'my-games'
+        ? await DatabaseService.getUserGames(page)
+        : await DatabaseService.getMasterGames(page);
+
+      setGames(prev => replace ? result.items : [...prev, ...result.items]);
+      setHasMore(result.hasMore);
+      setCurrentPage(page);
+    } catch (error) {
+      console.error('Failed to load games:', error);
+    } finally {
+      setIsLoadingGames(false);
+    }
+  };
+
+  const refreshGames = async () => {
+    setIsRefreshing(true);
+    if (activeTab === 'my-games') {
+      await refreshUserGamesCount();
+    } else {
+      await refreshMasterGamesCount();
+    }
+    await loadGames(0, true);
+    setIsRefreshing(false);
+  };
+
+  const loadMoreGames = () => {
+    if (hasMore && !isLoadingGames) {
+      loadGames(currentPage + 1, false);
+    }
+  };
 
   const handleImport = () => {
     navigation.navigate('ImportPGN', { target: activeTab });
@@ -105,6 +158,7 @@ export default function GameListScreen({ navigation }: GameListScreenProps) {
       }));
 
       await addUserGames(userGames);
+      await refreshGames();
 
       const msg = `Successfully imported ${userGames.length} game(s) from Lichess!`;
       if (Platform.OS === 'web') {
@@ -130,15 +184,16 @@ export default function GameListScreen({ navigation }: GameListScreenProps) {
     navigation.navigate('Analysis', { game });
   };
 
-  const handleDelete = (gameId: string) => {
+  const handleDelete = async (gameId: string) => {
     if (Platform.OS === 'web') {
       const confirmed = window.confirm('Are you sure you want to delete this game?');
       if (confirmed) {
         if (activeTab === 'my-games') {
-          deleteUserGame(gameId);
+          await deleteUserGame(gameId);
         } else {
-          deleteMasterGame(gameId);
+          await deleteMasterGame(gameId);
         }
+        await refreshGames();
       }
     } else {
       Alert.alert(
@@ -155,6 +210,7 @@ export default function GameListScreen({ navigation }: GameListScreenProps) {
               } else {
                 await deleteMasterGame(gameId);
               }
+              await refreshGames();
             },
           },
         ]
@@ -162,18 +218,19 @@ export default function GameListScreen({ navigation }: GameListScreenProps) {
     }
   };
 
-  const handleDeleteAll = () => {
+  const handleDeleteAll = async () => {
     const gameType = activeTab === 'my-games' ? 'user games' : 'master games';
-    const count = games.length;
+    const count = totalCount;
 
     if (Platform.OS === 'web') {
       const confirmed = window.confirm(`Are you sure you want to delete all ${count} ${gameType}? This cannot be undone.`);
       if (confirmed) {
         if (activeTab === 'my-games') {
-          deleteAllUserGames();
+          await deleteAllUserGames();
         } else {
-          deleteAllMasterGames();
+          await deleteAllMasterGames();
         }
+        await refreshGames();
       }
     } else {
       Alert.alert(
@@ -190,6 +247,7 @@ export default function GameListScreen({ navigation }: GameListScreenProps) {
               } else {
                 await deleteAllMasterGames();
               }
+              await refreshGames();
             },
           },
         ]
@@ -232,7 +290,7 @@ export default function GameListScreen({ navigation }: GameListScreenProps) {
 
       {/* Header with import and delete all buttons */}
       <View style={styles.header}>
-        <Text style={styles.count}>{games.length} game{games.length !== 1 ? 's' : ''}</Text>
+        <Text style={styles.count}>{totalCount} game{totalCount !== 1 ? 's' : ''}</Text>
         <View style={styles.headerButtons}>
           {games.length > 0 && (
             <TouchableOpacity style={styles.deleteAllButton} onPress={handleDeleteAll}>
@@ -275,6 +333,18 @@ export default function GameListScreen({ navigation }: GameListScreenProps) {
         <FlatList
           data={games}
           keyExtractor={(item) => item.id}
+          onEndReached={loadMoreGames}
+          onEndReachedThreshold={0.5}
+          refreshing={isRefreshing}
+          onRefresh={refreshGames}
+          ListFooterComponent={
+            isLoadingGames ? (
+              <View style={styles.loadingFooter}>
+                <ActivityIndicator size="small" color="#007AFF" />
+                <Text style={styles.loadingFooterText}>Loading more games...</Text>
+              </View>
+            ) : null
+          }
           renderItem={({ item }) => (
             <Swipeable
               renderRightActions={() => renderRightActions(item.id)}
@@ -486,5 +556,16 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 14,
     fontWeight: '600',
+  },
+  loadingFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 20,
+    gap: 12,
+  },
+  loadingFooterText: {
+    color: '#aaa',
+    fontSize: 14,
   },
 });

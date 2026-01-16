@@ -13,6 +13,7 @@ import { HierarchyBrowser } from '@components/repertoire/HierarchyBrowser';
 import { ChapterList } from '@components/repertoire/ChapterList';
 import { GameList } from '@components/repertoire/GameList';
 import { computeFensFromMoves, normalizeFen, UserGame, MasterGame, Chapter } from '@types';
+import { DatabaseService } from '@services/database/DatabaseService';
 
 interface RepertoireStudyScreenProps {
   navigation: any;
@@ -26,7 +27,7 @@ interface RepertoireStudyScreenProps {
 
 export default function RepertoireStudyScreen({ navigation, route }: RepertoireStudyScreenProps) {
   const { repertoireId, chapterId } = route.params;
-  const { repertoires, userGames, masterGames } = useStore();
+  const { repertoires } = useStore();
   const { width } = useWindowDimensions();
   const isWide = width > 700;
 
@@ -39,6 +40,10 @@ export default function RepertoireStudyScreen({ navigation, route }: RepertoireS
   const [moveTree, setMoveTree] = useState<MoveTree | null>(null);
   const [, forceUpdate] = useState(0);
   const [leftPanelVisible, setLeftPanelVisible] = useState(false);
+  const [gamesAtPosition, setGamesAtPosition] = useState<{ userGames: UserGame[]; masterGames: MasterGame[] }>({
+    userGames: [],
+    masterGames: [],
+  });
 
   const currentChapter = useMemo(
     () => repertoire?.chapters.find(c => c.id === selectedChapterId),
@@ -84,26 +89,13 @@ export default function RepertoireStudyScreen({ navigation, route }: RepertoireS
   const currentFen = moveTree?.getCurrentFen() || '';
   const currentComment = moveTree?.getCurrentNode()?.comment || '';
 
-  const gamesAtPosition = useMemo(() => {
-    if (!currentFen) return { userGames: [], masterGames: [] };
-
-    const normalizedFen = normalizeFen(currentFen);
-
-    const matchingUserGames = userGames.filter(game => {
-      const gameFens = computeFensFromMoves(game.moves);
-      return gameFens.includes(normalizedFen);
-    });
-
-    const matchingMasterGames = masterGames.filter(game => {
-      const gameFens = computeFensFromMoves(game.moves);
-      return gameFens.includes(normalizedFen);
-    });
-
-    return {
-      userGames: matchingUserGames,
-      masterGames: matchingMasterGames,
-    };
-  }, [userGames, masterGames, currentFen]);
+  // Load games that match current position from database (disabled for now - performance issue)
+  // TODO: Add FEN indexing to database for efficient position search
+  useEffect(() => {
+    // Temporarily disabled - loading all games is too slow for large databases
+    // Will need to implement FEN indexing in database to make this performant
+    setGamesAtPosition({ userGames: [], masterGames: [] });
+  }, [currentFen]);
 
   const handleSelectChapter = (newChapterId: string) => {
     setSelectedChapterId(newChapterId);
