@@ -2,6 +2,7 @@
  * SettingsService - Global settings persistence for game review
  */
 
+import { Platform } from 'react-native';
 import { ReviewSettings } from '@types';
 import { StorageService } from '@services/storage/StorageService';
 
@@ -10,12 +11,15 @@ const SETTINGS_KEY = '@kingside/review-settings';
 export const SettingsService = {
   /**
    * Get default settings
+   * On mobile: defaults to local Stockfish engine
+   * On web: defaults to external API (WASM complexity not supported)
    */
   getDefaults(): ReviewSettings {
     return {
       engine: {
+        engineType: Platform.OS === 'web' ? 'external' : 'local',
         apiEndpoint: '',
-        depth: 20,
+        depth: 18, // Lower depth for better mobile performance
         timeout: 10000,
       },
       thresholds: {

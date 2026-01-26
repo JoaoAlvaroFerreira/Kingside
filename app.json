@@ -14,7 +14,8 @@
       "package": "com.kingside.app"
     },
     "plugins": [
-      "expo-document-picker"
+      "expo-document-picker",
+      "@loloof64/react-native-stockfish"
     ]
   }
 }

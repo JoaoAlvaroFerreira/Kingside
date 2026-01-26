@@ -398,6 +398,7 @@ const styles = StyleSheet.create({
   },
   mainContent: {
     paddingTop: 8,
+    maxWidth: '100%',
   },
   mainContentWide: {
     flexDirection: 'row',
@@ -405,6 +406,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     gap: 12,
     paddingHorizontal: 12,
+    maxWidth: '100%',
   },
   boardSection: {
     alignItems: 'center',

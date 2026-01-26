@@ -78,6 +78,7 @@ export interface GameReviewStatus {
 }
 
 export interface EngineSettings {
+  engineType: 'local' | 'external';
   apiEndpoint: string;
   depth: number;
   timeout: number;          // ms

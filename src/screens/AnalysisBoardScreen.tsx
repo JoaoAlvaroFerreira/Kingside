@@ -1,10 +1,11 @@
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import { View, StyleSheet, Text, TouchableOpacity, useWindowDimensions } from 'react-native';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import { View, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { Chess } from 'chess.js';
-import { InteractiveChessBoard } from '@components/chess/InteractiveChessBoard/InteractiveChessBoard';
-import { MoveHistory } from '@components/chess/MoveHistory/MoveHistory';
+import { ChessWorkspace } from '@components/chess/ChessWorkspace/ChessWorkspace';
 import { MoveTree } from '@utils/MoveTree';
-import { UserGame, MasterGame } from '@types';
+import { UserGame, MasterGame, EngineEvaluation } from '@types';
+import { StockfishService } from '@services/engine/StockfishService';
+import { useStore } from '@store';
 
 interface AnalysisBoardScreenProps {
   route?: {
@@ -15,10 +16,16 @@ interface AnalysisBoardScreenProps {
 }
 
 export default function AnalysisBoardScreen({ route }: AnalysisBoardScreenProps) {
+  const { screenSettings } = useStore();
   const [moveTree, setMoveTree] = useState(() => new MoveTree());
   const [updateCounter, forceUpdate] = useState(0);
-  const { width } = useWindowDimensions();
-  const isWideScreen = width > 700;
+  const [currentEval, setCurrentEval] = useState<EngineEvaluation | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+
+  const engineEnabled = screenSettings.analysis.engineEnabled;
+
+  const currentFen = moveTree.getCurrentFen();
+  const currentNodeId = moveTree.getCurrentNode()?.id || null;
 
   // Load game if provided via navigation
   useEffect(() => {
@@ -33,11 +40,30 @@ export default function AnalysisBoardScreen({ route }: AnalysisBoardScreenProps)
     }
   }, [route?.params?.game]);
 
-  const currentFen = moveTree.getCurrentFen();
-  const currentNodeId = moveTree.getCurrentNode()?.id || null;
-  const flatMoves = useMemo(() => moveTree.getFlatMoves(), [moveTree, currentNodeId, updateCounter]);
-  const canGoBack = !moveTree.isAtStart();
-  const canGoForward = !moveTree.isAtEnd();
+  // Analyze current position when FEN changes (only if engine enabled)
+  useEffect(() => {
+    if (!engineEnabled) {
+      setCurrentEval(null);
+      setIsAnalyzing(false);
+      return;
+    }
+
+    const analyzeCurrent = async () => {
+      setIsAnalyzing(true);
+      try {
+        // Use depth 12 for faster analysis (adjustable in Settings)
+        const evaluation = await StockfishService.analyze(currentFen, 12, 8000);
+        setCurrentEval(evaluation);
+      } catch (error) {
+        console.warn('[AnalysisBoard] Engine analysis failed:', error);
+        setCurrentEval(null);
+      } finally {
+        setIsAnalyzing(false);
+      }
+    };
+
+    analyzeCurrent();
+  }, [currentFen, updateCounter, engineEnabled]);
 
   const triggerUpdate = useCallback(() => {
     forceUpdate(n => n + 1);
@@ -62,26 +88,6 @@ export default function AnalysisBoardScreen({ route }: AnalysisBoardScreenProps)
 
   const handleNavigate = useCallback((nodeId: string | null) => {
     moveTree.navigateToNode(nodeId);
-    triggerUpdate();
-  }, [moveTree, triggerUpdate]);
-
-  const handleGoBack = useCallback(() => {
-    moveTree.goBack();
-    triggerUpdate();
-  }, [moveTree, triggerUpdate]);
-
-  const handleGoForward = useCallback(() => {
-    moveTree.goForward();
-    triggerUpdate();
-  }, [moveTree, triggerUpdate]);
-
-  const handleGoToStart = useCallback(() => {
-    moveTree.goToStart();
-    triggerUpdate();
-  }, [moveTree, triggerUpdate]);
-
-  const handleGoToEnd = useCallback(() => {
-    moveTree.goToEnd();
     triggerUpdate();
   }, [moveTree, triggerUpdate]);
 
@@ -117,36 +123,32 @@ export default function AnalysisBoardScreen({ route }: AnalysisBoardScreenProps)
 
   return (
     <View style={styles.container}>
+      {/* Status Bar */}
       <View style={styles.statusContainer}>
         <Text style={styles.turnText}>{turnText}</Text>
         {gameStatus && <Text style={styles.gameStatus}>{gameStatus}</Text>}
+        {isAnalyzing && <Text style={styles.analyzingText}>Analyzing...</Text>}
       </View>
 
-      <View style={[styles.gameArea, isWideScreen && styles.gameAreaWide]}>
-        <InteractiveChessBoard
-          fen={currentFen}
-          onMove={handleMove}
-          orientation="white"
-        />
+      {/* Chess Workspace */}
+      <ChessWorkspace
+        fen={currentFen}
+        onMove={handleMove}
+        moveTree={moveTree}
+        currentNodeId={currentNodeId}
+        onNavigate={handleNavigate}
+        onPromoteToMainLine={handlePromoteToMainLine}
+        currentEval={currentEval}
+        screenKey="analysis"
+        showMoveHistory={true}
+        showSettingsGear={true}
+      />
 
-        <View style={[styles.sidePanel, isWideScreen && styles.sidePanelWide]}>
-          <MoveHistory
-            moves={flatMoves}
-            currentNodeId={currentNodeId}
-            onNavigate={handleNavigate}
-            onGoBack={handleGoBack}
-            onGoForward={handleGoForward}
-            onGoToStart={handleGoToStart}
-            onGoToEnd={handleGoToEnd}
-            onPromoteToMainLine={handlePromoteToMainLine}
-            canGoBack={canGoBack}
-            canGoForward={canGoForward}
-          />
-
-          <TouchableOpacity style={styles.resetButton} onPress={resetGame}>
-            <Text style={styles.resetButtonText}>New Game</Text>
-          </TouchableOpacity>
-        </View>
+      {/* Reset Button */}
+      <View style={styles.resetContainer}>
+        <TouchableOpacity style={styles.resetButton} onPress={resetGame}>
+          <Text style={styles.resetButtonText}>New Game</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -155,51 +157,47 @@ export default function AnalysisBoardScreen({ route }: AnalysisBoardScreenProps)
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
     backgroundColor: '#2c2c2c',
-    padding: 16,
   },
   statusContainer: {
-    marginBottom: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: '#3a3a3a',
   },
   turnText: {
     color: '#e0e0e0',
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
   },
   gameStatus: {
     color: '#ffc107',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '700',
     marginTop: 4,
   },
-  gameArea: {
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: 16,
+  analyzingText: {
+    color: '#4a9eff',
+    fontSize: 12,
+    marginTop: 4,
   },
-  gameAreaWide: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-  },
-  sidePanel: {
-    alignItems: 'center',
-  },
-  sidePanelWide: {
-    marginLeft: 20,
+  resetContainer: {
+    position: 'absolute',
+    bottom: 16,
+    right: 16,
   },
   resetButton: {
-    marginTop: 16,
     backgroundColor: '#4a4a4a',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
     borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#555',
   },
   resetButtonText: {
     color: '#e0e0e0',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
   },
 });

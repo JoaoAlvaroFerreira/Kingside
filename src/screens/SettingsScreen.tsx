@@ -17,6 +17,7 @@ import {
 } from 'react-native';
 import { useStore } from '@store';
 import { EngineService } from '@services/engine/EngineService';
+import { LocalEngineService } from '@services/engine/LocalEngineService';
 
 interface SettingsScreenProps {
   navigation: any;
@@ -26,8 +27,10 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
   const { reviewSettings, saveReviewSettings } = useStore();
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
+  const [localEngineAvailable, setLocalEngineAvailable] = useState(false);
 
   // Engine settings
+  const [engineType, setEngineType] = useState<'local' | 'external'>(reviewSettings.engine.engineType);
   const [apiEndpoint, setApiEndpoint] = useState(reviewSettings.engine.apiEndpoint);
   const [depth, setDepth] = useState(reviewSettings.engine.depth.toString());
   const [timeout, setTimeout] = useState(reviewSettings.engine.timeout.toString());
@@ -46,8 +49,17 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
   const [lichessUsername, setLichessUsername] = useState(reviewSettings.lichess.username);
   const [lichessImportDaysBack, setLichessImportDaysBack] = useState(reviewSettings.lichess.importDaysBack.toString());
 
+  // Check local engine availability on mount
+  useEffect(() => {
+    LocalEngineService.isAvailable().then(available => {
+      console.log('[SettingsScreen] Local engine available:', available);
+      setLocalEngineAvailable(available);
+    });
+  }, []);
+
   // Update local state when store changes
   useEffect(() => {
+    setEngineType(reviewSettings.engine.engineType);
     setApiEndpoint(reviewSettings.engine.apiEndpoint);
     setDepth(reviewSettings.engine.depth.toString());
     setTimeout(reviewSettings.engine.timeout.toString());
@@ -158,6 +170,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
     try {
       await saveReviewSettings({
         engine: {
+          engineType,
           apiEndpoint,
           depth: parseInt(depth, 10),
           timeout: parseInt(timeout, 10),
@@ -253,37 +266,93 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Engine Configuration</Text>
           <Text style={styles.sectionDescription}>
-            Configure external chess engine API for position analysis
+            {Platform.OS === 'web'
+              ? 'Local engine not supported on web. Use external API.'
+              : 'Choose between local Stockfish (offline) or external API'}
           </Text>
 
           <View style={styles.field}>
-            <Text style={styles.label}>API Endpoint</Text>
-            <TextInput
-              style={styles.input}
-              value={apiEndpoint}
-              onChangeText={setApiEndpoint}
-              placeholder="https://your-engine-api.com/analyze"
-              placeholderTextColor="#666"
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
+            <Text style={styles.label}>Engine Type</Text>
+            <View style={styles.engineTypeSelector}>
+              <TouchableOpacity
+                style={[
+                  styles.engineTypeButton,
+                  styles.engineTypeButtonLeft,
+                  engineType === 'local' && styles.engineTypeButtonActive,
+                  !localEngineAvailable && styles.engineTypeButtonDisabled,
+                ]}
+                onPress={() => localEngineAvailable && setEngineType('local')}
+                disabled={!localEngineAvailable}
+              >
+                <Text
+                  style={[
+                    styles.engineTypeButtonText,
+                    engineType === 'local' && styles.engineTypeButtonTextActive,
+                    !localEngineAvailable && styles.engineTypeButtonTextDisabled,
+                  ]}
+                >
+                  {Platform.OS === 'web' ? 'Local (Not Available)' : 'Local Stockfish'}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.engineTypeButton,
+                  styles.engineTypeButtonRight,
+                  engineType === 'external' && styles.engineTypeButtonActive,
+                ]}
+                onPress={() => setEngineType('external')}
+              >
+                <Text
+                  style={[
+                    styles.engineTypeButtonText,
+                    engineType === 'external' && styles.engineTypeButtonTextActive,
+                  ]}
+                >
+                  External API
+                </Text>
+              </TouchableOpacity>
+            </View>
             <Text style={styles.hint}>
-              Complete URL to your engine analysis endpoint.{'\n'}
-              The app will POST to this URL with fen and depth in the body.
+              {Platform.OS === 'web'
+                ? 'Web platform requires external API. Mobile supports offline local engine.'
+                : localEngineAvailable
+                ? 'Local: Free, offline, works without internet. External: Requires API setup.'
+                : 'Local engine initializing... If unavailable, use External API.'}
             </Text>
           </View>
 
-          <TouchableOpacity
-            style={[styles.testButton, testing && styles.testButtonDisabled]}
-            onPress={handleTestEngine}
-            disabled={testing}
-          >
-            {testing ? (
-              <ActivityIndicator size="small" color="#fff" />
-            ) : (
-              <Text style={styles.testButtonText}>Test Connection</Text>
-            )}
-          </TouchableOpacity>
+          {engineType === 'external' && (
+            <>
+              <View style={styles.field}>
+                <Text style={styles.label}>API Endpoint</Text>
+                <TextInput
+                  style={styles.input}
+                  value={apiEndpoint}
+                  onChangeText={setApiEndpoint}
+                  placeholder="https://your-engine-api.com/analyze"
+                  placeholderTextColor="#666"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+                <Text style={styles.hint}>
+                  Complete URL to your engine analysis endpoint.{'\n'}
+                  The app will POST to this URL with fen and depth in the body.
+                </Text>
+              </View>
+
+              <TouchableOpacity
+                style={[styles.testButton, testing && styles.testButtonDisabled]}
+                onPress={handleTestEngine}
+                disabled={testing}
+              >
+                {testing ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <Text style={styles.testButtonText}>Test Connection</Text>
+                )}
+              </TouchableOpacity>
+            </>
+          )}
 
           <View style={styles.row}>
             <View style={[styles.field, styles.fieldHalf]}>
@@ -629,5 +698,45 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#999',
     textAlign: 'center',
+  },
+  engineTypeSelector: {
+    flexDirection: 'row',
+    borderRadius: 6,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#444',
+  },
+  engineTypeButton: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: '#2a2a2a',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  engineTypeButtonLeft: {
+    borderRightWidth: 0.5,
+    borderRightColor: '#444',
+  },
+  engineTypeButtonRight: {
+    borderLeftWidth: 0.5,
+    borderLeftColor: '#444',
+  },
+  engineTypeButtonActive: {
+    backgroundColor: '#4a9eff',
+  },
+  engineTypeButtonDisabled: {
+    opacity: 0.4,
+  },
+  engineTypeButtonText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#bbb',
+  },
+  engineTypeButtonTextActive: {
+    color: '#fff',
+  },
+  engineTypeButtonTextDisabled: {
+    color: '#666',
   },
 });

@@ -39,6 +39,7 @@
     "react-native-screens": "~3.29.0",
     "react-native-svg": "15.8.0",
     "react-native-web": "~0.19.13",
+    "@loloof64/react-native-stockfish": "latest",
     "zustand": "^4.4.7"
   },
   "devDependencies": {

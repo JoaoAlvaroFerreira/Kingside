@@ -14,9 +14,13 @@ import {
   GameReviewStatus,
   GameReviewSession,
   RepertoireColor,
+  AllScreenSettings,
+  ScreenKey,
+  ScreenSettings,
 } from '@types';
 import { StorageService } from '@services/storage/StorageService';
 import { SettingsService } from '@services/settings/SettingsService';
+import { ScreenSettingsService } from '@services/settings/ScreenSettingsService';
 import { GameReviewService } from '@services/gameReview/GameReviewService';
 import { EngineService } from '@services/engine/EngineService';
 import { DatabaseService } from '@services/database/DatabaseService';
@@ -31,6 +35,7 @@ interface AppState {
   lineStats: LineStats[];      // Training line statistics
   currentTrainingSession: TrainingSession | null;
   reviewSettings: ReviewSettings;
+  screenSettings: AllScreenSettings;
   gameReviewStatuses: GameReviewStatus[];
   currentReviewSession: GameReviewSession | null;
   isLoading: boolean;
@@ -75,6 +80,10 @@ interface AppState {
   completeGameReview: () => Promise<void>;
   setReviewSession: (session: GameReviewSession | null) => void;
   getUnreviewedGames: () => Promise<UserGame[]>;
+
+  // Screen Settings actions
+  loadScreenSettings: () => Promise<void>;
+  updateScreenSettings: (screenKey: ScreenKey, settings: Partial<ScreenSettings>) => Promise<void>;
 }
 
 export const useStore = create<AppState>((set, get) => ({
@@ -85,6 +94,7 @@ export const useStore = create<AppState>((set, get) => ({
   lineStats: [],
   currentTrainingSession: null,
   reviewSettings: SettingsService.getDefaults(),
+  screenSettings: ScreenSettingsService.getDefaults(),
   gameReviewStatuses: [],
   currentReviewSession: null,
   isLoading: true,
@@ -98,18 +108,22 @@ export const useStore = create<AppState>((set, get) => ({
     // Migrate existing AsyncStorage data to SQLite if needed
     await MigrationService.migrateIfNeeded();
 
-    const [repertoires, userGamesCount, masterGamesCount, reviewCards, lineStats, reviewSettings, gameReviewStatuses] = await Promise.all([
+    const [repertoires, userGamesCount, masterGamesCount, reviewCards, lineStats, reviewSettings, screenSettings, gameReviewStatuses] = await Promise.all([
       StorageService.loadRepertoires(),
       DatabaseService.getUserGamesCount(),
       DatabaseService.getMasterGamesCount(),
       StorageService.loadCards(),
       StorageService.loadLineStats(),
       SettingsService.loadSettings(),
+      ScreenSettingsService.loadSettings(),
       StorageService.loadGameReviewStatuses(),
     ]);
 
     // Configure engine with loaded settings
     EngineService.setEndpoint(reviewSettings.engine.apiEndpoint);
+    const { StockfishService } = await import('@services/engine/StockfishService');
+    StockfishService.setEngineType(reviewSettings.engine.engineType);
+    StockfishService.setExternalEndpoint(reviewSettings.engine.apiEndpoint);
 
     console.log('Store: Loaded data:', {
       repertoires: repertoires.length,
@@ -119,7 +133,7 @@ export const useStore = create<AppState>((set, get) => ({
       lineStats: lineStats.length,
       gameReviewStatuses: gameReviewStatuses.length,
     });
-    set({ repertoires, userGamesCount, masterGamesCount, reviewCards, lineStats, reviewSettings, gameReviewStatuses, isLoading: false });
+    set({ repertoires, userGamesCount, masterGamesCount, reviewCards, lineStats, reviewSettings, screenSettings, gameReviewStatuses, isLoading: false });
   },
 
   addRepertoire: async (repertoire) => {
@@ -302,6 +316,9 @@ export const useStore = create<AppState>((set, get) => ({
   loadReviewSettings: async () => {
     const reviewSettings = await SettingsService.loadSettings();
     EngineService.setEndpoint(reviewSettings.engine.apiEndpoint);
+    const { StockfishService } = await import('@services/engine/StockfishService');
+    StockfishService.setEngineType(reviewSettings.engine.engineType);
+    StockfishService.setExternalEndpoint(reviewSettings.engine.apiEndpoint);
     set({ reviewSettings });
   },
 
@@ -309,9 +326,16 @@ export const useStore = create<AppState>((set, get) => ({
     const current = get().reviewSettings;
     const updated = await SettingsService.updateSettings(updates);
 
-    // Update engine endpoint if changed
+    // Update engine configuration if changed
     if (updates.engine?.apiEndpoint) {
       EngineService.setEndpoint(updates.engine.apiEndpoint);
+    }
+    const { StockfishService } = await import('@services/engine/StockfishService');
+    if (updates.engine?.engineType) {
+      StockfishService.setEngineType(updates.engine.engineType);
+    }
+    if (updates.engine?.apiEndpoint) {
+      StockfishService.setExternalEndpoint(updates.engine.apiEndpoint);
     }
 
     set({ reviewSettings: updated });
@@ -417,5 +441,16 @@ export const useStore = create<AppState>((set, get) => ({
     );
     const allUserGames = await DatabaseService.getAllUserGames();
     return allUserGames.filter(g => !reviewedGameIds.has(g.id));
+  },
+
+  // Screen Settings actions
+  loadScreenSettings: async () => {
+    const screenSettings = await ScreenSettingsService.loadSettings();
+    set({ screenSettings });
+  },
+
+  updateScreenSettings: async (screenKey, settings) => {
+    const updated = await ScreenSettingsService.updateScreenSettings(screenKey, settings);
+    set({ screenSettings: updated });
   },
 }));

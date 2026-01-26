@@ -103,7 +103,9 @@ export const MoveHistory: React.FC<MoveHistoryProps> = ({
 
         const variationElements: React.ReactNode[] = [];
         variationElements.push(
-          <Text key={`bracket-open-${move.id}`} style={styles.variationBracket}>(</Text>
+          <View key={`bracket-open-${move.id}`}>
+            <Text style={styles.variationBracket}>(</Text>
+          </View>
         );
         variationMoves.forEach((varMove) => {
           variationElements.push(
@@ -113,7 +115,9 @@ export const MoveHistory: React.FC<MoveHistoryProps> = ({
           );
         });
         variationElements.push(
-          <Text key={`bracket-close-${move.id}`} style={styles.variationBracket}>)</Text>
+          <View key={`bracket-close-${move.id}`}>
+            <Text style={styles.variationBracket}>)</Text>
+          </View>
         );
 
         elements.push(

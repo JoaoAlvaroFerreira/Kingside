@@ -19,7 +19,20 @@
       "Bash(npm start)",
       "Bash(ls -la \"D:\\\\Projects\\\\Kingside\\\\src\\\\types\"\" 2>/dev/null || ls -la \"D:/Projects/Kingside/src/types/ \")",
       "Bash(node -e:*)",
-      "Bash(npm test:*)"
+      "Bash(npm test:*)",
+      "Bash(bash --norc --noprofile -c \"cd D:\\\\Projects\\\\Kingside && npm install stockfish\")",
+      "Bash(bash --norc --noprofile -c \"cd /d/Projects/Kingside && /c/Program\\\\ Files/nodejs/npm install stockfish\")",
+      "Bash(test:*)",
+      "Bash(npm search:*)",
+      "Bash(npm view:*)",
+      "WebSearch",
+      "Bash(java -version:*)",
+      "Bash(javac:*)",
+      "Bash(echo:*)",
+      "Bash(./gradlew clean:*)",
+      "Bash(choco install:*)",
+      "Bash(ls:*)",
+      "Bash(npx expo prebuild:*)"
     ]
   }
 }

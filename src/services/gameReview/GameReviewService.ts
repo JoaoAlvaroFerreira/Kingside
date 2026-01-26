@@ -24,7 +24,7 @@ import {
   EngineEvaluation,
   EvalThresholds,
 } from '@types';
-import { EngineService } from '@services/engine/EngineService';
+import { StockfishService } from '@services/engine/StockfishService';
 import { normalizeFen } from '@types';
 import { MoveTree } from '@utils/MoveTree';
 
@@ -138,7 +138,7 @@ export const GameReviewService = {
 
     // Get engine evaluations for all positions (if engine is configured)
     console.log(`Analyzing ${positions.length} positions...`);
-    const evaluations = await EngineService.analyzeBatch(positions, engineDepth, engineTimeout);
+    const evaluations = await StockfishService.analyzeBatch(positions, engineDepth, engineTimeout);
     const hasEngineAnalysis = evaluations.some(e => e !== null);
     console.log(`Received ${evaluations.length} evaluations (${hasEngineAnalysis ? 'engine active' : 'engine disabled'})`);
 
