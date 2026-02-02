@@ -32,17 +32,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   const [orientation, setOrientation] = useState(currentSettings.orientation);
   const [engineEnabled, setEngineEnabled] = useState(currentSettings.engineEnabled);
-  const [evalBarVisible, setEvalBarVisible] = useState(currentSettings.evalBarVisible);
   const [coordinatesVisible, setCoordinatesVisible] = useState(currentSettings.coordinatesVisible);
   const [moveHistoryVisible, setMoveHistoryVisible] = useState(currentSettings.moveHistoryVisible);
+  const [boardSize, setBoardSize] = useState(currentSettings.boardSize || 'small');
 
   const handleSave = async () => {
     await updateScreenSettings(screenKey, {
       orientation,
       engineEnabled,
-      evalBarVisible,
       coordinatesVisible,
       moveHistoryVisible,
+      boardSize,
     });
     onClose();
   };
@@ -51,9 +51,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     // Reset to current settings
     setOrientation(currentSettings.orientation);
     setEngineEnabled(currentSettings.engineEnabled);
-    setEvalBarVisible(currentSettings.evalBarVisible);
     setCoordinatesVisible(currentSettings.coordinatesVisible);
     setMoveHistoryVisible(currentSettings.moveHistoryVisible);
+    setBoardSize(currentSettings.boardSize || 'small');
     onClose();
   };
 
@@ -115,35 +115,107 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               </View>
             </View>
 
-            {/* Engine Analysis */}
+            {/* Board Size */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Board Size</Text>
+              <View style={styles.segmentedControl}>
+                <TouchableOpacity
+                  style={[
+                    styles.segmentButton,
+                    styles.segmentButtonLeft,
+                    boardSize === 'tiny' && styles.segmentButtonActive,
+                  ]}
+                  onPress={() => setBoardSize('tiny')}
+                >
+                  <Text
+                    style={[
+                      styles.segmentButtonText,
+                      boardSize === 'tiny' && styles.segmentButtonTextActive,
+                    ]}
+                  >
+                    XS
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.segmentButton,
+                    boardSize === 'small' && styles.segmentButtonActive,
+                  ]}
+                  onPress={() => setBoardSize('small')}
+                >
+                  <Text
+                    style={[
+                      styles.segmentButtonText,
+                      boardSize === 'small' && styles.segmentButtonTextActive,
+                    ]}
+                  >
+                    S
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.segmentButton,
+                    boardSize === 'medium' && styles.segmentButtonActive,
+                  ]}
+                  onPress={() => setBoardSize('medium')}
+                >
+                  <Text
+                    style={[
+                      styles.segmentButtonText,
+                      boardSize === 'medium' && styles.segmentButtonTextActive,
+                    ]}
+                  >
+                    M
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.segmentButton,
+                    boardSize === 'large' && styles.segmentButtonActive,
+                  ]}
+                  onPress={() => setBoardSize('large')}
+                >
+                  <Text
+                    style={[
+                      styles.segmentButtonText,
+                      boardSize === 'large' && styles.segmentButtonTextActive,
+                    ]}
+                  >
+                    L
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.segmentButton,
+                    styles.segmentButtonRight,
+                    boardSize === 'xlarge' && styles.segmentButtonActive,
+                  ]}
+                  onPress={() => setBoardSize('xlarge')}
+                >
+                  <Text
+                    style={[
+                      styles.segmentButtonText,
+                      boardSize === 'xlarge' && styles.segmentButtonTextActive,
+                    ]}
+                  >
+                    XL
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Engine Analysis (includes eval bar) */}
             <View style={styles.section}>
               <View style={styles.switchRow}>
                 <View style={styles.switchLabel}>
                   <Text style={styles.label}>Engine Analysis</Text>
-                  <Text style={styles.hint}>Enable position evaluation</Text>
+                  <Text style={styles.hint}>Enable position evaluation and eval bar</Text>
                 </View>
                 <Switch
                   value={engineEnabled}
                   onValueChange={setEngineEnabled}
                   trackColor={{ false: '#444', true: '#4a9eff' }}
                   thumbColor={engineEnabled ? '#fff' : '#bbb'}
-                />
-              </View>
-            </View>
-
-            {/* Evaluation Bar */}
-            <View style={styles.section}>
-              <View style={styles.switchRow}>
-                <View style={styles.switchLabel}>
-                  <Text style={styles.label}>Evaluation Bar</Text>
-                  <Text style={styles.hint}>Show vertical eval bar</Text>
-                </View>
-                <Switch
-                  value={evalBarVisible}
-                  onValueChange={setEvalBarVisible}
-                  disabled={!engineEnabled}
-                  trackColor={{ false: '#444', true: '#4a9eff' }}
-                  thumbColor={evalBarVisible ? '#fff' : '#bbb'}
                 />
               </View>
             </View>
@@ -257,14 +329,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#1e1e1e',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  segmentButtonLeft: {
     borderRightWidth: 0.5,
     borderRightColor: '#444',
   },
+  segmentButtonLeft: {
+    // Already has border from base
+  },
   segmentButtonRight: {
-    borderLeftWidth: 0.5,
-    borderLeftColor: '#444',
+    borderRightWidth: 0,
   },
   segmentButtonActive: {
     backgroundColor: '#4a9eff',

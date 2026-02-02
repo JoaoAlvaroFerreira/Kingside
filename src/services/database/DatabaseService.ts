@@ -4,7 +4,6 @@
  */
 
 import { Platform } from 'react-native';
-import * as SQLite from 'expo-sqlite';
 import { UserGame, MasterGame } from '@types';
 import { WebDatabaseService } from './WebDatabaseService';
 
@@ -18,8 +17,14 @@ interface PaginatedResult<T> {
   page: number;
 }
 
+// Conditionally import SQLite only on native platforms
+let SQLite: any = null;
+if (Platform.OS !== 'web') {
+  SQLite = require('expo-sqlite');
+}
+
 class DatabaseServiceClass {
-  private db: SQLite.SQLiteDatabase | null = null;
+  private db: any | null = null;
   private isWeb = Platform.OS === 'web';
 
   /**
@@ -33,6 +38,10 @@ class DatabaseServiceClass {
     }
 
     console.log('[DatabaseService] Using SQLite for native platform');
+
+    if (!SQLite) {
+      throw new Error('SQLite module not available on this platform');
+    }
 
     try {
       this.db = await SQLite.openDatabaseAsync(DB_NAME);

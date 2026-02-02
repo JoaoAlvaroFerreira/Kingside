@@ -49,13 +49,24 @@ const StockfishProviderWeb: React.FC<{ children: React.ReactNode }> = ({ childre
 const StockfishProviderNative: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Dynamic require to avoid web bundler errors
   // This code only runs on native platforms due to Platform.OS check below
-  const { useStockfish } = require('@loloof64/react-native-stockfish');
+  let useStockfish;
+  try {
+    const stockfishModule = require('@loloof64/react-native-stockfish');
+    console.log('[Stockfish] Module loaded:', Object.keys(stockfishModule));
+    useStockfish = stockfishModule.useStockfish;
+    if (!useStockfish) {
+      throw new Error('useStockfish hook not found in module');
+    }
+  } catch (error) {
+    console.error('[Stockfish] Failed to load module:', error);
+    throw error;
+  }
 
   const [isReady, setIsReady] = useState(false);
   const outputListeners = useRef<Map<string, (line: string) => void>>(new Map());
 
   const handleOutput = useCallback((line: string) => {
-    console.log('[Stockfish]', line);
+    console.log('[Stockfish] Output:', line);
 
     // Notify all registered listeners
     outputListeners.current.forEach(listener => {
@@ -67,6 +78,7 @@ const StockfishProviderNative: React.FC<{ children: React.ReactNode }> = ({ chil
     });
 
     if (line === 'readyok') {
+      console.log('[Stockfish] ✓ Engine is READY');
       setIsReady(true);
     }
   }, []);
@@ -75,15 +87,36 @@ const StockfishProviderNative: React.FC<{ children: React.ReactNode }> = ({ chil
     console.error('[Stockfish Error]', error);
   }, []);
 
-  const { stockfishLoop, sendCommandToStockfish, stopStockfish } = useStockfish({
-    onOutput: handleOutput,
-    onError: handleError,
-  });
+  let stockfishHookResult;
+  try {
+    stockfishHookResult = useStockfish({
+      onOutput: handleOutput,
+      onError: handleError,
+    });
+    console.log('[Stockfish] Hook initialized:', Object.keys(stockfishHookResult));
+  } catch (error) {
+    console.error('[Stockfish] Hook failed:', error);
+    throw error;
+  }
+
+  const { stockfishLoop, sendCommandToStockfish, stopStockfish } = stockfishHookResult;
 
   useEffect(() => {
     console.log('[Stockfish] Initializing engine...');
-    stockfishLoop();
+    console.log('[Stockfish] Starting stockfishLoop...');
+
+    try {
+      stockfishLoop();
+      console.log('[Stockfish] stockfishLoop() called successfully');
+    } catch (error) {
+      console.error('[Stockfish] stockfishLoop() failed:', error);
+      return;
+    }
+
+    console.log('[Stockfish] Sending uci command...');
     sendCommandToStockfish('uci');
+
+    console.log('[Stockfish] Sending isready command...');
     sendCommandToStockfish('isready');
 
     return () => {

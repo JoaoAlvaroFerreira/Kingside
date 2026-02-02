@@ -32,7 +32,30 @@
       "Bash(./gradlew clean:*)",
       "Bash(choco install:*)",
       "Bash(ls:*)",
-      "Bash(npx expo prebuild:*)"
+      "Bash(npx expo prebuild:*)",
+      "Bash(./gradlew assembleDebug:*)",
+      "Bash(tee:*)",
+      "Bash(bash gradlew:*)",
+      "Bash(bash -c:*)",
+      "Bash(powershell.exe -ExecutionPolicy Bypass -File \"./check-android-env.ps1\")",
+      "Bash(powershell.exe -Command \"[System.Environment]::GetEnvironmentVariable\\(''JAVA_HOME'', ''User''\\)\")",
+      "Bash(powershell.exe -Command \"[System.Environment]::GetEnvironmentVariable\\(''JAVA_HOME'', ''Machine''\\)\")",
+      "Bash(powershell.exe -Command:*)",
+      "Bash(powershell.exe -ExecutionPolicy Bypass -File \"./setup-android-sdk.ps1\")",
+      "Bash(powershell.exe -ExecutionPolicy Bypass -File \"./build-android-jdk17.ps1\")",
+      "Bash(npx expo:*)",
+      "Bash(node --version)",
+      "Bash(npm --version)",
+      "Bash(npm run android:*)",
+      "Bash(cmd.exe /c build-android-jdk17.bat)",
+      "Bash(cmd.exe /c .build-android-jdk17.bat)",
+      "Bash(cmd.exe /c \"D:\\\\Projects\\\\Kingside\\\\build-android-jdk17.bat\")",
+      "Bash(cmd.exe /c:*)",
+      "Bash(node:*)",
+      "Bash(./gradlew.bat:*)",
+      "Bash(adb install:*)",
+      "Bash(adb uninstall:*)",
+      "Bash(npx react-native-async-storage inspect)"
     ]
   }
 }

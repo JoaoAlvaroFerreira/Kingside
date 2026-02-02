@@ -23,6 +23,10 @@ interface ChessWorkspaceProps {
   moveTree?: MoveTree | null;
   currentNodeId?: string | null;
   onNavigate?: (nodeId: string | null) => void;
+  onGoBack?: () => void;
+  onGoForward?: () => void;
+  onGoToStart?: () => void;
+  onGoToEnd?: () => void;
   onMarkCritical?: (nodeId: string, isCritical: boolean) => void;
   onPromoteToMainLine?: (nodeId: string) => void;
 
@@ -49,6 +53,10 @@ export const ChessWorkspace: React.FC<ChessWorkspaceProps> = ({
   moveTree,
   currentNodeId,
   onNavigate,
+  onGoBack,
+  onGoForward,
+  onGoToStart,
+  onGoToEnd,
   onMarkCritical,
   onPromoteToMainLine,
   currentEval,
@@ -59,7 +67,7 @@ export const ChessWorkspace: React.FC<ChessWorkspaceProps> = ({
   showSettingsGear = true,
   orientationOverride,
 }) => {
-  const { width } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const { screenSettings } = useStore();
   const settings = screenSettings[screenKey];
 
@@ -67,9 +75,32 @@ export const ChessWorkspace: React.FC<ChessWorkspaceProps> = ({
 
   // Use override orientation if provided, otherwise use settings
   const orientation = orientationOverride || settings.orientation;
-  const evalBarVisible = settings.evalBarVisible && settings.engineEnabled;
+  const evalBarVisible = Boolean(settings.engineEnabled); // Eval bar shows when engine enabled
   const coordinatesVisible = settings.coordinatesVisible;
   const moveHistoryVisible = showMoveHistory && settings.moveHistoryVisible;
+  const boardSizeSetting = settings.boardSize || 'small';
+
+  // Calculate actual board size in pixels
+  const maxBoardSize = Math.min(width, height) - 40;
+  const sizeMap = {
+    tiny: 280,
+    small: 320,
+    medium: 380,
+    large: 440,
+    xlarge: 500,
+  };
+  const maxSize = sizeMap[boardSizeSetting];
+  const actualBoardSize = Math.min(maxBoardSize, maxSize);
+
+  // Debug logging for board size
+  console.log('[ChessWorkspace] Board size calculation:', {
+    boardSizeSetting,
+    maxSize,
+    maxBoardSize,
+    actualBoardSize,
+    width,
+    height,
+  });
 
   const isWideScreen = width > 700;
 
@@ -83,10 +114,37 @@ export const ChessWorkspace: React.FC<ChessWorkspaceProps> = ({
   const canGoBack = moveTree ? !moveTree.isAtStart() : false;
   const canGoForward = moveTree ? !moveTree.isAtEnd() : false;
 
-  const handleGoBack = () => moveTree?.goBack();
-  const handleGoForward = () => moveTree?.goForward();
-  const handleGoToStart = () => moveTree?.goToStart();
-  const handleGoToEnd = () => moveTree?.goToEnd();
+  const handleGoBack = () => {
+    if (onGoBack) {
+      onGoBack();
+    } else {
+      moveTree?.goBack();
+    }
+  };
+
+  const handleGoForward = () => {
+    if (onGoForward) {
+      onGoForward();
+    } else {
+      moveTree?.goForward();
+    }
+  };
+
+  const handleGoToStart = () => {
+    if (onGoToStart) {
+      onGoToStart();
+    } else {
+      moveTree?.goToStart();
+    }
+  };
+
+  const handleGoToEnd = () => {
+    if (onGoToEnd) {
+      onGoToEnd();
+    } else {
+      moveTree?.goToEnd();
+    }
+  };
 
   // Current move comment
   const currentNode = moveTree?.getCurrentNode();
@@ -94,23 +152,14 @@ export const ChessWorkspace: React.FC<ChessWorkspaceProps> = ({
 
   return (
     <View style={styles.container}>
-      {/* Settings Gear */}
-      {showSettingsGear && (
-        <View style={styles.settingsGearContainer}>
-          <TouchableOpacity
-            style={styles.settingsGear}
-            onPress={() => setSettingsVisible(true)}
-          >
-            <Text style={styles.settingsGearText}>⚙️</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-
       {/* Main Content */}
       <View style={[styles.mainContent, isWideScreen && styles.mainContentWide]}>
         {/* Board Section with Optional EvalBar */}
         <View style={styles.boardSection}>
-          <View style={styles.boardRow}>
+          <View style={[
+            styles.boardRow,
+            evalBarVisible && { width: actualBoardSize + 48 } // Board + EvalBar (40px) + margin (8px)
+          ]}>
             {evalBarVisible && (
               <EvalBar
                 currentEval={currentEval}
@@ -118,7 +167,7 @@ export const ChessWorkspace: React.FC<ChessWorkspaceProps> = ({
                 moveHistory={moveEvals}
                 currentMoveIndex={flatMoves.findIndex(m => m.id === currentNodeId)}
                 keyMoves={keyMoves}
-                height={Math.min(width - 80, 500)}
+                height={actualBoardSize}
                 visible={evalBarVisible}
               />
             )}
@@ -128,12 +177,16 @@ export const ChessWorkspace: React.FC<ChessWorkspaceProps> = ({
               orientation={orientation}
               showCoordinates={coordinatesVisible}
               disabled={disabled}
+              boardSizePixels={actualBoardSize}
             />
           </View>
 
           {/* Comment Display */}
           {currentComment && (
-            <View style={styles.commentBox}>
+            <View style={[
+              styles.commentBox,
+              { maxWidth: evalBarVisible ? actualBoardSize + 48 : actualBoardSize }
+            ]}>
               <Text style={styles.commentText}>{currentComment}</Text>
             </View>
           )}
@@ -141,7 +194,11 @@ export const ChessWorkspace: React.FC<ChessWorkspaceProps> = ({
 
         {/* Move History */}
         {moveHistoryVisible && moveTree && onNavigate && (
-          <View style={[styles.moveHistorySection, isWideScreen && styles.moveHistorySectionWide]}>
+          <View style={[
+            styles.moveHistorySection,
+            isWideScreen && styles.moveHistorySectionWide,
+            !isWideScreen && { maxWidth: evalBarVisible ? actualBoardSize + 48 : actualBoardSize }
+          ]}>
             <MoveHistory
               moves={flatMoves}
               currentNodeId={currentNodeId || null}
@@ -152,6 +209,7 @@ export const ChessWorkspace: React.FC<ChessWorkspaceProps> = ({
               onGoToEnd={handleGoToEnd}
               onPromoteToMainLine={onPromoteToMainLine}
               onMarkCritical={onMarkCritical}
+              onSettingsPress={showSettingsGear ? () => setSettingsVisible(true) : undefined}
               canGoBack={canGoBack}
               canGoForward={canGoForward}
             />
@@ -174,32 +232,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     position: 'relative',
-  },
-  settingsGearContainer: {
-    position: 'absolute',
-    top: 16,
-    right: 16,
-    zIndex: 100,
-  },
-  settingsGear: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#3a3a3a',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#555',
-  },
-  settingsGearText: {
-    fontSize: 20,
+    paddingTop: 4,
   },
   mainContent: {
     flexDirection: 'column',
     alignItems: 'center',
-    gap: 16,
+    gap: 8,
     maxWidth: '100%',
   },
   mainContentWide: {
@@ -208,31 +248,36 @@ const styles = StyleSheet.create({
   },
   boardSection: {
     alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
   },
   boardRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
   },
   commentBox: {
-    marginTop: 12,
-    padding: 12,
+    marginTop: 8,
+    padding: 8,
     backgroundColor: '#3a3a3a',
     borderRadius: 6,
     borderLeftWidth: 3,
     borderLeftColor: '#87CEEB',
-    maxWidth: 500,
   },
   commentText: {
     color: '#e0e0e0',
-    fontSize: 13,
-    lineHeight: 20,
+    fontSize: 12,
+    lineHeight: 18,
   },
   moveHistorySection: {
     width: '100%',
-    maxWidth: 500,
+    maxHeight: 350,
+    paddingHorizontal: 8,
   },
   moveHistorySectionWide: {
     width: 'auto',
-    marginLeft: 20,
+    marginLeft: 12,
+    maxHeight: 500,
+    paddingHorizontal: 0,
   },
 });

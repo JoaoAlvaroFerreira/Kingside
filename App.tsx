@@ -14,12 +14,11 @@ function AppContent() {
   }, [initialize]);
 
   // Initialize LocalEngineService with Stockfish context
+  // Must be called immediately, not after isReady
   useEffect(() => {
-    if (stockfishContext.isReady) {
-      console.log('[App] Initializing LocalEngineService with Stockfish context');
-      LocalEngineService.initializeWithContext(stockfishContext);
-    }
-  }, [stockfishContext.isReady]);
+    console.log('[App] Initializing LocalEngineService with Stockfish context');
+    LocalEngineService.initializeWithContext(stockfishContext);
+  }, [stockfishContext]);
 
   return <AppNavigator />;
 }

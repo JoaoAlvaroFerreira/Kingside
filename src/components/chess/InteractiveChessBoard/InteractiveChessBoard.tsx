@@ -2,7 +2,7 @@
  * Interactive Chess Board Component - Tap or drag pieces to move
  */
 
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import {
   View,
   StyleSheet,
@@ -22,6 +22,7 @@ interface InteractiveChessBoardProps {
   orientation?: 'white' | 'black';
   showCoordinates?: boolean;
   disabled?: boolean;
+  boardSizePixels?: number;
 }
 
 const PIECE_IMAGES: Record<string, string> = {
@@ -52,10 +53,12 @@ export const InteractiveChessBoard: React.FC<InteractiveChessBoardProps> = ({
   orientation = 'white',
   showCoordinates = true,
   disabled = false,
+  boardSizePixels,
 }) => {
   const { width, height } = useWindowDimensions();
-  const maxBoardSize = Math.min(width, height) - 80;
-  const boardSize = Math.min(maxBoardSize, 500);
+
+  // Use provided size or calculate default
+  const boardSize = boardSizePixels || Math.min(Math.min(width, height) - 40, 480);
   const squareSize = boardSize / 8;
   const coordinateSize = 20;
 
@@ -81,6 +84,13 @@ export const InteractiveChessBoard: React.FC<InteractiveChessBoardProps> = ({
 
   const filesArray = orientation === 'white' ? [0, 1, 2, 3, 4, 5, 6, 7] : [7, 6, 5, 4, 3, 2, 1, 0];
   const ranksArray = orientation === 'white' ? [0, 1, 2, 3, 4, 5, 6, 7] : [7, 6, 5, 4, 3, 2, 1, 0];
+
+  // Measure board position on layout
+  const handleLayout = () => {
+    boardRef.current?.measure((x, y, w, h, pageX, pageY) => {
+      boardOrigin.current = { x: pageX, y: pageY };
+    });
+  };
 
   const getSquareName = (file: number, rank: number): string => {
     return `${FILES[file]}${RANKS[rank]}`;
@@ -127,16 +137,25 @@ export const InteractiveChessBoard: React.FC<InteractiveChessBoardProps> = ({
 
     onPanResponderGrant: (evt: GestureResponderEvent) => {
       if (disabled) return;
-      // Measure board position
-      boardRef.current?.measure((x, y, w, h, pageX, pageY) => {
-        boardOrigin.current = { x: pageX, y: pageY };
-      });
 
       const touch = evt.nativeEvent;
-      const relX = touch.locationX;
-      const relY = touch.locationY;
+      console.log('[Board] Touch detected at', touch.pageX, touch.pageY);
+
+      // Measure board position synchronously if not already measured
+      if (boardOrigin.current.x === 0 && boardOrigin.current.y === 0) {
+        boardRef.current?.measure((x, y, w, h, pageX, pageY) => {
+          boardOrigin.current = { x: pageX, y: pageY };
+          console.log('[Board] Measured board origin:', pageX, pageY);
+        });
+      }
+
+      // Use absolute coordinates (pageX, pageY) and subtract board origin
+      // locationX/locationY are unreliable in nested layouts
+      const relX = touch.pageX - boardOrigin.current.x;
+      const relY = touch.pageY - boardOrigin.current.y;
 
       const square = getSquareFromPosition(relX, relY);
+      console.log('[Board] Calculated square:', square, 'from relative pos', relX, relY);
       if (!square) return;
 
       const fileIdx = FILES.indexOf(square[0]);
@@ -163,17 +182,22 @@ export const InteractiveChessBoard: React.FC<InteractiveChessBoardProps> = ({
       if (!draggingFrom) return;
 
       const touch = evt.nativeEvent;
+      const relX = touch.pageX - boardOrigin.current.x;
+      const relY = touch.pageY - boardOrigin.current.y;
       dragPosition.setValue({
-        x: touch.locationX - squareSize / 2,
-        y: touch.locationY - squareSize / 2,
+        x: relX - squareSize / 2,
+        y: relY - squareSize / 2,
       });
     },
 
     onPanResponderRelease: (evt: GestureResponderEvent, gestureState: PanResponderGestureState) => {
+      const touch = evt.nativeEvent;
+      const relX = touch.pageX - boardOrigin.current.x;
+      const relY = touch.pageY - boardOrigin.current.y;
+
       if (!draggingFrom) {
         // This was a tap, not a drag
-        const touch = evt.nativeEvent;
-        const square = getSquareFromPosition(touch.locationX, touch.locationY);
+        const square = getSquareFromPosition(relX, relY);
 
         if (square) {
           handleTap(square);
@@ -181,8 +205,7 @@ export const InteractiveChessBoard: React.FC<InteractiveChessBoardProps> = ({
         return;
       }
 
-      const touch = evt.nativeEvent;
-      const targetSquare = getSquareFromPosition(touch.locationX, touch.locationY);
+      const targetSquare = getSquareFromPosition(relX, relY);
 
       if (targetSquare && draggingFrom) {
         const moves = getValidMoves(draggingFrom);
@@ -212,6 +235,7 @@ export const InteractiveChessBoard: React.FC<InteractiveChessBoardProps> = ({
 
   const handleTap = (squareName: string) => {
     if (disabled) return;
+    console.log('[Board] Tap on square:', squareName);
     const fileIdx = FILES.indexOf(squareName[0]);
     const rankIdx = RANKS.indexOf(squareName[1]);
     const piece = board[rankIdx]?.[fileIdx];
@@ -259,6 +283,7 @@ export const InteractiveChessBoard: React.FC<InteractiveChessBoardProps> = ({
           <View
             ref={boardRef}
             style={[styles.board, { width: boardSize, height: boardSize }]}
+            onLayout={handleLayout}
             {...panResponder.panHandlers}
           >
             {ranksArray.map((rank) => (

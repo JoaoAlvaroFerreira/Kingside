@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
-import { View, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, Text } from 'react-native';
 import { Chess } from 'chess.js';
 import { ChessWorkspace } from '@components/chess/ChessWorkspace/ChessWorkspace';
 import { MoveTree } from '@utils/MoveTree';
@@ -16,7 +16,7 @@ interface AnalysisBoardScreenProps {
 }
 
 export default function AnalysisBoardScreen({ route }: AnalysisBoardScreenProps) {
-  const { screenSettings } = useStore();
+  const { screenSettings, isLoading } = useStore();
   const [moveTree, setMoveTree] = useState(() => new MoveTree());
   const [updateCounter, forceUpdate] = useState(0);
   const [currentEval, setCurrentEval] = useState<EngineEvaluation | null>(null);
@@ -42,7 +42,8 @@ export default function AnalysisBoardScreen({ route }: AnalysisBoardScreenProps)
 
   // Analyze current position when FEN changes (only if engine enabled)
   useEffect(() => {
-    if (!engineEnabled) {
+    // Don't analyze if store is still loading or engine is disabled
+    if (isLoading || !engineEnabled) {
       setCurrentEval(null);
       setIsAnalyzing(false);
       return;
@@ -63,7 +64,7 @@ export default function AnalysisBoardScreen({ route }: AnalysisBoardScreenProps)
     };
 
     analyzeCurrent();
-  }, [currentFen, updateCounter, engineEnabled]);
+  }, [currentFen, updateCounter, engineEnabled, isLoading]);
 
   const triggerUpdate = useCallback(() => {
     forceUpdate(n => n + 1);
@@ -96,9 +97,25 @@ export default function AnalysisBoardScreen({ route }: AnalysisBoardScreenProps)
     triggerUpdate();
   }, [moveTree, triggerUpdate]);
 
-  const resetGame = useCallback(() => {
-    setMoveTree(new MoveTree());
-  }, []);
+  const handleGoBack = useCallback(() => {
+    moveTree.goBack();
+    triggerUpdate();
+  }, [moveTree, triggerUpdate]);
+
+  const handleGoForward = useCallback(() => {
+    moveTree.goForward();
+    triggerUpdate();
+  }, [moveTree, triggerUpdate]);
+
+  const handleGoToStart = useCallback(() => {
+    moveTree.goToStart();
+    triggerUpdate();
+  }, [moveTree, triggerUpdate]);
+
+  const handleGoToEnd = useCallback(() => {
+    moveTree.goToEnd();
+    triggerUpdate();
+  }, [moveTree, triggerUpdate]);
 
   const displayGame = useMemo(() => {
     try {
@@ -119,16 +136,15 @@ export default function AnalysisBoardScreen({ route }: AnalysisBoardScreenProps)
     return null;
   }, [displayGame]);
 
-  const turnText = displayGame.turn() === 'w' ? 'White to move' : 'Black to move';
-
   return (
     <View style={styles.container}>
       {/* Status Bar */}
-      <View style={styles.statusContainer}>
-        <Text style={styles.turnText}>{turnText}</Text>
-        {gameStatus && <Text style={styles.gameStatus}>{gameStatus}</Text>}
-        {isAnalyzing && <Text style={styles.analyzingText}>Analyzing...</Text>}
-      </View>
+      {(gameStatus || isAnalyzing) && (
+        <View style={styles.statusContainer}>
+          {gameStatus && <Text style={styles.gameStatus}>{gameStatus}</Text>}
+          {isAnalyzing && <Text style={styles.analyzingText}>Analyzing...</Text>}
+        </View>
+      )}
 
       {/* Chess Workspace */}
       <ChessWorkspace
@@ -137,19 +153,16 @@ export default function AnalysisBoardScreen({ route }: AnalysisBoardScreenProps)
         moveTree={moveTree}
         currentNodeId={currentNodeId}
         onNavigate={handleNavigate}
+        onGoBack={handleGoBack}
+        onGoForward={handleGoForward}
+        onGoToStart={handleGoToStart}
+        onGoToEnd={handleGoToEnd}
         onPromoteToMainLine={handlePromoteToMainLine}
         currentEval={currentEval}
         screenKey="analysis"
         showMoveHistory={true}
         showSettingsGear={true}
       />
-
-      {/* Reset Button */}
-      <View style={styles.resetContainer}>
-        <TouchableOpacity style={styles.resetButton} onPress={resetGame}>
-          <Text style={styles.resetButtonText}>New Game</Text>
-        </TouchableOpacity>
-      </View>
     </View>
   );
 }
@@ -166,38 +179,14 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#3a3a3a',
   },
-  turnText: {
-    color: '#e0e0e0',
-    fontSize: 16,
-    fontWeight: '600',
-  },
   gameStatus: {
     color: '#ffc107',
     fontSize: 14,
     fontWeight: '700',
-    marginTop: 4,
   },
   analyzingText: {
     color: '#4a9eff',
     fontSize: 12,
     marginTop: 4,
-  },
-  resetContainer: {
-    position: 'absolute',
-    bottom: 16,
-    right: 16,
-  },
-  resetButton: {
-    backgroundColor: '#4a4a4a',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#555',
-  },
-  resetButtonText: {
-    color: '#e0e0e0',
-    fontSize: 14,
-    fontWeight: '600',
   },
 });

@@ -67,7 +67,9 @@ class StockfishWorker {
   private messageId = 0;
 
   constructor() {
-    this.readyPromise = this.initialize();
+    // Don't initialize in constructor to avoid throwing errors at module load time
+    this.readyPromise = Promise.resolve();
+    console.log('[StockfishWorker] Local Stockfish not available on web. Use External API mode.');
   }
 
   private async initialize(): Promise<void> {
@@ -91,7 +93,8 @@ class StockfishWorker {
   }
 
   async analyze(fen: string, depth: number, timeout: number = 10000): Promise<EngineEvaluation> {
-    await this.readyPromise;
+    // Initialize on first analysis attempt (lazy initialization)
+    await this.initialize();
 
     if (!this.worker) {
       throw new Error('Stockfish worker not initialized');
@@ -233,18 +236,26 @@ class StockfishNative {
       throw new Error('StockfishNative context not set. Call setContext() first.');
     }
 
+    console.log('[StockfishNative] Waiting for engine to be ready...');
+    console.log('[StockfishNative] Current isReady status:', this.contextRef.current.isReady);
+
     // Wait for engine to be ready
     let attempts = 0;
     while (!this.contextRef.current.isReady && attempts < 50) {
       await new Promise(resolve => setTimeout(resolve, 100));
       attempts++;
+
+      if (attempts % 10 === 0) {
+        console.log(`[StockfishNative] Still waiting... (${attempts * 100}ms elapsed)`);
+      }
     }
 
     if (!this.contextRef.current.isReady) {
+      console.error('[StockfishNative] Engine failed to initialize after 5 seconds');
       throw new Error('Stockfish engine failed to initialize');
     }
 
-    console.log('[StockfishNative] Engine ready');
+    console.log('[StockfishNative] ✓ Engine ready');
   }
 
   async analyze(fen: string, depth: number, timeout: number = 10000): Promise<EngineEvaluation> {

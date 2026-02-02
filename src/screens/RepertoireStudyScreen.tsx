@@ -9,6 +9,7 @@ import { useStore } from '@store';
 import { MoveTree } from '@utils/MoveTree';
 import { InteractiveChessBoard } from '@components/chess/InteractiveChessBoard/InteractiveChessBoard';
 import { MoveHistory } from '@components/chess/MoveHistory/MoveHistory';
+import { SettingsModal } from '@components/chess/ChessWorkspace/SettingsModal';
 import { HierarchyBrowser } from '@components/repertoire/HierarchyBrowser';
 import { ChapterList } from '@components/repertoire/ChapterList';
 import { GameList } from '@components/repertoire/GameList';
@@ -27,9 +28,10 @@ interface RepertoireStudyScreenProps {
 
 export default function RepertoireStudyScreen({ navigation, route }: RepertoireStudyScreenProps) {
   const { repertoireId, chapterId } = route.params;
-  const { repertoires } = useStore();
-  const { width } = useWindowDimensions();
+  const { repertoires, screenSettings } = useStore();
+  const { width, height } = useWindowDimensions();
   const isWide = width > 700;
+  const settings = screenSettings.repertoire;
 
   const repertoire = useMemo(
     () => repertoires.find(r => r.id === repertoireId),
@@ -40,6 +42,7 @@ export default function RepertoireStudyScreen({ navigation, route }: RepertoireS
   const [moveTree, setMoveTree] = useState<MoveTree | null>(null);
   const [, forceUpdate] = useState(0);
   const [leftPanelVisible, setLeftPanelVisible] = useState(false);
+  const [settingsVisible, setSettingsVisible] = useState(false);
   const [gamesAtPosition, setGamesAtPosition] = useState<{ userGames: UserGame[]; masterGames: MasterGame[] }>({
     userGames: [],
     masterGames: [],
@@ -88,6 +91,26 @@ export default function RepertoireStudyScreen({ navigation, route }: RepertoireS
 
   const currentFen = moveTree?.getCurrentFen() || '';
   const currentComment = moveTree?.getCurrentNode()?.comment || '';
+
+  // Calculate board size from settings
+  const maxBoardSize = Math.min(width, height) - 40;
+  const sizeMap = {
+    tiny: 280,
+    small: 320,
+    medium: 380,
+    large: 440,
+    xlarge: 500,
+  };
+  const boardSizeSetting = settings.boardSize || 'small';
+  const maxSize = sizeMap[boardSizeSetting];
+  const boardSizePixels = Math.min(maxBoardSize, maxSize);
+
+  console.log('[RepertoireStudyScreen] Board size:', {
+    boardSizeSetting,
+    maxSize,
+    maxBoardSize,
+    boardSizePixels,
+  });
 
   // Load games that match current position from database (disabled for now - performance issue)
   // TODO: Add FEN indexing to database for efficient position search
@@ -217,9 +240,11 @@ export default function RepertoireStudyScreen({ navigation, route }: RepertoireS
                   fen={currentFen}
                   onMove={handleMoveClick}
                   orientation={repertoire.color}
+                  showCoordinates={settings.coordinatesVisible}
+                  boardSizePixels={boardSizePixels}
                 />
                 {currentComment && (
-                  <View style={styles.commentBox}>
+                  <View style={[styles.commentBox, { maxWidth: boardSizePixels }]}>
                     <Text style={styles.commentText}>{currentComment}</Text>
                   </View>
                 )}
@@ -236,6 +261,7 @@ export default function RepertoireStudyScreen({ navigation, route }: RepertoireS
                   onGoToEnd={handleGoToEnd}
                   onPromoteToMainLine={handlePromoteToMainLine}
                   onMarkCritical={handleMarkCritical}
+                  onSettingsPress={() => setSettingsVisible(true)}
                   canGoBack={!moveTree.isAtStart()}
                   canGoForward={!moveTree.isAtEnd()}
                 />
@@ -277,15 +303,29 @@ export default function RepertoireStudyScreen({ navigation, route }: RepertoireS
             onSelect={handleSelectChapter}
             defaultCollapsed={true}
           />
+          <GameList
+            title="Your Games"
+            games={gamesAtPosition.userGames}
+            onSelect={handleSelectGame}
+            defaultCollapsed={true}
+          />
+          <GameList
+            title="Master Games"
+            games={gamesAtPosition.masterGames}
+            onSelect={handleSelectGame}
+            defaultCollapsed={true}
+          />
 
           <View style={styles.boardContainer}>
             <InteractiveChessBoard
               fen={currentFen}
               onMove={handleMoveClick}
               orientation={repertoire.color}
+              showCoordinates={settings.coordinatesVisible}
+              boardSizePixels={boardSizePixels}
             />
             {currentComment && (
-              <View style={styles.commentBox}>
+              <View style={[styles.commentBox, { maxWidth: boardSizePixels }]}>
                 <Text style={styles.commentText}>{currentComment}</Text>
               </View>
             )}
@@ -302,25 +342,21 @@ export default function RepertoireStudyScreen({ navigation, route }: RepertoireS
               onGoToEnd={handleGoToEnd}
               onPromoteToMainLine={handlePromoteToMainLine}
               onMarkCritical={handleMarkCritical}
+              onSettingsPress={() => setSettingsVisible(true)}
               canGoBack={!moveTree.isAtStart()}
               canGoForward={!moveTree.isAtEnd()}
             />
           </View>
-
-          <GameList
-            title="Your Games"
-            games={gamesAtPosition.userGames}
-            onSelect={handleSelectGame}
-            defaultCollapsed={true}
-          />
-          <GameList
-            title="Master Games"
-            games={gamesAtPosition.masterGames}
-            onSelect={handleSelectGame}
-            defaultCollapsed={true}
-          />
         </ScrollView>
       )}
+
+      {/* Settings Modal */}
+      <SettingsModal
+        visible={settingsVisible}
+        onClose={() => setSettingsVisible(false)}
+        screenKey="repertoire"
+        currentSettings={settings}
+      />
     </View>
   );
 }
@@ -335,10 +371,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   leftPanel: {
-    width: 240,
+    width: 220,
     borderRightWidth: 1,
     borderRightColor: '#3a3a3a',
-    padding: 12,
+    padding: 8,
   },
   toggleButton: {
     width: 32,
@@ -359,8 +395,8 @@ const styles = StyleSheet.create({
   topSection: {
     flex: 1,
     flexDirection: 'row',
-    padding: 12,
-    gap: 16,
+    padding: 8,
+    gap: 12,
     alignItems: 'flex-start',
     minHeight: 0,
   },
@@ -369,42 +405,42 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   commentBox: {
-    marginTop: 12,
-    padding: 12,
+    marginTop: 8,
+    padding: 8,
     backgroundColor: '#3a3a3a',
-    borderRadius: 8,
+    borderRadius: 6,
     borderLeftWidth: 3,
     borderLeftColor: '#007AFF',
-    maxWidth: 400,
   },
   commentText: {
     color: '#e0e0e0',
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 12,
+    lineHeight: 18,
   },
   moveHistoryPanel: {
     flex: 1,
-    minWidth: 300,
-    maxWidth: 500,
-    maxHeight: 600,
+    minWidth: 280,
+    maxWidth: 450,
+    maxHeight: 500,
   },
   bottomSection: {
     flexDirection: 'row',
     borderTopWidth: 1,
     borderTopColor: '#3a3a3a',
-    height: 200,
+    minHeight: 180,
     gap: 12,
-    padding: 12,
+    padding: 8,
   },
   gameListHalf: {
     flex: 1,
+    minWidth: 0, // Allow flex to shrink properly
   },
   moveHistoryContainer: {
     width: '100%',
     maxWidth: 600,
-    maxHeight: 400,
+    maxHeight: 350,
     alignItems: 'center',
-    marginTop: 16,
-    marginBottom: 16,
+    marginTop: 12,
+    marginBottom: 12,
   },
 });

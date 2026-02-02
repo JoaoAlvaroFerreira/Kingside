@@ -15,7 +15,9 @@
     },
     "plugins": [
       "expo-document-picker",
-      "@loloof64/react-native-stockfish"
+      "expo-asset",
+      "expo-font",
+      "expo-sqlite"
     ]
   }
 }

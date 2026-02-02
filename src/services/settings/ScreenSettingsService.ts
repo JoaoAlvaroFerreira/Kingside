@@ -16,30 +16,30 @@ export const ScreenSettingsService = {
       analysis: {
         orientation: 'white',
         engineEnabled: false,
-        evalBarVisible: false,
         coordinatesVisible: true,
         moveHistoryVisible: true,
+        boardSize: 'small',
       },
       repertoire: {
         orientation: 'white', // Will be overridden by repertoire.color
         engineEnabled: false,
-        evalBarVisible: false,
         coordinatesVisible: true,
         moveHistoryVisible: true,
+        boardSize: 'small',
       },
       gameReview: {
         orientation: 'white', // Will be overridden by session.userColor
-        engineEnabled: true,
-        evalBarVisible: true,
+        engineEnabled: false,
         coordinatesVisible: true,
         moveHistoryVisible: false,
+        boardSize: 'small',
       },
       training: {
         orientation: 'white', // Will be overridden by card.color
         engineEnabled: false,
-        evalBarVisible: false,
         coordinatesVisible: true,
         moveHistoryVisible: false,
+        boardSize: 'small',
       },
     };
   },

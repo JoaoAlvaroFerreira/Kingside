@@ -5,9 +5,9 @@
 export interface ScreenSettings {
   orientation: 'white' | 'black';
   engineEnabled: boolean;
-  evalBarVisible: boolean;
   coordinatesVisible: boolean;
   moveHistoryVisible: boolean;
+  boardSize: 'tiny' | 'small' | 'medium' | 'large' | 'xlarge';
 }
 
 export interface AllScreenSettings {

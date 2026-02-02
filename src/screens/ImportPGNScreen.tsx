@@ -4,6 +4,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system';
 import { PGNService } from '@services/pgn/PGNService';
 import { OpeningClassifier } from '@services/openings/OpeningClassifier';
+import { LichessService } from '@services/lichess/LichessService';
 import { useStore } from '@store';
 import { RepertoireColor } from '@types';
 
@@ -31,7 +32,21 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
   const [isImporting, setIsImporting] = useState(false);
   const [progress, setProgress] = useState({ current: 0, total: 0, phase: '' });
   const [fileSelected, setFileSelected] = useState(false);
+  const [lichessUsername, setLichessUsername] = useState('');
+  const [isImportingLichess, setIsImportingLichess] = useState(false);
   const { addRepertoire, addUserGames, addMasterGames } = useStore();
+
+  const readFileWithTimeout = async (uri: string, timeoutMs: number = 15000): Promise<string> => {
+    const fileReadPromise = Platform.OS === 'web'
+      ? fetch(uri).then(r => r.text())
+      : FileSystem.readAsStringAsync(uri);
+
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('File read timeout after 15 seconds')), timeoutMs)
+    );
+
+    return Promise.race([fileReadPromise, timeoutPromise]);
+  };
 
   const handleFilePick = async () => {
     try {
@@ -52,13 +67,12 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
 
         let content: string;
 
-        if (Platform.OS === 'web') {
-          // On web, use fetch to read the blob URL
-          const response = await fetch(file.uri);
-          content = await response.text();
-        } else {
-          // On native, use FileSystem
-          content = await FileSystem.readAsStringAsync(file.uri);
+        try {
+          content = await readFileWithTimeout(file.uri, 15000);
+        } catch (timeoutError) {
+          setFileSelected(false);
+          Alert.alert('Error', 'File read timed out. File may be too large or corrupted.');
+          return;
         }
 
         console.log('File content length:', content.length);
@@ -118,6 +132,46 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
     return results;
   };
 
+  const handleLichessImport = async () => {
+    if (!lichessUsername.trim()) {
+      Alert.alert('Error', 'Please enter a Lichess username');
+      return;
+    }
+
+    setIsImportingLichess(true);
+    setProgress({ current: 0, total: 0, phase: 'Fetching games from Lichess...' });
+
+    try {
+      console.log('[ImportPGN] Fetching games for username:', lichessUsername);
+
+      const pgns = await LichessService.fetchMasterGames(lichessUsername, 50);
+
+      if (pgns.length === 0) {
+        Alert.alert('No Games', `No games found for user "${lichessUsername}"`);
+        setIsImportingLichess(false);
+        return;
+      }
+
+      console.log('[ImportPGN] Fetched', pgns.length, 'PGNs from Lichess');
+
+      // Combine all PGNs with double newline separator
+      const combinedPgn = pgns.join('\n\n');
+
+      // Use existing import logic
+      setIsImporting(true);
+      await handleImport(combinedPgn);
+
+      Alert.alert('Success', `Imported ${pgns.length} games from ${lichessUsername}`);
+      setLichessUsername('');
+    } catch (error: any) {
+      console.error('[ImportPGN] Lichess import error:', error);
+      Alert.alert('Import Error', error?.message || String(error));
+    } finally {
+      setIsImportingLichess(false);
+      setIsImporting(false);
+    }
+  };
+
   const handleImport = async (textOverride?: string) => {
     // Ensure textOverride is a string (not an event object from button press)
     const text = (typeof textOverride === 'string' ? textOverride : pgnText);
@@ -128,6 +182,13 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
 
     setIsImporting(true);
     setProgress({ current: 0, total: 0, phase: 'Parsing PGN...' });
+
+    // Set timeout for entire import process
+    const importTimeout = setTimeout(() => {
+      setIsImporting(false);
+      setFileSelected(false);
+      Alert.alert('Import Timeout', 'Import took too long. Try importing smaller batches.');
+    }, 120000); // 2 minute max for entire import
 
     try {
       console.log('Starting PGN import, target:', target);
@@ -191,6 +252,7 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
         setProgress({ current: chapters.length, total: chapters.length, phase: 'Saving repertoire...' });
         await addRepertoire(repertoire);
 
+        clearTimeout(importTimeout);
         setIsImporting(false);
         setFileSelected(false);
 
@@ -209,6 +271,7 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
         setProgress({ current: userGames.length, total: userGames.length, phase: 'Saving games...' });
         await addUserGames(userGames);
 
+        clearTimeout(importTimeout);
         setIsImporting(false);
         setFileSelected(false);
 
@@ -227,6 +290,7 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
         setProgress({ current: masterGames.length, total: masterGames.length, phase: 'Saving games...' });
         await addMasterGames(masterGames);
 
+        clearTimeout(importTimeout);
         setIsImporting(false);
         setFileSelected(false);
 
@@ -235,6 +299,7 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
       }
     } catch (error: any) {
       console.error('Import error:', error);
+      clearTimeout(importTimeout);
       setIsImporting(false);
       setFileSelected(false);
       const errorMessage = error?.message || String(error);
@@ -278,8 +343,38 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
         </View>
       )}
 
-      {!isImporting && !fileSelected && (
+      {!isImporting && !fileSelected && !isImportingLichess && (
         <>
+          {/* Lichess import (Master Games only) */}
+          {target === 'master-games' && (
+            <View style={styles.lichessSection}>
+              <Text style={styles.sectionTitle}>Import from Lichess</Text>
+              <TextInput
+                style={styles.input}
+                value={lichessUsername}
+                onChangeText={setLichessUsername}
+                placeholder="Enter Lichess username"
+                placeholderTextColor="#666"
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+              <TouchableOpacity
+                style={[styles.lichessButton, (!lichessUsername.trim() || isImportingLichess) && styles.buttonDisabled]}
+                onPress={handleLichessImport}
+                disabled={!lichessUsername.trim() || isImportingLichess}
+              >
+                <Text style={styles.buttonText}>
+                  {isImportingLichess ? 'Importing from Lichess...' : 'Import from Lichess'}
+                </Text>
+              </TouchableOpacity>
+              <View style={styles.divider}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.dividerText}>OR</Text>
+                <View style={styles.dividerLine} />
+              </View>
+            </View>
+          )}
+
           {/* Repertoire-specific fields */}
           {target === 'repertoire' && (
             <>
@@ -457,5 +552,41 @@ const styles = StyleSheet.create({
     color: '#888',
     fontSize: 14,
     marginTop: 8,
+  },
+  lichessSection: {
+    marginBottom: 24,
+    padding: 16,
+    backgroundColor: '#3a3a3a',
+    borderRadius: 8,
+  },
+  sectionTitle: {
+    color: '#e0e0e0',
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 12,
+  },
+  lichessButton: {
+    backgroundColor: '#4a9eff',
+    padding: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 24,
+    marginBottom: 8,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#555',
+  },
+  dividerText: {
+    color: '#888',
+    fontSize: 12,
+    fontWeight: '600',
+    marginHorizontal: 12,
   },
 });
