@@ -13,7 +13,7 @@ import {
   GestureResponderEvent,
   PanResponderGestureState,
 } from 'react-native';
-import { SvgUri } from 'react-native-svg';
+import { SvgUri, Svg, Path } from 'react-native-svg';
 import { Chess } from 'chess.js';
 
 interface InteractiveChessBoardProps {
@@ -23,7 +23,54 @@ interface InteractiveChessBoardProps {
   showCoordinates?: boolean;
   disabled?: boolean;
   boardSizePixels?: number;
+  bestMove?: string;  // UCI notation (e.g. "e2e4") — renders arrow when set
 }
+
+// Square name → center pixel on the board grid
+const squareToCenterPixel = (square: string, squareSize: number, orientation: 'white' | 'black') => {
+  const file = square.charCodeAt(0) - 97;   // 'a' = 0
+  const rank = parseInt(square[1]) - 1;      // '1' = 0
+  const displayFile = orientation === 'white' ? file : 7 - file;
+  const displayRank = orientation === 'white' ? 7 - rank : rank;
+  return {
+    x: (displayFile + 0.5) * squareSize,
+    y: (displayRank + 0.5) * squareSize,
+  };
+};
+
+// Arrow-shaped path: thick shaft + triangular head
+const getArrowPath = (x1: number, y1: number, x2: number, y2: number, squareSize: number): string => {
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const len = Math.sqrt(dx * dx + dy * dy);
+  if (len === 0) return '';
+
+  const ux = dx / len;
+  const uy = dy / len;
+  const px = -uy;   // perpendicular
+  const py = ux;
+
+  const shaftW = squareSize * 0.18;
+  const headLen = squareSize * 0.38;
+  const headW = squareSize * 0.38;
+
+  // Shaft end where the head triangle starts
+  const sx = x2 - ux * headLen;
+  const sy = y2 - uy * headLen;
+
+  const pts = [
+    [x1  + px * shaftW / 2, y1  + py * shaftW / 2],  // shaft start R
+    [sx  + px * shaftW / 2, sy  + py * shaftW / 2],  // shaft end   R
+    [sx  + px * headW  / 2, sy  + py * headW  / 2],  // head base   R
+    [x2, y2],                                          // tip
+    [sx  - px * headW  / 2, sy  - py * headW  / 2],  // head base   L
+    [sx  - px * shaftW / 2, sy  - py * shaftW / 2],  // shaft end   L
+    [x1  - px * shaftW / 2, y1  - py * shaftW / 2],  // shaft start L
+  ];
+
+  return `M ${pts[0][0]} ${pts[0][1]} ` +
+    pts.slice(1).map(p => `L ${p[0]} ${p[1]}`).join(' ') + ' Z';
+};
 
 const PIECE_IMAGES: Record<string, string> = {
   wK: 'https://lichess1.org/assets/_DYoVny/piece/cburnett/wK.svg',
@@ -54,6 +101,7 @@ export const InteractiveChessBoard: React.FC<InteractiveChessBoardProps> = ({
   showCoordinates = true,
   disabled = false,
   boardSizePixels,
+  bestMove,
 }) => {
   const { width, height } = useWindowDimensions();
 
@@ -139,18 +187,14 @@ export const InteractiveChessBoard: React.FC<InteractiveChessBoardProps> = ({
       if (disabled) return;
 
       const touch = evt.nativeEvent;
-      console.log('[Board] Touch detected at', touch.pageX, touch.pageY);
 
-      // Measure board position synchronously if not already measured
-      if (boardOrigin.current.x === 0 && boardOrigin.current.y === 0) {
-        boardRef.current?.measure((x, y, w, h, pageX, pageY) => {
-          boardOrigin.current = { x: pageX, y: pageY };
-          console.log('[Board] Measured board origin:', pageX, pageY);
-        });
-      }
+      // Always re-measure board origin (parent layout shifts from EvalBar or
+      // status bar can invalidate a previously measured position). Async result
+      // updates boardOrigin for the next touch; current touch uses latest cached value.
+      boardRef.current?.measure((x, y, w, h, pageX, pageY) => {
+        boardOrigin.current = { x: pageX, y: pageY };
+      });
 
-      // Use absolute coordinates (pageX, pageY) and subtract board origin
-      // locationX/locationY are unreliable in nested layouts
       const relX = touch.pageX - boardOrigin.current.x;
       const relY = touch.pageY - boardOrigin.current.y;
 
@@ -325,6 +369,20 @@ export const InteractiveChessBoard: React.FC<InteractiveChessBoardProps> = ({
               </View>
             ))}
 
+            {/* Best-move arrow overlay */}
+            {bestMove && bestMove.length >= 4 && (() => {
+              const from = squareToCenterPixel(bestMove.substring(0, 2), squareSize, orientation);
+              const to   = squareToCenterPixel(bestMove.substring(2, 4), squareSize, orientation);
+              const d    = getArrowPath(from.x, from.y, to.x, to.y, squareSize);
+              return d ? (
+                <View style={[styles.arrowOverlay, { width: boardSize, height: boardSize }]} pointerEvents="none">
+                  <Svg width={boardSize} height={boardSize} viewBox={`0 0 ${boardSize} ${boardSize}`}>
+                    <Path d={d} fill="rgba(39, 174, 96, 0.7)" />
+                  </Svg>
+                </View>
+              ) : null;
+            })()}
+
             {/* Dragging piece overlay */}
             {draggingPiece && (
               <Animated.View
@@ -429,6 +487,12 @@ const styles = StyleSheet.create({
     borderRadius: 100,
     borderWidth: 3,
     borderColor: 'rgba(0, 0, 0, 0.3)',
+  },
+  arrowOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    zIndex: 50,
   },
   draggingPiece: {
     position: 'absolute',

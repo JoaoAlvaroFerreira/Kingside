@@ -3,8 +3,8 @@ import { View, StyleSheet, Text } from 'react-native';
 import { Chess } from 'chess.js';
 import { ChessWorkspace } from '@components/chess/ChessWorkspace/ChessWorkspace';
 import { MoveTree } from '@utils/MoveTree';
-import { UserGame, MasterGame, EngineEvaluation } from '@types';
-import { StockfishService } from '@services/engine/StockfishService';
+import { UserGame, MasterGame } from '@types';
+import { useEngine } from '@hooks/useEngine';
 import { useStore } from '@store';
 
 interface AnalysisBoardScreenProps {
@@ -19,13 +19,15 @@ export default function AnalysisBoardScreen({ route }: AnalysisBoardScreenProps)
   const { screenSettings, isLoading } = useStore();
   const [moveTree, setMoveTree] = useState(() => new MoveTree());
   const [updateCounter, forceUpdate] = useState(0);
-  const [currentEval, setCurrentEval] = useState<EngineEvaluation | null>(null);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   const engineEnabled = screenSettings.analysis.engineEnabled;
-
   const currentFen = moveTree.getCurrentFen();
   const currentNodeId = moveTree.getCurrentNode()?.id || null;
+
+  const { evaluation: currentEval, isAnalyzing } = useEngine(
+    currentFen,
+    !isLoading && engineEnabled,
+  );
 
   // Load game if provided via navigation
   useEffect(() => {
@@ -39,32 +41,6 @@ export default function AnalysisBoardScreen({ route }: AnalysisBoardScreenProps)
       forceUpdate(n => n + 1);
     }
   }, [route?.params?.game]);
-
-  // Analyze current position when FEN changes (only if engine enabled)
-  useEffect(() => {
-    // Don't analyze if store is still loading or engine is disabled
-    if (isLoading || !engineEnabled) {
-      setCurrentEval(null);
-      setIsAnalyzing(false);
-      return;
-    }
-
-    const analyzeCurrent = async () => {
-      setIsAnalyzing(true);
-      try {
-        // Use depth 12 for faster analysis (adjustable in Settings)
-        const evaluation = await StockfishService.analyze(currentFen, 12, 8000);
-        setCurrentEval(evaluation);
-      } catch (error) {
-        console.warn('[AnalysisBoard] Engine analysis failed:', error);
-        setCurrentEval(null);
-      } finally {
-        setIsAnalyzing(false);
-      }
-    };
-
-    analyzeCurrent();
-  }, [currentFen, updateCounter, engineEnabled, isLoading]);
 
   const triggerUpdate = useCallback(() => {
     forceUpdate(n => n + 1);
@@ -83,7 +59,7 @@ export default function AnalysisBoardScreen({ route }: AnalysisBoardScreenProps)
         triggerUpdate();
       }
     } catch {
-      // Invalid move - ignore
+      // Invalid move
     }
   }, [moveTree, currentFen, triggerUpdate]);
 
@@ -138,15 +114,15 @@ export default function AnalysisBoardScreen({ route }: AnalysisBoardScreenProps)
 
   return (
     <View style={styles.container}>
-      {/* Status Bar */}
-      {(gameStatus || isAnalyzing) && (
-        <View style={styles.statusContainer}>
-          {gameStatus && <Text style={styles.gameStatus}>{gameStatus}</Text>}
-          {isAnalyzing && <Text style={styles.analyzingText}>Analyzing...</Text>}
-        </View>
-      )}
+      <View style={styles.statusWrapper}>
+        {(gameStatus || isAnalyzing) && (
+          <View style={styles.statusContainer}>
+            {gameStatus && <Text style={styles.gameStatus}>{gameStatus}</Text>}
+            {isAnalyzing && <Text style={styles.analyzingText}>Analyzing...</Text>}
+          </View>
+        )}
+      </View>
 
-      {/* Chess Workspace */}
       <ChessWorkspace
         fen={currentFen}
         onMove={handleMove}
@@ -172,12 +148,14 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#2c2c2c',
   },
-  statusContainer: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    alignItems: 'center',
+  statusWrapper: {
+    height: 40,
+    justifyContent: 'center',
     borderBottomWidth: 1,
     borderBottomColor: '#3a3a3a',
+  },
+  statusContainer: {
+    alignItems: 'center',
   },
   gameStatus: {
     color: '#ffc107',

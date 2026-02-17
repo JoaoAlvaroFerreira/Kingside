@@ -55,7 +55,10 @@
       "Bash(./gradlew.bat:*)",
       "Bash(adb install:*)",
       "Bash(adb uninstall:*)",
-      "Bash(npx react-native-async-storage inspect)"
+      "Bash(npx react-native-async-storage inspect)",
+      "WebFetch(domain:www.npmjs.com)",
+      "Bash(npm uninstall:*)",
+      "Bash(gh api:*)"
     ]
   }
 }

@@ -22,7 +22,6 @@ import { StorageService } from '@services/storage/StorageService';
 import { SettingsService } from '@services/settings/SettingsService';
 import { ScreenSettingsService } from '@services/settings/ScreenSettingsService';
 import { GameReviewService } from '@services/gameReview/GameReviewService';
-import { EngineService } from '@services/engine/EngineService';
 import { DatabaseService } from '@services/database/DatabaseService';
 import { MigrationService } from '@services/database/MigrationService';
 
@@ -119,11 +118,7 @@ export const useStore = create<AppState>((set, get) => ({
       StorageService.loadGameReviewStatuses(),
     ]);
 
-    // Configure engine with loaded settings
-    EngineService.setEndpoint(reviewSettings.engine.apiEndpoint);
-    const { StockfishService } = await import('@services/engine/StockfishService');
-    StockfishService.setEngineType(reviewSettings.engine.engineType);
-    StockfishService.setExternalEndpoint(reviewSettings.engine.apiEndpoint);
+    // Engine settings will be used from reviewSettings when analyzing
 
     console.log('Store: Loaded data:', {
       repertoires: repertoires.length,
@@ -315,29 +310,11 @@ export const useStore = create<AppState>((set, get) => ({
   // Game Review actions
   loadReviewSettings: async () => {
     const reviewSettings = await SettingsService.loadSettings();
-    EngineService.setEndpoint(reviewSettings.engine.apiEndpoint);
-    const { StockfishService } = await import('@services/engine/StockfishService');
-    StockfishService.setEngineType(reviewSettings.engine.engineType);
-    StockfishService.setExternalEndpoint(reviewSettings.engine.apiEndpoint);
     set({ reviewSettings });
   },
 
   saveReviewSettings: async (updates) => {
-    const current = get().reviewSettings;
     const updated = await SettingsService.updateSettings(updates);
-
-    // Update engine configuration if changed
-    if (updates.engine?.apiEndpoint) {
-      EngineService.setEndpoint(updates.engine.apiEndpoint);
-    }
-    const { StockfishService } = await import('@services/engine/StockfishService');
-    if (updates.engine?.engineType) {
-      StockfishService.setEngineType(updates.engine.engineType);
-    }
-    if (updates.engine?.apiEndpoint) {
-      StockfishService.setExternalEndpoint(updates.engine.apiEndpoint);
-    }
-
     set({ reviewSettings: updated });
   },
 
@@ -360,8 +337,6 @@ export const useStore = create<AppState>((set, get) => ({
       state.repertoires,
       masterGames,
       state.reviewSettings.thresholds,
-      state.reviewSettings.engine.depth,
-      state.reviewSettings.engine.timeout
     );
 
     set({ currentReviewSession: session });

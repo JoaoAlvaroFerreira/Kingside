@@ -4,30 +4,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ---
 
-## ⚠️ PENDING WORK - RESUME HERE
-
-**Session Date:** 2026-02-02
-**Status:** Debugging local Stockfish engine initialization failure
-
-### Quick Summary
-Local Stockfish engine fails with: "Stockfish engine failed to initialize"
-- Added comprehensive logging to StockfishContext.tsx and LocalEngineService.ts
-- App rebuilt successfully with enhanced logging
-- Installation failed due to emulator storage (APK ready at: `android/app/build/outputs/apk/debug/app-debug.apk`)
-
-### Next Steps
-1. **First:** Check tasks with `/tasks` command - all details are there
-2. **Fix installation:** Free up emulator space or use physical device
-3. **Test with logging:** Enable engine analysis and watch logs to see where initialization fails
-
-### Files Modified (with enhanced logging)
-- `src/services/engine/StockfishContext.tsx`
-- `src/services/engine/LocalEngineService.ts`
-
-**Remove this section once Stockfish debugging is complete.**
-
----
-
 ## Project Overview
 
 Kingside is a React Native/Expo chess training app. Personal tool for a 2000+ rated player focused on deep repertoire understanding and efficient drilling through intelligent spaced repetition.
@@ -80,7 +56,7 @@ Kingside is a React Native/Expo chess training app. Personal tool for a 2000+ ra
 ### ✅ Implemented
 - **PGN Import/Export**: Three import paths (Repertoire, My Games, Master Games) with file picker, text paste, and Lichess username import
 - **Repertoire Management**: Fixed 4-level hierarchy (Color → Opening Type → Variation → Sub-variation → Chapters), auto-categorization via ECO codes
-- **Game Review**: Engine analysis integration (external API), FEN-based repertoire matching with complete transposition detection, color-coded key move indicators
+- **Game Review**: Engine analysis integration (local Stockfish), FEN-based repertoire matching with complete transposition detection, color-coded key move indicators
 - **Interactive Chess Board**: Full variation support, comment display (💬 indicators), touch handling optimized for mobile
 - **Screen Settings**: Per-screen UI preferences (orientation, engine, eval bar, coordinates, move history)
 - **Database**: SQLite storage for games with migration system
@@ -93,7 +69,7 @@ Kingside is a React Native/Expo chess training app. Personal tool for a 2000+ ra
 - **Spaced Repetition**: SM2 algorithm with context-aware cards, mistake-driven priority, difficulty scaling
 - **Decision Tree Visualization**: Show branching points explicitly
 - **Linked Positions**: Connect similar structures across different openings
-- **Local Stockfish**: Currently disabled due to mobile timeout issues (external API works)
+- **Local Stockfish verification**: Rebuild and test on device (rewritten 2026-02-16)
 - **Backend & Sync**: User authentication, cloud storage, multi-device sync
 
 ## Key Implementation Patterns
@@ -263,9 +239,8 @@ src/
 │   ├── storage/StorageService.ts       # AsyncStorage wrapper
 │   ├── lichess/LichessService.ts       # Fetch games from Lichess API
 │   ├── engine/
-│   │   ├── EngineService.ts            # External engine API
-│   │   ├── StockfishService.ts         # Unified engine facade
-│   │   └── LocalEngineService.ts       # Native Stockfish (disabled)
+│   │   ├── StockfishContext.tsx         # React Context wrapping native hook
+│   │   └── EngineAnalyzer.ts           # UCI protocol, parsing, cache
 │   ├── gameReview/GameReviewService.ts # Analysis + repertoire matching
 │   ├── settings/
 │   │   ├── SettingsService.ts          # Review settings
@@ -307,16 +282,7 @@ build-release-apk.bat                         # Generate standalone release APK
 
 ## Known Issues
 
-### 1. Local Stockfish Disabled
-**Status:** TEMPORARY FIX - Root cause investigation needed
-
-Local engine temporarily disabled in `StockfishService.analyze()` due to mobile timeout issues. External API engine works correctly.
-
-**Workaround:** Use external engine API (configure endpoint URL in Settings)
-
-**Affected:** All screens when `engineEnabled: true` and `engineType: 'local'`
-
-### 2. Database Migration
+### 1. Database Migration
 **Status:** ONGOING - Games stored in SQLite
 
 User games and master games moved to SQLite database. Repertoires still in AsyncStorage. Migration service handles schema updates.
@@ -381,10 +347,10 @@ npm test -- --coverage            # Generate coverage report
 ## Next Steps
 
 ### Immediate Priority
-1. **Training System**: Implement spaced repetition review flow with color-based testing
-2. **Review Card Generation**: Auto-create cards from repertoire positions
-3. **Analysis Board**: Add variation support, keyboard shortcuts
-4. **Fix Local Stockfish**: Investigate root cause of analysis timeout
+1. **Verify Engine on Device**: Rebuild and test local Stockfish (rewritten 2026-02-16)
+2. **Training System**: Implement spaced repetition review flow with color-based testing
+3. **Review Card Generation**: Auto-create cards from repertoire positions
+4. **Analysis Board**: Add variation support, keyboard shortcuts
 
 ### Short-Term
 5. **SM2 Algorithm**: Implement spaced repetition scheduling with difficulty scaling

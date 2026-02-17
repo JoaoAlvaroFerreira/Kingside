@@ -1,6 +1,10 @@
 /**
  * EvalBar Component - Visual evaluation display for chess positions
  * Shows centipawn advantage, current position, and key move markers
+ *
+ * Convention: the bar's bottom matches the board's bottom.
+ * White perspective → white at bottom of bar, black at top.
+ * Black perspective → black at bottom, white at top.
  */
 
 import React from 'react';
@@ -23,26 +27,21 @@ interface EvalBarProps {
   visible?: boolean;
 }
 
-const MAX_EVAL = 500; // Cap display at +/- 5 pawns for better visualization
+const MAX_EVAL = 500; // Cap display at +/- 5 pawns
 
 /**
- * Convert centipawn score to position on bar (0-1, where 0.5 is equal)
+ * Convert centipawn score to white's proportion (0-1).
+ * 0 = black winning fully, 0.5 = equal, 1 = white winning fully.
  */
 const scoreToPosition = (score?: number, mate?: number): number => {
   if (mate !== undefined) {
     return mate > 0 ? 1 : 0;
   }
   if (score === undefined) return 0.5;
-
-  // Clamp to max
   const clamped = Math.max(-MAX_EVAL, Math.min(MAX_EVAL, score));
-  // Convert to 0-1 range (0 = black winning, 1 = white winning)
   return (clamped + MAX_EVAL) / (MAX_EVAL * 2);
 };
 
-/**
- * Get color for key move reason
- */
 const getKeyMoveColor = (reason: string): string => {
   switch (reason) {
     case 'blunder':
@@ -74,35 +73,32 @@ export const EvalBar: React.FC<EvalBarProps> = ({
 }) => {
   if (!visible) return null;
 
+  // position: 0-1 where 1 = white winning (always from white's perspective)
   const position = scoreToPosition(currentEval?.score, currentEval?.mate);
-  const displayOrientation = orientation === 'white' ? 'normal' : 'inverted';
+  const whiteOnBottom = orientation === 'white';
 
-  // Calculate marker positions
-  const totalMoves = moveHistory.length || 1;
-  const currentMarkerPosition = displayOrientation === 'normal'
-    ? position
-    : 1 - position;
+  // Top and bottom sections swap based on board orientation
+  const topRatio = whiteOnBottom ? (1 - position) : position;
+  const bottomRatio = whiteOnBottom ? position : (1 - position);
+
+  // Marker sits at the boundary (topRatio from the top)
+  const markerTop = topRatio;
 
   return (
     <View style={[styles.container, { height }]}>
-      {/* Background gradient */}
       <View style={styles.barContainer}>
-        {/* White advantage (top) */}
+        {/* Top section */}
         <View
           style={[
-            styles.whiteSection,
-            {
-              height: `${(displayOrientation === 'normal' ? (1 - position) : position) * 100}%`,
-            },
+            whiteOnBottom ? styles.blackSection : styles.whiteSection,
+            { height: `${topRatio * 100}%` },
           ]}
         />
-        {/* Black advantage (bottom) */}
+        {/* Bottom section */}
         <View
           style={[
-            styles.blackSection,
-            {
-              height: `${(displayOrientation === 'normal' ? position : (1 - position)) * 100}%`,
-            },
+            whiteOnBottom ? styles.whiteSection : styles.blackSection,
+            { height: `${bottomRatio * 100}%` },
           ]}
         />
 
@@ -110,21 +106,17 @@ export const EvalBar: React.FC<EvalBarProps> = ({
         <View
           style={[
             styles.currentMarker,
-            {
-              top: `${currentMarkerPosition * 100}%`,
-            },
+            { top: `${markerTop * 100}%` },
           ]}
         />
 
         {/* Key move markers */}
         {keyMoves.map((keyMove, idx) => {
-          const movePosition = keyMove.evaluation !== undefined
+          const movePos = keyMove.evaluation !== undefined
             ? scoreToPosition(keyMove.evaluation, undefined)
-            : currentMarkerPosition;
+            : position;
 
-          const markerTop = displayOrientation === 'normal'
-            ? movePosition
-            : 1 - movePosition;
+          const kmTop = whiteOnBottom ? (1 - movePos) : movePos;
 
           return (
             <View
@@ -133,7 +125,7 @@ export const EvalBar: React.FC<EvalBarProps> = ({
                 styles.keyMoveMarker,
                 {
                   backgroundColor: getKeyMoveColor(keyMove.reason),
-                  top: `${markerTop * 100}%`,
+                  top: `${kmTop * 100}%`,
                 },
               ]}
             />
@@ -157,7 +149,7 @@ export const EvalBar: React.FC<EvalBarProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    width: 40,
+    width: 28,
     position: 'relative',
     marginRight: 8,
   },
@@ -200,10 +192,13 @@ const styles = StyleSheet.create({
   },
   evalTextContainer: {
     position: 'absolute',
-    bottom: -24,
+    bottom: 2,
     left: 0,
     right: 0,
     alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.55)',
+    borderRadius: 3,
+    paddingVertical: 1,
   },
   evalText: {
     color: '#e0e0e0',

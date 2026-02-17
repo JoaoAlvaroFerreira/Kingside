@@ -24,7 +24,7 @@ import {
   EngineEvaluation,
   EvalThresholds,
 } from '@types';
-import { StockfishService } from '@services/engine/StockfishService';
+import { EngineAnalyzer, AnalysisOptions } from '@services/engine/EngineAnalyzer';
 import { normalizeFen } from '@types';
 import { MoveTree } from '@utils/MoveTree';
 
@@ -38,8 +38,8 @@ export const GameReviewService = {
     repertoires: Repertoire[],
     masterGames: MasterGame[],
     thresholds: EvalThresholds,
-    engineDepth: number,
-    engineTimeout: number
+    analyzer?: EngineAnalyzer,
+    analysisOptions?: AnalysisOptions,
   ): Promise<GameReviewSession> {
     console.log('[GameReview] Starting review with userColor:', userColor);
     console.log('[GameReview] Available repertoires:', repertoires.length);
@@ -136,9 +136,18 @@ export const GameReviewService = {
       throw new Error('Failed to parse game moves');
     }
 
-    // Get engine evaluations for all positions (if engine is configured)
+    // Get engine evaluations for all positions (if analyzer is provided)
     console.log(`Analyzing ${positions.length} positions...`);
-    const evaluations = await StockfishService.analyzeBatch(positions, engineDepth, engineTimeout);
+    const evaluations: Array<EngineEvaluation | null> = new Array(positions.length).fill(null);
+    if (analyzer && analysisOptions) {
+      for (let i = 0; i < positions.length; i++) {
+        try {
+          evaluations[i] = await analyzer.analyze(positions[i], analysisOptions);
+        } catch {
+          evaluations[i] = null;
+        }
+      }
+    }
     const hasEngineAnalysis = evaluations.some(e => e !== null);
     console.log(`Received ${evaluations.length} evaluations (${hasEngineAnalysis ? 'engine active' : 'engine disabled'})`);
 

@@ -9,7 +9,8 @@ export interface EngineEvaluation {
   mate?: number;           // Mate in N (positive = white mates)
   bestMove: string;        // UCI format (e4e5)
   bestMoveSan: string;     // SAN format (e5)
-  pv: string[];            // Principal variation
+  pv: string[];            // Principal variation (UCI)
+  lines?: Array<{ score: number; mate?: number; pv: string[] }>;  // Top multipv lines
   timestamp: Date;
 }
 
@@ -78,10 +79,10 @@ export interface GameReviewStatus {
 }
 
 export interface EngineSettings {
-  engineType: 'local' | 'external';
-  apiEndpoint: string;
-  depth: number;
-  timeout: number;          // ms
+  moveTime: number;         // Analysis duration in ms (default: 1000)
+  depth: number;            // Search depth limit (default: 16)
+  threads: number;          // Number of threads (1-4, default: 1)
+  multiPV: number;          // Number of principal variations (1-5, default: 3)
 }
 
 export interface EvalThresholds {

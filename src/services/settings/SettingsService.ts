@@ -11,16 +11,14 @@ const SETTINGS_KEY = '@kingside/review-settings';
 export const SettingsService = {
   /**
    * Get default settings
-   * On mobile: defaults to local Stockfish engine
-   * On web: defaults to external API (WASM complexity not supported)
    */
   getDefaults(): ReviewSettings {
     return {
       engine: {
-        engineType: Platform.OS === 'web' ? 'external' : 'local',
-        apiEndpoint: '',
-        depth: 18, // Lower depth for better mobile performance
-        timeout: 10000,
+        moveTime: 1000,
+        depth: 10,
+        threads: 1,
+        multiPV: 3,
       },
       thresholds: {
         blunder: 200,

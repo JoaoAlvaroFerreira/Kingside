@@ -8,6 +8,7 @@ import { View, StyleSheet, TouchableOpacity, Text, useWindowDimensions } from 'r
 import { InteractiveChessBoard } from '@components/chess/InteractiveChessBoard/InteractiveChessBoard';
 import { MoveHistory } from '@components/chess/MoveHistory/MoveHistory';
 import { EvalBar, KeyMoveMarker } from '@components/chess/EvalBar/EvalBar';
+import { EngineLines } from '@components/chess/EngineLines/EngineLines';
 import { MoveTree } from '@utils/MoveTree';
 import { EngineEvaluation, ScreenKey } from '@types';
 import { SettingsModal } from './SettingsModal';
@@ -92,16 +93,6 @@ export const ChessWorkspace: React.FC<ChessWorkspaceProps> = ({
   const maxSize = sizeMap[boardSizeSetting];
   const actualBoardSize = Math.min(maxBoardSize, maxSize);
 
-  // Debug logging for board size
-  console.log('[ChessWorkspace] Board size calculation:', {
-    boardSizeSetting,
-    maxSize,
-    maxBoardSize,
-    actualBoardSize,
-    width,
-    height,
-  });
-
   const isWideScreen = width > 700;
 
   // Compute flat moves for MoveHistory
@@ -158,7 +149,7 @@ export const ChessWorkspace: React.FC<ChessWorkspaceProps> = ({
         <View style={styles.boardSection}>
           <View style={[
             styles.boardRow,
-            evalBarVisible && { width: actualBoardSize + 48 } // Board + EvalBar (40px) + margin (8px)
+            evalBarVisible && { width: actualBoardSize + 36 } // Board + EvalBar (28px) + margin (8px)
           ]}>
             {evalBarVisible && (
               <EvalBar
@@ -178,6 +169,7 @@ export const ChessWorkspace: React.FC<ChessWorkspaceProps> = ({
               showCoordinates={coordinatesVisible}
               disabled={disabled}
               boardSizePixels={actualBoardSize}
+              bestMove={evalBarVisible ? currentEval?.bestMove : undefined}
             />
           </View>
 
@@ -185,19 +177,29 @@ export const ChessWorkspace: React.FC<ChessWorkspaceProps> = ({
           {currentComment && (
             <View style={[
               styles.commentBox,
-              { maxWidth: evalBarVisible ? actualBoardSize + 48 : actualBoardSize }
+              { maxWidth: evalBarVisible ? actualBoardSize + 36 : actualBoardSize }
             ]}>
               <Text style={styles.commentText}>{currentComment}</Text>
             </View>
           )}
         </View>
 
+        {/* Engine lines (top 3 PVs) */}
+        {evalBarVisible && currentEval && (
+          <View style={[
+            styles.engineLinesSection,
+            { maxWidth: evalBarVisible ? actualBoardSize + 36 : actualBoardSize }
+          ]}>
+            <EngineLines evaluation={currentEval} />
+          </View>
+        )}
+
         {/* Move History */}
         {moveHistoryVisible && moveTree && onNavigate && (
           <View style={[
             styles.moveHistorySection,
             isWideScreen && styles.moveHistorySectionWide,
-            !isWideScreen && { maxWidth: evalBarVisible ? actualBoardSize + 48 : actualBoardSize }
+            !isWideScreen && { maxWidth: evalBarVisible ? actualBoardSize + 36 : actualBoardSize }
           ]}>
             <MoveHistory
               moves={flatMoves}
@@ -268,6 +270,10 @@ const styles = StyleSheet.create({
     color: '#e0e0e0',
     fontSize: 12,
     lineHeight: 18,
+  },
+  engineLinesSection: {
+    width: '100%',
+    paddingHorizontal: 8,
   },
   moveHistorySection: {
     width: '100%',
