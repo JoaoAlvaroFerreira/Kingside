@@ -133,25 +133,15 @@ export const EvalBar: React.FC<EvalBarProps> = ({
         })}
       </View>
 
-      {/* Evaluation text */}
-      {currentEval && (
-        <View style={styles.evalTextContainer}>
-          <Text style={styles.evalText}>
-            {currentEval.mate !== undefined
-              ? `M${Math.abs(currentEval.mate)}`
-              : (currentEval.score / 100).toFixed(1)}
-          </Text>
-        </View>
-      )}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    width: 28,
+    width: 14,
     position: 'relative',
-    marginRight: 8,
+    marginRight: 4,
   },
   barContainer: {
     flex: 1,
@@ -182,28 +172,12 @@ const styles = StyleSheet.create({
   keyMoveMarker: {
     position: 'absolute',
     left: '50%',
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    transform: [{ translateX: -4 }, { translateY: -4 }],
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    transform: [{ translateX: -3 }, { translateY: -3 }],
     borderWidth: 1,
     borderColor: '#000',
     zIndex: 5,
-  },
-  evalTextContainer: {
-    position: 'absolute',
-    bottom: 2,
-    left: 0,
-    right: 0,
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.55)',
-    borderRadius: 3,
-    paddingVertical: 1,
-  },
-  evalText: {
-    color: '#e0e0e0',
-    fontSize: 11,
-    fontWeight: '600',
-    fontFamily: 'monospace',
   },
 });

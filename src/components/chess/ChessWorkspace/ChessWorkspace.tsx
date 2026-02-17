@@ -149,7 +149,7 @@ export const ChessWorkspace: React.FC<ChessWorkspaceProps> = ({
         <View style={styles.boardSection}>
           <View style={[
             styles.boardRow,
-            evalBarVisible && { width: actualBoardSize + 36 } // Board + EvalBar (28px) + margin (8px)
+            evalBarVisible && { width: actualBoardSize + 18 } // Board + EvalBar (14px) + margin (4px)
           ]}>
             {evalBarVisible && (
               <EvalBar
@@ -177,7 +177,7 @@ export const ChessWorkspace: React.FC<ChessWorkspaceProps> = ({
           {currentComment && (
             <View style={[
               styles.commentBox,
-              { maxWidth: evalBarVisible ? actualBoardSize + 36 : actualBoardSize }
+              { maxWidth: evalBarVisible ? actualBoardSize + 18 : actualBoardSize }
             ]}>
               <Text style={styles.commentText}>{currentComment}</Text>
             </View>
@@ -188,7 +188,7 @@ export const ChessWorkspace: React.FC<ChessWorkspaceProps> = ({
         {evalBarVisible && currentEval && (
           <View style={[
             styles.engineLinesSection,
-            { maxWidth: evalBarVisible ? actualBoardSize + 36 : actualBoardSize }
+            { maxWidth: evalBarVisible ? actualBoardSize + 18 : actualBoardSize }
           ]}>
             <EngineLines evaluation={currentEval} />
           </View>
@@ -199,7 +199,7 @@ export const ChessWorkspace: React.FC<ChessWorkspaceProps> = ({
           <View style={[
             styles.moveHistorySection,
             isWideScreen && styles.moveHistorySectionWide,
-            !isWideScreen && { maxWidth: evalBarVisible ? actualBoardSize + 36 : actualBoardSize }
+            !isWideScreen && { maxWidth: evalBarVisible ? actualBoardSize + 18 : actualBoardSize }
           ]}>
             <MoveHistory
               moves={flatMoves}

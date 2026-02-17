@@ -33,6 +33,8 @@ export class EngineAnalyzer {
   private cache = new Map<string, EngineEvaluation>();
   private cacheMax = 500;
   private threadsConfigured = false;
+  private lastProgressAt = 0;
+  private static PROGRESS_THROTTLE_MS = 250;
 
   constructor(sendCommand: (cmd: string) => void) {
     this.send = sendCommand;
@@ -66,7 +68,11 @@ export class EngineAnalyzer {
       this.parseInfo(line, s);
 
       if (s.onProgress && s.pvs.size > 0) {
-        s.onProgress(this.buildEval(s));
+        const now = Date.now();
+        if (now - this.lastProgressAt >= EngineAnalyzer.PROGRESS_THROTTLE_MS) {
+          this.lastProgressAt = now;
+          s.onProgress(this.buildEval(s));
+        }
       }
       return;
     }

@@ -199,7 +199,6 @@ export const InteractiveChessBoard: React.FC<InteractiveChessBoardProps> = ({
       const relY = touch.pageY - boardOrigin.current.y;
 
       const square = getSquareFromPosition(relX, relY);
-      console.log('[Board] Calculated square:', square, 'from relative pos', relX, relY);
       if (!square) return;
 
       const fileIdx = FILES.indexOf(square[0]);
@@ -279,7 +278,6 @@ export const InteractiveChessBoard: React.FC<InteractiveChessBoardProps> = ({
 
   const handleTap = (squareName: string) => {
     if (disabled) return;
-    console.log('[Board] Tap on square:', squareName);
     const fileIdx = FILES.indexOf(squareName[0]);
     const rankIdx = RANKS.indexOf(squareName[1]);
     const piece = board[rankIdx]?.[fileIdx];
@@ -323,7 +321,7 @@ export const InteractiveChessBoard: React.FC<InteractiveChessBoardProps> = ({
             ))}
           </View>
         )}
-        <View>
+        <View style={{ position: 'relative' }}>
           <View
             ref={boardRef}
             style={[styles.board, { width: boardSize, height: boardSize }]}
@@ -369,20 +367,6 @@ export const InteractiveChessBoard: React.FC<InteractiveChessBoardProps> = ({
               </View>
             ))}
 
-            {/* Best-move arrow overlay */}
-            {bestMove && bestMove.length >= 4 && (() => {
-              const from = squareToCenterPixel(bestMove.substring(0, 2), squareSize, orientation);
-              const to   = squareToCenterPixel(bestMove.substring(2, 4), squareSize, orientation);
-              const d    = getArrowPath(from.x, from.y, to.x, to.y, squareSize);
-              return d ? (
-                <View style={[styles.arrowOverlay, { width: boardSize, height: boardSize }]} pointerEvents="none">
-                  <Svg width={boardSize} height={boardSize} viewBox={`0 0 ${boardSize} ${boardSize}`}>
-                    <Path d={d} fill="rgba(39, 174, 96, 0.7)" />
-                  </Svg>
-                </View>
-              ) : null;
-            })()}
-
             {/* Dragging piece overlay */}
             {draggingPiece && (
               <Animated.View
@@ -404,6 +388,20 @@ export const InteractiveChessBoard: React.FC<InteractiveChessBoardProps> = ({
               </Animated.View>
             )}
           </View>
+
+          {/* Best-move arrow — outside PanResponder so SVG cannot intercept touches */}
+          {bestMove && bestMove.length >= 4 && (() => {
+            const from = squareToCenterPixel(bestMove.substring(0, 2), squareSize, orientation);
+            const to   = squareToCenterPixel(bestMove.substring(2, 4), squareSize, orientation);
+            const d    = getArrowPath(from.x, from.y, to.x, to.y, squareSize);
+            return d ? (
+              <View style={[styles.arrowOverlay, { width: boardSize, height: boardSize }]} pointerEvents="none">
+                <Svg width={boardSize} height={boardSize} viewBox={`0 0 ${boardSize} ${boardSize}`}>
+                  <Path d={d} fill="rgba(39, 174, 96, 0.7)" />
+                </Svg>
+              </View>
+            ) : null;
+          })()}
           {showCoordinates && (
             <View style={[styles.fileLabels, { width: boardSize }]}>
               {displayFiles.map((fileLabel) => (
@@ -423,7 +421,6 @@ const styles = StyleSheet.create({
   boardContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 10,
   },
   boardWrapper: {
     flexDirection: 'row',

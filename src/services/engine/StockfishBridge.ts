@@ -45,7 +45,6 @@ class StockfishBridge {
   }
 
   sendCommand(cmd: string): void {
-    console.log('[SF] >>>', cmd);
     StockfishModule?.sendCommand(cmd);
   }
 
@@ -90,8 +89,6 @@ class StockfishBridge {
   };
 
   private processLine(line: string): void {
-    console.log('[SF] <<<', line);
-
     if (!this.ready) {
       if (line === 'readyok') {
         console.log('[SF] Engine ready (classical eval, NNUE disabled)');
