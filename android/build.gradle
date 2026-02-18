@@ -9,6 +9,11 @@ buildscript {
         kotlinVersion = findProperty('android.kotlinVersion') ?: '1.9.25'
 
         ndkVersion = "26.1.10909125"
+
+        // Force react-native-stockfish-chess-engine to compile against SDK 35
+        // (its default of 30 lacks android:attr/lStar introduced in API 31)
+        StockfishChessEngine_compileSdkVersion = Integer.parseInt(findProperty('android.compileSdkVersion') ?: '35')
+        StockfishChessEngine_targetSdkVersion = Integer.parseInt(findProperty('android.targetSdkVersion') ?: '34')
     }
     repositories {
         google()

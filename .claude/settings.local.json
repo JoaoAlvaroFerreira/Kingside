@@ -64,7 +64,8 @@
       "Bash(npm run lint)",
       "Bash(npm run lint:fix:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(./gradlew assembleRelease:*)"
     ],
     "defaultMode": "bypassPermissions"
   }
