@@ -356,17 +356,19 @@ export const useStore = create<AppState>((set, get) => ({
       case 'prev':
         newIndex = Math.max(0, newIndex - 1);
         break;
-      case 'nextKey':
+      case 'nextKey': {
         const nextKey = session.keyMoveIndices.find(i => i > newIndex);
         if (nextKey !== undefined) newIndex = nextKey;
         break;
-      case 'prevKey':
+      }
+      case 'prevKey': {
         const prevKey = session.keyMoveIndices
           .slice()
           .reverse()
           .find(i => i < newIndex);
         if (prevKey !== undefined) newIndex = prevKey;
         break;
+      }
     }
 
     set({

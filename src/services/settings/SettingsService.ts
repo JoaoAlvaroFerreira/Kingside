@@ -2,7 +2,6 @@
  * SettingsService - Global settings persistence for game review
  */
 
-import { Platform } from 'react-native';
 import { ReviewSettings } from '@types';
 import { StorageService } from '@services/storage/StorageService';
 

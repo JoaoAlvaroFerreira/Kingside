@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, FlatList, ScrollView, Alert, TextInput, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, TextInput, Platform } from 'react-native';
 import { useStore } from '@store';
 import { RepertoireColor, OpeningType, Repertoire } from '@types';
 import { CardGenerator } from '@services/srs/CardGenerator';

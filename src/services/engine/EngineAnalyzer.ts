@@ -55,7 +55,7 @@ export class EngineAnalyzer {
     // data from a previous search contaminates the new one.
     if (!s.fenced) {
       if (line === 'readyok') {
-        console.log('[SF] Fence cleared, starting search for', s.fen.split(' ').slice(0, 2).join(' '));
+        if (__DEV__) console.log('[SF] Fence cleared, starting search for', s.fen.split(' ').slice(0, 2).join(' '));
         s.fenced = true;
         this.send(`setoption name MultiPV value ${s.options.multiPV}`);
         this.send(`position fen ${s.fen}`);
@@ -118,7 +118,7 @@ export class EngineAnalyzer {
         const s = this.search;
         this.search = null;
         this.send('stop');
-        console.log(`[SF] Analysis timeout after ${Date.now() - t0}ms`);
+        if (__DEV__) console.log(`[SF] Analysis timeout after ${Date.now() - t0}ms`);
         if (s.pvs.size > 0) {
           resolve(this.buildEval(s));
         } else {
@@ -145,7 +145,7 @@ export class EngineAnalyzer {
       this.send('stop');
       this.send('isready');
     }).then(result => {
-      console.log(`[SF] Analysis done in ${Date.now() - t0}ms depth=${result.depth}`);
+      if (__DEV__) console.log(`[SF] Analysis done in ${Date.now() - t0}ms depth=${result.depth}`);
 
       if (this.cache.size >= this.cacheMax) {
         const first = this.cache.keys().next().value;

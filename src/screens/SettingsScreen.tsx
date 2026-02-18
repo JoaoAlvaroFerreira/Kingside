@@ -368,7 +368,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
           <View style={styles.switchRow}>
             <View style={styles.switchLabel}>
               <Text style={styles.label}>Show Best Move</Text>
-              <Text style={styles.hint}>Highlight engine's best move on board</Text>
+              <Text style={styles.hint}>{"Highlight engine's best move on board"}</Text>
             </View>
             <Switch
               value={showBestMove}

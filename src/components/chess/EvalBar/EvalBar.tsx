@@ -8,7 +8,7 @@
  */
 
 import React from 'react';
-import { View, StyleSheet, Text } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { EngineEvaluation } from '@types';
 
 export interface KeyMoveMarker {
@@ -65,8 +65,8 @@ const getKeyMoveColor = (reason: string): string => {
 export const EvalBar: React.FC<EvalBarProps> = ({
   currentEval,
   orientation,
-  moveHistory = [],
-  currentMoveIndex = 0,
+  moveHistory: _moveHistory = [],
+  currentMoveIndex: _currentMoveIndex = 0,
   keyMoves = [],
   height,
   visible = true,

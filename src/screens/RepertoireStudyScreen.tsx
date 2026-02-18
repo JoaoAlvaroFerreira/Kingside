@@ -13,8 +13,7 @@ import { SettingsModal } from '@components/chess/ChessWorkspace/SettingsModal';
 import { HierarchyBrowser } from '@components/repertoire/HierarchyBrowser';
 import { ChapterList } from '@components/repertoire/ChapterList';
 import { GameList } from '@components/repertoire/GameList';
-import { computeFensFromMoves, normalizeFen, UserGame, MasterGame, Chapter } from '@types';
-import { DatabaseService } from '@services/database/DatabaseService';
+import { computeFensFromMoves, normalizeFen, UserGame, MasterGame } from '@types';
 
 interface RepertoireStudyScreenProps {
   navigation: any;
@@ -26,7 +25,7 @@ interface RepertoireStudyScreenProps {
   };
 }
 
-export default function RepertoireStudyScreen({ navigation, route }: RepertoireStudyScreenProps) {
+export default function RepertoireStudyScreen({ navigation: _navigation, route }: RepertoireStudyScreenProps) {
   const { repertoireId, chapterId } = route.params;
   const { repertoires, screenSettings } = useStore();
   const { width, height } = useWindowDimensions();
@@ -144,7 +143,8 @@ export default function RepertoireStudyScreen({ navigation, route }: RepertoireS
   const handleMoveClick = (from: string, to: string) => {
     if (!moveTree) return;
 
-    const chess = new (require('chess.js').Chess)(moveTree.getCurrentFen());
+    const { Chess } = require('chess.js'); // eslint-disable-line @typescript-eslint/no-var-requires
+    const chess = new Chess(moveTree.getCurrentFen());
     const move = chess.move({ from, to, promotion: 'q' });
 
     if (move) {

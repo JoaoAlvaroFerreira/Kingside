@@ -112,7 +112,7 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
     phase: string
   ): Promise<any[]> => {
     const results: any[] = [];
-    const totalBatches = Math.ceil(items.length / batchSize);
+    const _totalBatches = Math.ceil(items.length / batchSize);
 
     for (let i = 0; i < items.length; i += batchSize) {
       const batch = items.slice(i, i + batchSize);

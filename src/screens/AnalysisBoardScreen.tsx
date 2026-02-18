@@ -18,7 +18,7 @@ interface AnalysisBoardScreenProps {
 export default function AnalysisBoardScreen({ route }: AnalysisBoardScreenProps) {
   const { screenSettings, isLoading } = useStore();
   const [moveTree, setMoveTree] = useState(() => new MoveTree());
-  const [updateCounter, forceUpdate] = useState(0);
+  const [_updateCounter, forceUpdate] = useState(0);
 
   const engineEnabled = screenSettings.analysis.engineEnabled;
   const currentFen = moveTree.getCurrentFen();

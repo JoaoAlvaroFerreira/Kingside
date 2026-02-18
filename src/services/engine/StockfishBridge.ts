@@ -16,7 +16,7 @@ class StockfishBridge {
   start(): Promise<void> {
     if (this.readyPromise) return this.readyPromise;
 
-    console.log('[SF] Starting engine...');
+    if (__DEV__) console.log('[SF] Starting engine...');
     if (!StockfishModule) {
       console.error('[SF] Native module StockfishChessEngine not found');
       return Promise.reject(new Error('StockfishChessEngine native module not found'));
@@ -34,7 +34,7 @@ class StockfishBridge {
       this.onFragment,
     );
 
-    console.log('[SF] Calling mainLoop...');
+    if (__DEV__) console.log('[SF] Calling mainLoop...');
     StockfishModule.mainLoop();
 
     this.sendCommand('uci');
@@ -91,7 +91,7 @@ class StockfishBridge {
   private processLine(line: string): void {
     if (!this.ready) {
       if (line === 'readyok') {
-        console.log('[SF] Engine ready (classical eval, NNUE disabled)');
+        if (__DEV__) console.log('[SF] Engine ready (classical eval, NNUE disabled)');
         this.ready = true;
         this.readyResolve?.();
         this.readyResolve = null;

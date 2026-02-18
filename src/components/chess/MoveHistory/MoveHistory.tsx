@@ -190,7 +190,7 @@ export const MoveHistory: React.FC<MoveHistoryProps> = ({
       return (
         <View
           key={move.id}
-          // @ts-ignore - onContextMenu exists on web
+          // @ts-expect-error - onContextMenu exists on web
           onContextMenu={(e: any) => handleContextMenu(move.id, isInVariation, move.isCritical || false, e)}
         >
           {moveElement}

@@ -112,11 +112,11 @@ export class PGNService {
   /**
    * Recursively build MoveTree from parsed moves (including variations)
    */
-  private static buildMoveTree(movesArray: any[], moveTree: MoveTree, startFromCurrent: boolean = false): void {
+  private static buildMoveTree(movesArray: any[], moveTree: MoveTree, _startFromCurrent: boolean = false): void {
     if (!movesArray || movesArray.length === 0) return;
 
     // Track where we started for this sequence
-    const startingNode = moveTree.getCurrentNode();
+    const _startingNode = moveTree.getCurrentNode();
 
     const processMoveSequence = (move: any) => {
       if (!move) return;

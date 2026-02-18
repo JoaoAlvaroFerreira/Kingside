@@ -2,7 +2,7 @@
  * GameReviewScreen - Active game review session with board and analysis
  */
 
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -13,7 +13,6 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useStore } from '@store';
-import { Chess } from 'chess.js';
 import { InteractiveChessBoard } from '@components/chess/InteractiveChessBoard/InteractiveChessBoard';
 
 interface GameReviewScreenProps {
@@ -25,7 +24,7 @@ interface GameReviewScreenProps {
   };
 }
 
-export default function GameReviewScreen({ navigation, route }: GameReviewScreenProps) {
+export default function GameReviewScreen({ navigation, route: _route }: GameReviewScreenProps) {
   const { currentReviewSession, advanceReviewMove, completeGameReview } = useStore();
   const { width } = useWindowDimensions();
   const [completing, setCompleting] = useState(false);

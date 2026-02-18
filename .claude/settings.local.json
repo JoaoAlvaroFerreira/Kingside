@@ -58,7 +58,14 @@
       "Bash(npx react-native-async-storage inspect)",
       "WebFetch(domain:www.npmjs.com)",
       "Bash(npm uninstall:*)",
-      "Bash(gh api:*)"
-    ]
+      "Bash(gh api:*)",
+      "Bash(cut:*)",
+      "Bash(cat:*)",
+      "Bash(npm run lint)",
+      "Bash(npm run lint:fix:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
+    ],
+    "defaultMode": "bypassPermissions"
   }
 }

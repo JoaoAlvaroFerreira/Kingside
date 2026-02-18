@@ -99,7 +99,7 @@ export const GameReviewService = {
 
       for (const move of movesInSection) {
         // Clean up move (remove annotations and extra characters)
-        let cleanMove = move
+        const cleanMove = move
           .replace(/[!?]+$/, '')        // Remove ! and ? annotations
           .replace(/\(.*?\)/g, '')       // Remove parenthetical variations
           .replace(/\[.*?\]/g, '')       // Remove any remaining brackets
@@ -482,6 +482,7 @@ export const GameReviewService = {
 
     // If not found at expected ply, check ALL other plies (for deep transpositions)
     console.log(`  [FEN-Match] Not found at ply ${resultingMoveCount}, checking other plies...`);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     for (const [ply, positions] of positionMap) {
       if (positions.has(resultingFen)) {
         const expectedMovesFromThisPosition = positions.get(resultingFen);
@@ -505,7 +506,7 @@ export const GameReviewService = {
     let expectedMovesFromBeforePosition: string[] = [];
 
     // Check if the position before this move exists in repertoire
-    for (const [ply, positions] of positionMap) {
+    for (const [, positions] of positionMap) {
       if (positions.has(beforeFen)) {
         beforePositionInRepertoire = true;
         const movesSet = positions.get(beforeFen);

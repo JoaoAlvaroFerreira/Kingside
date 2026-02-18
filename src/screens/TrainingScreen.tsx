@@ -13,15 +13,13 @@ import { Chess } from 'chess.js';
 import { InteractiveChessBoard } from '@components/chess/InteractiveChessBoard/InteractiveChessBoard';
 import { useStore } from '@store';
 import { SM2Service } from '@services/srs/SM2Service';
-import { ReviewCard } from '@types';
-
-const OPPONENT_MOVE_DELAY = 300; // ms (configurable later)
+const _OPPONENT_MOVE_DELAY = 300; // ms (configurable later)
 
 export default function TrainingScreen() {
   const { getDueCards, updateCard } = useStore();
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [currentFen, setCurrentFen] = useState<string>('');
-  const [isAnimating, setIsAnimating] = useState(false);
+  const [isAnimating, _setIsAnimating] = useState(false);
   const [userMove, setUserMove] = useState<string | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
 

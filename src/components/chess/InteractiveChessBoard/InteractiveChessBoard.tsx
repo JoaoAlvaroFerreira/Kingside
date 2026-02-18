@@ -2,7 +2,7 @@
  * Interactive Chess Board Component - Tap or drag pieces to move
  */
 
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import {
   View,
   StyleSheet,
@@ -221,7 +221,7 @@ export const InteractiveChessBoard: React.FC<InteractiveChessBoardProps> = ({
       }
     },
 
-    onPanResponderMove: (evt: GestureResponderEvent, gestureState: PanResponderGestureState) => {
+    onPanResponderMove: (evt: GestureResponderEvent, _gestureState: PanResponderGestureState) => {
       if (!draggingFrom) return;
 
       const touch = evt.nativeEvent;
@@ -233,7 +233,7 @@ export const InteractiveChessBoard: React.FC<InteractiveChessBoardProps> = ({
       });
     },
 
-    onPanResponderRelease: (evt: GestureResponderEvent, gestureState: PanResponderGestureState) => {
+    onPanResponderRelease: (evt: GestureResponderEvent, _gestureState: PanResponderGestureState) => {
       const touch = evt.nativeEvent;
       const relX = touch.pageX - boardOrigin.current.x;
       const relY = touch.pageY - boardOrigin.current.y;

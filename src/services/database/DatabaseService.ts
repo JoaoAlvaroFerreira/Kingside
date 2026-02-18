@@ -186,9 +186,9 @@ class DatabaseServiceClass {
     const offset = page * pageSize;
 
     // Get total count
-    const countResult = await this.db.getFirstAsync<{ count: number }>(
+    const countResult = await this.db.getFirstAsync(
       'SELECT COUNT(*) as count FROM user_games'
-    );
+    ) as { count: number } | null;
     const totalCount = countResult?.count || 0;
 
     // Get paginated results
@@ -197,7 +197,7 @@ class DatabaseServiceClass {
       [pageSize, offset]
     );
 
-    const items = rows.map(row => this.rowToUserGame(row));
+    const items = (rows as any[]).map((row: any) => this.rowToUserGame(row));
     const hasMore = offset + pageSize < totalCount;
 
     return { items, totalCount, hasMore, page };
@@ -211,7 +211,7 @@ class DatabaseServiceClass {
     if (!this.db) throw new Error('Database not initialized');
 
     const rows = await this.db.getAllAsync('SELECT * FROM user_games ORDER BY imported_at DESC');
-    return rows.map(row => this.rowToUserGame(row));
+    return (rows as any[]).map((row: any) => this.rowToUserGame(row));
   }
 
   /**
@@ -254,9 +254,9 @@ class DatabaseServiceClass {
     if (this.isWeb) return WebDatabaseService.getUserGamesCount();
     if (!this.db) throw new Error('Database not initialized');
 
-    const result = await this.db.getFirstAsync<{ count: number }>(
+    const result = await this.db.getFirstAsync(
       'SELECT COUNT(*) as count FROM user_games'
-    );
+    ) as { count: number } | null;
     return result?.count || 0;
   }
 
@@ -313,9 +313,9 @@ class DatabaseServiceClass {
     const offset = page * pageSize;
 
     // Get total count
-    const countResult = await this.db.getFirstAsync<{ count: number }>(
+    const countResult = await this.db.getFirstAsync(
       'SELECT COUNT(*) as count FROM master_games'
-    );
+    ) as { count: number } | null;
     const totalCount = countResult?.count || 0;
 
     // Get paginated results
@@ -324,7 +324,7 @@ class DatabaseServiceClass {
       [pageSize, offset]
     );
 
-    const items = rows.map(row => this.rowToMasterGame(row));
+    const items = (rows as any[]).map((row: any) => this.rowToMasterGame(row));
     const hasMore = offset + pageSize < totalCount;
 
     return { items, totalCount, hasMore, page };
@@ -338,7 +338,7 @@ class DatabaseServiceClass {
     if (!this.db) throw new Error('Database not initialized');
 
     const rows = await this.db.getAllAsync('SELECT * FROM master_games ORDER BY imported_at DESC');
-    return rows.map(row => this.rowToMasterGame(row));
+    return (rows as any[]).map((row: any) => this.rowToMasterGame(row));
   }
 
   /**
@@ -381,9 +381,9 @@ class DatabaseServiceClass {
     if (this.isWeb) return WebDatabaseService.getMasterGamesCount();
     if (!this.db) throw new Error('Database not initialized');
 
-    const result = await this.db.getFirstAsync<{ count: number }>(
+    const result = await this.db.getFirstAsync(
       'SELECT COUNT(*) as count FROM master_games'
-    );
+    ) as { count: number } | null;
     return result?.count || 0;
   }
 
@@ -400,11 +400,11 @@ class DatabaseServiceClass {
     const offset = page * pageSize;
 
     // Get total count
-    const countResult = await this.db.getFirstAsync<{ count: number }>(
+    const countResult = await this.db.getFirstAsync(
       `SELECT COUNT(*) as count FROM user_games
        WHERE white LIKE ? OR black LIKE ? OR event LIKE ? OR eco LIKE ?`,
       [searchPattern, searchPattern, searchPattern, searchPattern]
-    );
+    ) as { count: number } | null;
     const totalCount = countResult?.count || 0;
 
     // Get paginated results
@@ -415,7 +415,7 @@ class DatabaseServiceClass {
       [searchPattern, searchPattern, searchPattern, searchPattern, pageSize, offset]
     );
 
-    const items = rows.map(row => this.rowToUserGame(row));
+    const items = (rows as any[]).map((row: any) => this.rowToUserGame(row));
     const hasMore = offset + pageSize < totalCount;
 
     return { items, totalCount, hasMore, page };
@@ -432,11 +432,11 @@ class DatabaseServiceClass {
     const offset = page * pageSize;
 
     // Get total count
-    const countResult = await this.db.getFirstAsync<{ count: number }>(
+    const countResult = await this.db.getFirstAsync(
       `SELECT COUNT(*) as count FROM master_games
        WHERE white LIKE ? OR black LIKE ? OR event LIKE ? OR eco LIKE ?`,
       [searchPattern, searchPattern, searchPattern, searchPattern]
-    );
+    ) as { count: number } | null;
     const totalCount = countResult?.count || 0;
 
     // Get paginated results
@@ -447,7 +447,7 @@ class DatabaseServiceClass {
       [searchPattern, searchPattern, searchPattern, searchPattern, pageSize, offset]
     );
 
-    const items = rows.map(row => this.rowToMasterGame(row));
+    const items = (rows as any[]).map((row: any) => this.rowToMasterGame(row));
     const hasMore = offset + pageSize < totalCount;
 
     return { items, totalCount, hasMore, page };

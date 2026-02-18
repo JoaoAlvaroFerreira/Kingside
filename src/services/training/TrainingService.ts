@@ -7,10 +7,8 @@ import {
   TrainingConfig,
   TrainingSession,
   Line,
-  LineMove,
   LineStats,
   DrillResult,
-  DrillFeedback,
 } from '@types';
 import { Repertoire } from '@types';
 import { LineExtractor } from './LineExtractor';

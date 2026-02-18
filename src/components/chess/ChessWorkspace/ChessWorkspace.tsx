@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import { View, StyleSheet, TouchableOpacity, Text, useWindowDimensions } from 'react-native';
+import { View, StyleSheet, Text, useWindowDimensions } from 'react-native';
 import { InteractiveChessBoard } from '@components/chess/InteractiveChessBoard/InteractiveChessBoard';
 import { MoveHistory } from '@components/chess/MoveHistory/MoveHistory';
 import { EvalBar, KeyMoveMarker } from '@components/chess/EvalBar/EvalBar';
