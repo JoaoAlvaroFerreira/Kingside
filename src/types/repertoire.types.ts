@@ -68,6 +68,7 @@ export interface UserGame {
   result: string;                 // '1-0', '0-1', '1/2-1/2', '*'
   date: string;
   event?: string;
+  site?: string;
   eco?: string;
   moves: string[];                // SAN moves array
   // NOTE: FENs computed on-demand, not stored (optimize later with hashing)

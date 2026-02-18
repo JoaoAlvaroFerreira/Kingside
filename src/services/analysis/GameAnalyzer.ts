@@ -3,7 +3,7 @@
  */
 
 import { Chess } from 'chess.js';
-import { UserGame, Repertoire, normalizeFen, computeFensFromMoves } from '@types';
+import { UserGame, Repertoire, normalizeFen } from '@types';
 import { MoveTree } from '@utils/MoveTree';
 
 export interface Deviation {

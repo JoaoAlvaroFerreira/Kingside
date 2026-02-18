@@ -16,7 +16,6 @@ import {
   Platform,
 } from 'react-native';
 import { useStore } from '@store';
-import { EngineService } from '@services/engine/EngineService';
 
 interface SettingsScreenProps {
   navigation: any;
@@ -25,12 +24,12 @@ interface SettingsScreenProps {
 export default function SettingsScreen({ navigation }: SettingsScreenProps) {
   const { reviewSettings, saveReviewSettings } = useStore();
   const [saving, setSaving] = useState(false);
-  const [testing, setTesting] = useState(false);
 
   // Engine settings
-  const [apiEndpoint, setApiEndpoint] = useState(reviewSettings.engine.apiEndpoint);
+  const [moveTime, setMoveTime] = useState(reviewSettings.engine.moveTime.toString());
   const [depth, setDepth] = useState(reviewSettings.engine.depth.toString());
-  const [timeout, setTimeout] = useState(reviewSettings.engine.timeout.toString());
+  const [threads, setThreads] = useState(reviewSettings.engine.threads.toString());
+  const [multiPV, setMultiPV] = useState(reviewSettings.engine.multiPV.toString());
 
   // Thresholds
   const [blunder, setBlunder] = useState(reviewSettings.thresholds.blunder.toString());
@@ -48,9 +47,10 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
 
   // Update local state when store changes
   useEffect(() => {
-    setApiEndpoint(reviewSettings.engine.apiEndpoint);
+    setMoveTime(reviewSettings.engine.moveTime.toString());
     setDepth(reviewSettings.engine.depth.toString());
-    setTimeout(reviewSettings.engine.timeout.toString());
+    setThreads(reviewSettings.engine.threads.toString());
+    setMultiPV(reviewSettings.engine.multiPV.toString());
     setBlunder(reviewSettings.thresholds.blunder.toString());
     setMistake(reviewSettings.thresholds.mistake.toString());
     setInaccuracy(reviewSettings.thresholds.inaccuracy.toString());
@@ -61,52 +61,25 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
     setLichessImportDaysBack(reviewSettings.lichess.importDaysBack.toString());
   }, [reviewSettings]);
 
-  const handleTestEngine = async () => {
-    if (!apiEndpoint) {
-      const msg = 'Please enter an API endpoint first';
-      if (Platform.OS === 'web') {
-        window.alert(msg);
-      } else {
-        Alert.alert('Error', msg);
-      }
-      return;
-    }
-
-    setTesting(true);
-    try {
-      EngineService.setEndpoint(apiEndpoint);
-      const available = await EngineService.isAvailable();
-
-      const msg = available
-        ? 'Engine is available and responding!'
-        : 'Could not connect to engine. Check the endpoint URL.';
-
-      if (Platform.OS === 'web') {
-        window.alert(msg);
-      } else {
-        Alert.alert(available ? 'Success' : 'Connection Failed', msg);
-      }
-    } catch (error) {
-      const msg = `Error testing engine: ${error}`;
-      if (Platform.OS === 'web') {
-        window.alert(msg);
-      } else {
-        Alert.alert('Error', msg);
-      }
-    } finally {
-      setTesting(false);
-    }
-  };
-
   const validateSettings = (): string | null => {
-    const depthNum = parseInt(depth, 10);
-    if (isNaN(depthNum) || depthNum < 1 || depthNum > 40) {
-      return 'Depth must be between 1 and 40';
+    const moveTimeNum = parseInt(moveTime, 10);
+    if (isNaN(moveTimeNum) || moveTimeNum < 100 || moveTimeNum > 10000) {
+      return 'Analysis time must be between 100ms and 10000ms';
     }
 
-    const timeoutNum = parseInt(timeout, 10);
-    if (isNaN(timeoutNum) || timeoutNum < 1000 || timeoutNum > 60000) {
-      return 'Timeout must be between 1000ms and 60000ms';
+    const depthNum = parseInt(depth, 10);
+    if (isNaN(depthNum) || depthNum < 1 || depthNum > 30) {
+      return 'Depth must be between 1 and 30';
+    }
+
+    const threadsNum = parseInt(threads, 10);
+    if (isNaN(threadsNum) || threadsNum < 1 || threadsNum > 4) {
+      return 'Threads must be between 1 and 4';
+    }
+
+    const multiPVNum = parseInt(multiPV, 10);
+    if (isNaN(multiPVNum) || multiPVNum < 1 || multiPVNum > 5) {
+      return 'MultiPV must be between 1 and 5';
     }
 
     const blunderNum = parseInt(blunder, 10);
@@ -158,9 +131,10 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
     try {
       await saveReviewSettings({
         engine: {
-          apiEndpoint,
+          moveTime: parseInt(moveTime, 10),
           depth: parseInt(depth, 10),
-          timeout: parseInt(timeout, 10),
+          threads: parseInt(threads, 10),
+          multiPV: parseInt(multiPV, 10),
         },
         thresholds: {
           blunder: parseInt(blunder, 10),
@@ -197,9 +171,10 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
   const handleReset = () => {
     const confirmReset = () => {
       const defaults = {
-        apiEndpoint: '',
-        depth: '20',
-        timeout: '10000',
+        moveTime: '1000',
+        depth: '16',
+        threads: '1',
+        multiPV: '3',
         blunder: '200',
         mistake: '100',
         inaccuracy: '50',
@@ -210,9 +185,10 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
         lichessImportDaysBack: '1',
       };
 
-      setApiEndpoint(defaults.apiEndpoint);
+      setMoveTime(defaults.moveTime);
       setDepth(defaults.depth);
-      setTimeout(defaults.timeout);
+      setThreads(defaults.threads);
+      setMultiPV(defaults.multiPV);
       setBlunder(defaults.blunder);
       setMistake(defaults.mistake);
       setInaccuracy(defaults.inaccuracy);
@@ -253,64 +229,69 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Engine Configuration</Text>
           <Text style={styles.sectionDescription}>
-            Configure external chess engine API for position analysis
+            Local Stockfish engine for position analysis and blunder detection
           </Text>
 
-          <View style={styles.field}>
-            <Text style={styles.label}>API Endpoint</Text>
-            <TextInput
-              style={styles.input}
-              value={apiEndpoint}
-              onChangeText={setApiEndpoint}
-              placeholder="https://your-engine-api.com/analyze"
-              placeholderTextColor="#666"
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
-            <Text style={styles.hint}>
-              Complete URL to your engine analysis endpoint.{'\n'}
-              The app will POST to this URL with fen and depth in the body.
-            </Text>
-          </View>
-
-          <TouchableOpacity
-            style={[styles.testButton, testing && styles.testButtonDisabled]}
-            onPress={handleTestEngine}
-            disabled={testing}
-          >
-            {testing ? (
-              <ActivityIndicator size="small" color="#fff" />
-            ) : (
-              <Text style={styles.testButtonText}>Test Connection</Text>
-            )}
-          </TouchableOpacity>
-
           <View style={styles.row}>
+            <View style={[styles.field, styles.fieldHalf]}>
+              <Text style={styles.label}>Analysis Time (ms)</Text>
+              <TextInput
+                style={styles.input}
+                value={moveTime}
+                onChangeText={setMoveTime}
+                placeholder="1000"
+                keyboardType="numeric"
+                placeholderTextColor="#666"
+              />
+              <Text style={styles.hint}>100-10000 (default: 1000)</Text>
+            </View>
+
             <View style={[styles.field, styles.fieldHalf]}>
               <Text style={styles.label}>Depth</Text>
               <TextInput
                 style={styles.input}
                 value={depth}
                 onChangeText={setDepth}
-                placeholder="20"
+                placeholder="16"
                 keyboardType="numeric"
                 placeholderTextColor="#666"
               />
-              <Text style={styles.hint}>1-40 (recommended: 20)</Text>
+              <Text style={styles.hint}>1-30 (default: 16)</Text>
+            </View>
+          </View>
+
+          <View style={styles.row}>
+            <View style={[styles.field, styles.fieldHalf]}>
+              <Text style={styles.label}>Threads</Text>
+              <TextInput
+                style={styles.input}
+                value={threads}
+                onChangeText={setThreads}
+                placeholder="1"
+                keyboardType="numeric"
+                placeholderTextColor="#666"
+              />
+              <Text style={styles.hint}>1-4 (default: 1)</Text>
             </View>
 
             <View style={[styles.field, styles.fieldHalf]}>
-              <Text style={styles.label}>Timeout (ms)</Text>
+              <Text style={styles.label}>MultiPV</Text>
               <TextInput
                 style={styles.input}
-                value={timeout}
-                onChangeText={setTimeout}
-                placeholder="10000"
+                value={multiPV}
+                onChangeText={setMultiPV}
+                placeholder="3"
                 keyboardType="numeric"
                 placeholderTextColor="#666"
               />
-              <Text style={styles.hint}>1000-60000</Text>
+              <Text style={styles.hint}>1-5 lines (default: 3)</Text>
             </View>
+          </View>
+
+          <View style={styles.thresholdNote}>
+            <Text style={styles.noteText}>
+              Analysis Time: Max time per position (ms). Depth: Search depth limit. Threads: CPU threads for engine. MultiPV: Number of top lines shown.
+            </Text>
           </View>
         </View>
 
@@ -387,7 +368,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
           <View style={styles.switchRow}>
             <View style={styles.switchLabel}>
               <Text style={styles.label}>Show Best Move</Text>
-              <Text style={styles.hint}>Highlight engine's best move on board</Text>
+              <Text style={styles.hint}>{"Highlight engine's best move on board"}</Text>
             </View>
             <Switch
               value={showBestMove}
@@ -562,23 +543,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#999',
     marginTop: 4,
-  },
-  testButton: {
-    backgroundColor: '#4a9eff',
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 6,
-    alignItems: 'center',
-    marginTop: 8,
-    marginBottom: 16,
-  },
-  testButtonDisabled: {
-    backgroundColor: '#666',
-  },
-  testButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
   },
   thresholdNote: {
     backgroundColor: '#2a2a2a',

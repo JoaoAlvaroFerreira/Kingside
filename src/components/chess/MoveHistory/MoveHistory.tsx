@@ -26,6 +26,7 @@ interface MoveHistoryProps {
   onPromoteToMainLine?: (nodeId: string) => void;
   onMarkCritical?: (nodeId: string, isCritical: boolean) => void;
   onAddComment?: (nodeId: string) => void;
+  onSettingsPress?: () => void;
   canGoBack: boolean;
   canGoForward: boolean;
 }
@@ -41,6 +42,7 @@ export const MoveHistory: React.FC<MoveHistoryProps> = ({
   onPromoteToMainLine,
   onMarkCritical,
   onAddComment,
+  onSettingsPress,
   canGoBack,
   canGoForward,
 }) => {
@@ -103,7 +105,9 @@ export const MoveHistory: React.FC<MoveHistoryProps> = ({
 
         const variationElements: React.ReactNode[] = [];
         variationElements.push(
-          <Text key={`bracket-open-${move.id}`} style={styles.variationBracket}>(</Text>
+          <View key={`bracket-open-${move.id}`}>
+            <Text style={styles.variationBracket}>(</Text>
+          </View>
         );
         variationMoves.forEach((varMove) => {
           variationElements.push(
@@ -113,7 +117,9 @@ export const MoveHistory: React.FC<MoveHistoryProps> = ({
           );
         });
         variationElements.push(
-          <Text key={`bracket-close-${move.id}`} style={styles.variationBracket}>)</Text>
+          <View key={`bracket-close-${move.id}`}>
+            <Text style={styles.variationBracket}>)</Text>
+          </View>
         );
 
         elements.push(
@@ -184,7 +190,7 @@ export const MoveHistory: React.FC<MoveHistoryProps> = ({
       return (
         <View
           key={move.id}
-          // @ts-ignore - onContextMenu exists on web
+          // @ts-expect-error - onContextMenu exists on web
           onContextMenu={(e: any) => handleContextMenu(move.id, isInVariation, move.isCritical || false, e)}
         >
           {moveElement}
@@ -237,6 +243,14 @@ export const MoveHistory: React.FC<MoveHistoryProps> = ({
         >
           <Text style={styles.navButtonText}>⏭</Text>
         </TouchableOpacity>
+        {onSettingsPress && (
+          <TouchableOpacity
+            style={styles.settingsButton}
+            onPress={onSettingsPress}
+          >
+            <Text style={styles.navButtonText}>⚙️</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* Context Menu Modal */}
@@ -280,15 +294,15 @@ export const MoveHistory: React.FC<MoveHistoryProps> = ({
 const styles = StyleSheet.create({
   container: {
     backgroundColor: '#3a3a3a',
-    borderRadius: 8,
-    padding: 12,
+    borderRadius: 6,
+    padding: 8,
     minWidth: 260,
-    minHeight: 250,
+    minHeight: 200,
     flex: 1,
   },
   moveList: {
     flex: 1,
-    marginBottom: 12,
+    marginBottom: 8,
   },
   moveListContent: {
     flexGrow: 1,
@@ -297,18 +311,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'center',
+    paddingHorizontal: 6,
   },
   emptyText: {
     color: '#888',
     fontStyle: 'italic',
     textAlign: 'center',
-    paddingVertical: 20,
+    paddingVertical: 16,
+    fontSize: 12,
   },
   moveContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 4,
-    paddingVertical: 2,
+    paddingHorizontal: 3,
+    paddingVertical: 1,
     borderRadius: 3,
     marginRight: 2,
   },
@@ -317,12 +333,12 @@ const styles = StyleSheet.create({
   },
   moveNumber: {
     color: '#888',
-    fontSize: 13,
+    fontSize: 11,
     marginRight: 2,
   },
   moveText: {
     color: '#e0e0e0',
-    fontSize: 14,
+    fontSize: 12,
     fontFamily: 'monospace',
   },
   currentMoveText: {
@@ -330,28 +346,28 @@ const styles = StyleSheet.create({
   },
   variationText: {
     color: '#aaa',
-    fontSize: 13,
+    fontSize: 11,
   },
   variation: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'center',
-    marginVertical: 2,
+    marginVertical: 1,
   },
   variationBracket: {
     color: '#777',
-    fontSize: 13,
+    fontSize: 11,
     marginHorizontal: 2,
   },
   navigation: {
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 8,
+    gap: 6,
   },
   navButton: {
     backgroundColor: '#4a4a4a',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: 4,
   },
   navButtonDisabled: {
@@ -359,7 +375,14 @@ const styles = StyleSheet.create({
   },
   navButtonText: {
     color: '#e0e0e0',
-    fontSize: 16,
+    fontSize: 14,
+  },
+  settingsButton: {
+    backgroundColor: '#4a4a4a',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 4,
+    marginLeft: 6,
   },
   modalOverlay: {
     flex: 1,
@@ -386,12 +409,12 @@ const styles = StyleSheet.create({
   },
   criticalStar: {
     color: '#FFD700',
-    fontSize: 12,
-    marginRight: 2,
+    fontSize: 10,
+    marginRight: 1,
   },
   commentIndicator: {
     color: '#87CEEB',
-    fontSize: 11,
-    marginLeft: 2,
+    fontSize: 9,
+    marginLeft: 1,
   },
 });

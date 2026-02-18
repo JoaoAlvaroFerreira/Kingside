@@ -14,21 +14,27 @@ import {
   GameReviewStatus,
   GameReviewSession,
   RepertoireColor,
+  AllScreenSettings,
+  ScreenKey,
+  ScreenSettings,
 } from '@types';
 import { StorageService } from '@services/storage/StorageService';
 import { SettingsService } from '@services/settings/SettingsService';
+import { ScreenSettingsService } from '@services/settings/ScreenSettingsService';
 import { GameReviewService } from '@services/gameReview/GameReviewService';
-import { EngineService } from '@services/engine/EngineService';
+import { DatabaseService } from '@services/database/DatabaseService';
+import { MigrationService } from '@services/database/MigrationService';
 
 interface AppState {
   // Data
   repertoires: Repertoire[];
-  userGames: UserGame[];       // Player's own games
-  masterGames: MasterGame[];   // Separate library for master games
+  userGamesCount: number;       // Count of user games (stored in SQLite)
+  masterGamesCount: number;     // Count of master games (stored in SQLite)
   reviewCards: ReviewCard[];
   lineStats: LineStats[];      // Training line statistics
   currentTrainingSession: TrainingSession | null;
   reviewSettings: ReviewSettings;
+  screenSettings: AllScreenSettings;
   gameReviewStatuses: GameReviewStatus[];
   currentReviewSession: GameReviewSession | null;
   isLoading: boolean;
@@ -41,13 +47,17 @@ interface AppState {
   updateRepertoire: (r: Repertoire) => Promise<void>;
   deleteRepertoire: (id: string) => Promise<void>;
 
-  // Game actions (separate for each library)
+  // Game actions (use database, not in-memory arrays)
   addUserGames: (games: UserGame[]) => Promise<void>;
   deleteUserGame: (id: string) => Promise<void>;
   deleteAllUserGames: () => Promise<void>;
+  getUserGameById: (id: string) => Promise<UserGame | null>;
+  refreshUserGamesCount: () => Promise<void>;
   addMasterGames: (games: MasterGame[]) => Promise<void>;
   deleteMasterGame: (id: string) => Promise<void>;
   deleteAllMasterGames: () => Promise<void>;
+  getMasterGameById: (id: string) => Promise<MasterGame | null>;
+  refreshMasterGamesCount: () => Promise<void>;
 
   // Review card actions
   addCards: (cards: ReviewCard[]) => Promise<void>;
@@ -68,45 +78,57 @@ interface AppState {
   advanceReviewMove: (direction: 'next' | 'prev' | 'nextKey' | 'prevKey') => void;
   completeGameReview: () => Promise<void>;
   setReviewSession: (session: GameReviewSession | null) => void;
-  getUnreviewedGames: () => UserGame[];
+  getUnreviewedGames: () => Promise<UserGame[]>;
+
+  // Screen Settings actions
+  loadScreenSettings: () => Promise<void>;
+  updateScreenSettings: (screenKey: ScreenKey, settings: Partial<ScreenSettings>) => Promise<void>;
 }
 
 export const useStore = create<AppState>((set, get) => ({
   repertoires: [],
-  userGames: [],
-  masterGames: [],
+  userGamesCount: 0,
+  masterGamesCount: 0,
   reviewCards: [],
   lineStats: [],
   currentTrainingSession: null,
   reviewSettings: SettingsService.getDefaults(),
+  screenSettings: ScreenSettingsService.getDefaults(),
   gameReviewStatuses: [],
   currentReviewSession: null,
   isLoading: true,
 
   initialize: async () => {
     console.log('Store: Initializing...');
-    const [repertoires, userGames, masterGames, reviewCards, lineStats, reviewSettings, gameReviewStatuses] = await Promise.all([
+
+    // Initialize database first
+    await DatabaseService.initialize();
+
+    // Migrate existing AsyncStorage data to SQLite if needed
+    await MigrationService.migrateIfNeeded();
+
+    const [repertoires, userGamesCount, masterGamesCount, reviewCards, lineStats, reviewSettings, screenSettings, gameReviewStatuses] = await Promise.all([
       StorageService.loadRepertoires(),
-      StorageService.loadUserGames(),
-      StorageService.loadMasterGames(),
+      DatabaseService.getUserGamesCount(),
+      DatabaseService.getMasterGamesCount(),
       StorageService.loadCards(),
       StorageService.loadLineStats(),
       SettingsService.loadSettings(),
+      ScreenSettingsService.loadSettings(),
       StorageService.loadGameReviewStatuses(),
     ]);
 
-    // Configure engine with loaded settings
-    EngineService.setEndpoint(reviewSettings.engine.apiEndpoint);
+    // Engine settings will be used from reviewSettings when analyzing
 
     console.log('Store: Loaded data:', {
       repertoires: repertoires.length,
-      userGames: userGames.length,
-      masterGames: masterGames.length,
+      userGamesCount,
+      masterGamesCount,
       reviewCards: reviewCards.length,
       lineStats: lineStats.length,
       gameReviewStatuses: gameReviewStatuses.length,
     });
-    set({ repertoires, userGames, masterGames, reviewCards, lineStats, reviewSettings, gameReviewStatuses, isLoading: false });
+    set({ repertoires, userGamesCount, masterGamesCount, reviewCards, lineStats, reviewSettings, screenSettings, gameReviewStatuses, isLoading: false });
   },
 
   addRepertoire: async (repertoire) => {
@@ -166,46 +188,62 @@ export const useStore = create<AppState>((set, get) => ({
 
   addUserGames: async (newGames) => {
     console.log('Store: Adding user games:', newGames.length);
-    const userGames = [...get().userGames, ...newGames];
-    console.log('Store: Total user games:', userGames.length);
-    await StorageService.saveUserGames(userGames);
-    set({ userGames });
-    console.log('Store: User games added and saved');
+    await DatabaseService.addUserGames(newGames);
+    const userGamesCount = await DatabaseService.getUserGamesCount();
+    set({ userGamesCount });
+    console.log('Store: User games added, total:', userGamesCount);
   },
 
   deleteUserGame: async (id) => {
-    const userGames = get().userGames.filter(g => g.id !== id);
-    await StorageService.saveUserGames(userGames);
-    set({ userGames });
+    await DatabaseService.deleteUserGame(id);
+    const userGamesCount = await DatabaseService.getUserGamesCount();
+    set({ userGamesCount });
   },
 
   deleteAllUserGames: async () => {
     console.log('Store: Deleting all user games');
-    await StorageService.saveUserGames([]);
-    set({ userGames: [] });
+    await DatabaseService.deleteAllUserGames();
+    set({ userGamesCount: 0 });
     console.log('Store: All user games deleted');
+  },
+
+  getUserGameById: async (id) => {
+    return await DatabaseService.getUserGameById(id);
+  },
+
+  refreshUserGamesCount: async () => {
+    const userGamesCount = await DatabaseService.getUserGamesCount();
+    set({ userGamesCount });
   },
 
   addMasterGames: async (newGames) => {
     console.log('Store: Adding master games:', newGames.length);
-    const masterGames = [...get().masterGames, ...newGames];
-    console.log('Store: Total master games:', masterGames.length);
-    await StorageService.saveMasterGames(masterGames);
-    set({ masterGames });
-    console.log('Store: Master games added and saved');
+    await DatabaseService.addMasterGames(newGames);
+    const masterGamesCount = await DatabaseService.getMasterGamesCount();
+    set({ masterGamesCount });
+    console.log('Store: Master games added, total:', masterGamesCount);
   },
 
   deleteMasterGame: async (id) => {
-    const masterGames = get().masterGames.filter(g => g.id !== id);
-    await StorageService.saveMasterGames(masterGames);
-    set({ masterGames });
+    await DatabaseService.deleteMasterGame(id);
+    const masterGamesCount = await DatabaseService.getMasterGamesCount();
+    set({ masterGamesCount });
   },
 
   deleteAllMasterGames: async () => {
     console.log('Store: Deleting all master games');
-    await StorageService.saveMasterGames([]);
-    set({ masterGames: [] });
+    await DatabaseService.deleteAllMasterGames();
+    set({ masterGamesCount: 0 });
     console.log('Store: All master games deleted');
+  },
+
+  getMasterGameById: async (id) => {
+    return await DatabaseService.getMasterGameById(id);
+  },
+
+  refreshMasterGamesCount: async () => {
+    const masterGamesCount = await DatabaseService.getMasterGamesCount();
+    set({ masterGamesCount });
   },
 
   addCards: async (newCards) => {
@@ -272,25 +310,17 @@ export const useStore = create<AppState>((set, get) => ({
   // Game Review actions
   loadReviewSettings: async () => {
     const reviewSettings = await SettingsService.loadSettings();
-    EngineService.setEndpoint(reviewSettings.engine.apiEndpoint);
     set({ reviewSettings });
   },
 
   saveReviewSettings: async (updates) => {
-    const current = get().reviewSettings;
     const updated = await SettingsService.updateSettings(updates);
-
-    // Update engine endpoint if changed
-    if (updates.engine?.apiEndpoint) {
-      EngineService.setEndpoint(updates.engine.apiEndpoint);
-    }
-
     set({ reviewSettings: updated });
   },
 
   startGameReview: async (gameId, userColor) => {
     const state = get();
-    const game = state.userGames.find(g => g.id === gameId);
+    const game = await DatabaseService.getUserGameById(gameId);
 
     if (!game) {
       throw new Error(`Game not found: ${gameId}`);
@@ -298,14 +328,15 @@ export const useStore = create<AppState>((set, get) => ({
 
     console.log('Store: Starting game review for:', game.id, 'userColor:', userColor);
 
+    // Get all master games for reference (consider optimization later)
+    const masterGames = await DatabaseService.getAllMasterGames();
+
     const session = await GameReviewService.startReview(
       game,
       userColor,
       state.repertoires,
-      state.masterGames,
+      masterGames,
       state.reviewSettings.thresholds,
-      state.reviewSettings.engine.depth,
-      state.reviewSettings.engine.timeout
     );
 
     set({ currentReviewSession: session });
@@ -325,17 +356,19 @@ export const useStore = create<AppState>((set, get) => ({
       case 'prev':
         newIndex = Math.max(0, newIndex - 1);
         break;
-      case 'nextKey':
+      case 'nextKey': {
         const nextKey = session.keyMoveIndices.find(i => i > newIndex);
         if (nextKey !== undefined) newIndex = nextKey;
         break;
-      case 'prevKey':
+      }
+      case 'prevKey': {
         const prevKey = session.keyMoveIndices
           .slice()
           .reverse()
           .find(i => i < newIndex);
         if (prevKey !== undefined) newIndex = prevKey;
         break;
+      }
     }
 
     set({
@@ -378,11 +411,23 @@ export const useStore = create<AppState>((set, get) => ({
     set({ currentReviewSession: session });
   },
 
-  getUnreviewedGames: () => {
+  getUnreviewedGames: async () => {
     const state = get();
     const reviewedGameIds = new Set(
       state.gameReviewStatuses.filter(s => s.reviewed).map(s => s.gameId)
     );
-    return state.userGames.filter(g => !reviewedGameIds.has(g.id));
+    const allUserGames = await DatabaseService.getAllUserGames();
+    return allUserGames.filter(g => !reviewedGameIds.has(g.id));
+  },
+
+  // Screen Settings actions
+  loadScreenSettings: async () => {
+    const screenSettings = await ScreenSettingsService.loadSettings();
+    set({ screenSettings });
+  },
+
+  updateScreenSettings: async (screenKey, settings) => {
+    const updated = await ScreenSettingsService.updateScreenSettings(screenKey, settings);
+    set({ screenSettings: updated });
   },
 }));

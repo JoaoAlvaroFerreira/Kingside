@@ -12,7 +12,6 @@
 import { MoveTree, MoveNode, SerializedMoveTree } from '@/utils/MoveTree';
 import { Line, LineMove } from '@types';
 import type { RepertoireColor } from '@types';
-import { Chess } from 'chess.js';
 
 export const LineExtractor = {
   /**

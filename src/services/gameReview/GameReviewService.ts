@@ -24,7 +24,7 @@ import {
   EngineEvaluation,
   EvalThresholds,
 } from '@types';
-import { EngineService } from '@services/engine/EngineService';
+import { EngineAnalyzer, AnalysisOptions } from '@services/engine/EngineAnalyzer';
 import { normalizeFen } from '@types';
 import { MoveTree } from '@utils/MoveTree';
 
@@ -38,8 +38,8 @@ export const GameReviewService = {
     repertoires: Repertoire[],
     masterGames: MasterGame[],
     thresholds: EvalThresholds,
-    engineDepth: number,
-    engineTimeout: number
+    analyzer?: EngineAnalyzer,
+    analysisOptions?: AnalysisOptions,
   ): Promise<GameReviewSession> {
     console.log('[GameReview] Starting review with userColor:', userColor);
     console.log('[GameReview] Available repertoires:', repertoires.length);
@@ -99,7 +99,7 @@ export const GameReviewService = {
 
       for (const move of movesInSection) {
         // Clean up move (remove annotations and extra characters)
-        let cleanMove = move
+        const cleanMove = move
           .replace(/[!?]+$/, '')        // Remove ! and ? annotations
           .replace(/\(.*?\)/g, '')       // Remove parenthetical variations
           .replace(/\[.*?\]/g, '')       // Remove any remaining brackets
@@ -136,9 +136,18 @@ export const GameReviewService = {
       throw new Error('Failed to parse game moves');
     }
 
-    // Get engine evaluations for all positions (if engine is configured)
+    // Get engine evaluations for all positions (if analyzer is provided)
     console.log(`Analyzing ${positions.length} positions...`);
-    const evaluations = await EngineService.analyzeBatch(positions, engineDepth, engineTimeout);
+    const evaluations: Array<EngineEvaluation | null> = new Array(positions.length).fill(null);
+    if (analyzer && analysisOptions) {
+      for (let i = 0; i < positions.length; i++) {
+        try {
+          evaluations[i] = await analyzer.analyze(positions[i], analysisOptions);
+        } catch {
+          evaluations[i] = null;
+        }
+      }
+    }
     const hasEngineAnalysis = evaluations.some(e => e !== null);
     console.log(`Received ${evaluations.length} evaluations (${hasEngineAnalysis ? 'engine active' : 'engine disabled'})`);
 
@@ -473,6 +482,7 @@ export const GameReviewService = {
 
     // If not found at expected ply, check ALL other plies (for deep transpositions)
     console.log(`  [FEN-Match] Not found at ply ${resultingMoveCount}, checking other plies...`);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     for (const [ply, positions] of positionMap) {
       if (positions.has(resultingFen)) {
         const expectedMovesFromThisPosition = positions.get(resultingFen);
@@ -496,7 +506,7 @@ export const GameReviewService = {
     let expectedMovesFromBeforePosition: string[] = [];
 
     // Check if the position before this move exists in repertoire
-    for (const [ply, positions] of positionMap) {
+    for (const [, positions] of positionMap) {
       if (positions.has(beforeFen)) {
         beforePositionInRepertoire = true;
         const movesSet = positions.get(beforeFen);

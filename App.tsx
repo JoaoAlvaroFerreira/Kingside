@@ -1,8 +1,10 @@
 import { useEffect } from 'react';
 import AppNavigator from '@navigation/AppNavigator';
 import { useStore } from '@store';
+import { StockfishProvider } from '@services/engine/StockfishContext';
+import { ErrorBoundary } from '@components/ErrorBoundary';
 
-export default function App() {
+function AppContent() {
   const initialize = useStore(state => state.initialize);
 
   useEffect(() => {
@@ -10,4 +12,14 @@ export default function App() {
   }, [initialize]);
 
   return <AppNavigator />;
+}
+
+export default function App() {
+  return (
+    <ErrorBoundary>
+      <StockfishProvider>
+        <AppContent />
+      </StockfishProvider>
+    </ErrorBoundary>
+  );
 }

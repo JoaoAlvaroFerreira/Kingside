@@ -163,7 +163,7 @@ export class MoveTree {
    * Go to the end of the main line
    */
   goToEnd(): void {
-    while (this.goForward()) {}
+    while (this.goForward()) { /* advance */ }
   }
 
   /**

@@ -2,19 +2,22 @@
  * GameReviewDashboardScreen - Dashboard for game review with status tracking
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
-  ScrollView,
+  FlatList,
   ActivityIndicator,
   Platform,
   Alert,
   Modal,
 } from 'react-native';
 import { useStore } from '@store';
+import { DatabaseService } from '@services/database/DatabaseService';
+import { UserGame } from '@types';
+import { useFocusEffect } from '@react-navigation/native';
 
 interface GameReviewDashboardScreenProps {
   navigation: any;
@@ -23,34 +26,61 @@ interface GameReviewDashboardScreenProps {
 type FilterTab = 'all' | 'reviewed' | 'unreviewed';
 
 export default function GameReviewDashboardScreen({ navigation }: GameReviewDashboardScreenProps) {
-  const { userGames, gameReviewStatuses, startGameReview } = useStore();
+  const { userGamesCount, gameReviewStatuses, startGameReview } = useStore();
   const [filterTab, setFilterTab] = useState<FilterTab>('all');
   const [startingReview, setStartingReview] = useState(false);
   const [colorPromptGameId, setColorPromptGameId] = useState<string | null>(null);
+  const [games, setGames] = useState<UserGame[]>([]);
+  const [isLoadingGames, setIsLoadingGames] = useState(false);
 
-  // Filter games based on tab
-  const filteredGames = useMemo(() => {
-    const reviewedIds = new Set(gameReviewStatuses.filter(s => s.reviewed).map(s => s.gameId));
+  // Load games when tab changes or screen focuses
+  useEffect(() => {
+    loadGames();
+  }, [filterTab]);
 
-    switch (filterTab) {
-      case 'reviewed':
-        return userGames.filter(g => reviewedIds.has(g.id));
-      case 'unreviewed':
-        return userGames.filter(g => !reviewedIds.has(g.id));
-      default:
-        return userGames;
+  useFocusEffect(
+    useCallback(() => {
+      loadGames();
+    }, [filterTab])
+  );
+
+  const loadGames = async () => {
+    setIsLoadingGames(true);
+    try {
+      // Load all user games (for now, can add pagination later if needed)
+      const allGames = await DatabaseService.getAllUserGames();
+      const reviewedIds = new Set(gameReviewStatuses.filter(s => s.reviewed).map(s => s.gameId));
+
+      let filtered: UserGame[];
+      switch (filterTab) {
+        case 'reviewed':
+          filtered = allGames.filter(g => reviewedIds.has(g.id));
+          break;
+        case 'unreviewed':
+          filtered = allGames.filter(g => !reviewedIds.has(g.id));
+          break;
+        default:
+          filtered = allGames;
+      }
+
+      setGames(filtered);
+    } catch (error) {
+      console.error('Failed to load games:', error);
+    } finally {
+      setIsLoadingGames(false);
     }
-  }, [userGames, gameReviewStatuses, filterTab]);
+  };
 
   // Count stats
   const stats = useMemo(() => {
     const reviewedIds = new Set(gameReviewStatuses.filter(s => s.reviewed).map(s => s.gameId));
+    // Use counts from loaded games for accuracy
     return {
-      total: userGames.length,
-      reviewed: userGames.filter(g => reviewedIds.has(g.id)).length,
-      unreviewed: userGames.filter(g => !reviewedIds.has(g.id)).length,
+      total: userGamesCount,
+      reviewed: games.filter(g => reviewedIds.has(g.id)).length,
+      unreviewed: games.filter(g => !reviewedIds.has(g.id)).length,
     };
-  }, [userGames, gameReviewStatuses]);
+  }, [games, gameReviewStatuses, userGamesCount]);
 
   const handleColorSelected = async (gameId: string, color: 'white' | 'black') => {
     setColorPromptGameId(null);
@@ -72,7 +102,7 @@ export default function GameReviewDashboardScreen({ navigation }: GameReviewDash
   };
 
   const handleStartReviewAll = async () => {
-    const unreviewedGames = userGames.filter(g => {
+    const unreviewedGames = games.filter(g => {
       const status = gameReviewStatuses.find(s => s.gameId === g.id);
       return !status || !status.reviewed;
     });
@@ -157,17 +187,26 @@ export default function GameReviewDashboardScreen({ navigation }: GameReviewDash
       </View>
 
       {/* Game List */}
-      <ScrollView style={styles.list} contentContainerStyle={styles.listContent}>
-        {filteredGames.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No games found</Text>
-          </View>
-        ) : (
-          filteredGames.map(game => {
+      {isLoadingGames ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#4a9eff" />
+          <Text style={styles.loadingText}>Loading games...</Text>
+        </View>
+      ) : (
+        <FlatList
+          style={styles.list}
+          contentContainerStyle={styles.listContent}
+          data={games}
+          keyExtractor={(item) => item.id}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>No games found</Text>
+            </View>
+          }
+          renderItem={({ item: game }) => {
             const status = getStatus(game.id);
             return (
               <TouchableOpacity
-                key={game.id}
                 style={styles.gameCard}
                 onPress={() => handleReviewGame(game.id)}
               >
@@ -200,9 +239,9 @@ export default function GameReviewDashboardScreen({ navigation }: GameReviewDash
                 )}
               </TouchableOpacity>
             );
-          })
-        )}
-      </ScrollView>
+          }}
+        />
+      )}
 
       {/* Color Selection Modal */}
       <Modal
@@ -215,7 +254,7 @@ export default function GameReviewDashboardScreen({ navigation }: GameReviewDash
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Select Your Color</Text>
             {colorPromptGameId && (() => {
-              const game = userGames.find(g => g.id === colorPromptGameId);
+              const game = games.find(g => g.id === colorPromptGameId);
               return game ? (
                 <View style={styles.modalGameInfo}>
                   <Text style={styles.modalPlayerText}>White: {game.white}</Text>
@@ -350,6 +389,17 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 16,
     color: '#999',
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 40,
+  },
+  loadingText: {
+    color: '#bbb',
+    fontSize: 14,
+    marginTop: 12,
   },
   gameCard: {
     backgroundColor: '#2a2a2a',

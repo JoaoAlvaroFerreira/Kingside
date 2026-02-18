@@ -11,4 +11,20 @@
 -keep class com.swmansion.reanimated.** { *; }
 -keep class com.facebook.react.turbomodule.** { *; }
 
-# Add any project specific keep options here:
+# React Native core
+-keep class com.facebook.react.** { *; }
+-keep class com.facebook.hermes.** { *; }
+
+# Expo SQLite
+-keep class expo.modules.sqlite.** { *; }
+
+# Stockfish native module
+-keep class com.reactnativestockfishchessengine.** { *; }
+
+# React Native SVG
+-keep class com.horcrux.svg.** { *; }
+
+# Keep JS bridge interface methods
+-keepclassmembers class * {
+    @com.facebook.react.bridge.ReactMethod *;
+}

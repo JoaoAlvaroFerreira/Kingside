@@ -8,7 +8,6 @@ import { normalizeFen } from '@types';
 import {
   buildMoveTreeFromMoves,
   createTestRepertoire,
-  createTestRepertoireWithVariations,
 } from './testHelpers';
 
 describe('GameReviewService - Transposition Detection', () => {
@@ -613,7 +612,7 @@ describe('GameReviewService - Transposition Detection', () => {
       const repertoire = createTestRepertoire('Test', 'white', [
         ['d4', 'd5', 'c4', 'e6', 'Nc3', 'Nf6'],
       ]);
-      const positionMap = GameReviewService.buildRepertoirePositionMap([repertoire], 'white');
+      GameReviewService.buildRepertoirePositionMap([repertoire], 'white');
 
       // Simulate the game flow
       let wasInRepertoireLastMove = true;

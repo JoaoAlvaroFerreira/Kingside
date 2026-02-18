@@ -57,3 +57,10 @@ export type {
   EvalThresholds,
   ReviewSettings,
 } from './gameReview.types';
+
+export type {
+  // Screen Settings types
+  ScreenSettings,
+  AllScreenSettings,
+  ScreenKey,
+} from './settings.types';

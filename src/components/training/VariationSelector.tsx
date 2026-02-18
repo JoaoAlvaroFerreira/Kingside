@@ -19,10 +19,13 @@ export const VariationSelector: React.FC<VariationSelectorProps> = ({
   onSelectLine,
   lineProgress = {},
 }) => {
-  const getLinePreview = (line: Line, maxMoves: number = 6): string => {
-    const moves = line.moves.slice(0, maxMoves).map(m => m.san);
+  const getLinePreview = (line: Line, maxMoves: number = 10): string => {
+    // Show the END of the line instead of the start (more useful for recognizing positions)
+    const allMoves = line.moves.map(m => m.san);
+    const startIndex = Math.max(0, allMoves.length - maxMoves);
+    const moves = allMoves.slice(startIndex);
     const preview = moves.join(' ');
-    return moves.length < line.moves.length ? `${preview}...` : preview;
+    return startIndex > 0 ? `...${preview}` : preview;
   };
 
   const getLineStatus = (line: Line): 'complete' | 'in-progress' | 'pending' => {
@@ -72,7 +75,7 @@ export const VariationSelector: React.FC<VariationSelectorProps> = ({
               </View>
               <Text
                 style={[styles.linePreview, isCurrent && styles.linePreviewCurrent]}
-                numberOfLines={2}
+                numberOfLines={3}
               >
                 {getLinePreview(line)}
               </Text>
@@ -89,8 +92,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#2a2a2a',
     borderRadius: 6,
     padding: 8,
-    minWidth: 200,
-    maxWidth: 280,
+    width: '100%',
   },
   title: {
     color: '#fff',
@@ -100,6 +102,7 @@ const styles = StyleSheet.create({
   },
   list: {
     maxHeight: 400,
+    flex: 1,
   },
   lineItem: {
     backgroundColor: '#1e1e1e',

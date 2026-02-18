@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Platform, useWindowDimensions } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, useWindowDimensions } from 'react-native';
 
 interface CollapsiblePanelProps {
   title: string;
@@ -36,28 +36,29 @@ export function CollapsiblePanel({ title, defaultCollapsed, children }: Collapsi
 const styles = StyleSheet.create({
   panel: {
     backgroundColor: '#3a3a3a',
-    borderRadius: 8,
-    marginBottom: 12,
+    borderRadius: 6,
+    marginBottom: 8,
     overflow: 'hidden',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 12,
+    padding: 8,
     backgroundColor: '#2c2c2c',
   },
   title: {
     color: '#e0e0e0',
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
     flex: 1,
+    marginRight: 8,
   },
   chevron: {
     color: '#888',
-    fontSize: 12,
+    fontSize: 11,
   },
   content: {
-    padding: 12,
+    padding: 8,
   },
 });

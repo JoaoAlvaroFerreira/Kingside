@@ -14,7 +14,10 @@
       "package": "com.kingside.app"
     },
     "plugins": [
-      "expo-document-picker"
+      "expo-document-picker",
+      "expo-asset",
+      "expo-font",
+      "expo-sqlite"
     ]
   }
 }

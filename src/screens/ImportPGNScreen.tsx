@@ -4,6 +4,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system';
 import { PGNService } from '@services/pgn/PGNService';
 import { OpeningClassifier } from '@services/openings/OpeningClassifier';
+import { LichessService } from '@services/lichess/LichessService';
 import { useStore } from '@store';
 import { RepertoireColor } from '@types';
 
@@ -29,8 +30,23 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
   const [name, setName] = useState('');
   const [color, setColor] = useState<RepertoireColor>('white');
   const [isImporting, setIsImporting] = useState(false);
-  const [progress, setProgress] = useState({ current: 0, total: 0 });
+  const [progress, setProgress] = useState({ current: 0, total: 0, phase: '' });
+  const [fileSelected, setFileSelected] = useState(false);
+  const [lichessUsername, setLichessUsername] = useState('');
+  const [isImportingLichess, setIsImportingLichess] = useState(false);
   const { addRepertoire, addUserGames, addMasterGames } = useStore();
+
+  const readFileWithTimeout = async (uri: string, timeoutMs: number = 15000): Promise<string> => {
+    const fileReadPromise = Platform.OS === 'web'
+      ? fetch(uri).then(r => r.text())
+      : FileSystem.readAsStringAsync(uri);
+
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('File read timeout after 15 seconds')), timeoutMs)
+    );
+
+    return Promise.race([fileReadPromise, timeoutPromise]);
+  };
 
   const handleFilePick = async () => {
     try {
@@ -46,40 +62,45 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
         const file = result.assets[0];
         console.log('Reading file:', file.uri);
 
+        setFileSelected(true);
+        setProgress({ current: 0, total: 0, phase: 'Reading file...' });
+
         let content: string;
 
-        if (Platform.OS === 'web') {
-          // On web, use fetch to read the blob URL
-          const response = await fetch(file.uri);
-          content = await response.text();
-        } else {
-          // On native, use FileSystem
-          content = await FileSystem.readAsStringAsync(file.uri);
+        try {
+          content = await readFileWithTimeout(file.uri, 15000);
+        } catch (timeoutError) {
+          setFileSelected(false);
+          Alert.alert('Error', 'File read timed out. File may be too large or corrupted.');
+          return;
         }
 
         console.log('File content length:', content.length);
-        setPgnText(content);
+
+        // Don't set pgnText for large files (would freeze UI)
+        // Only show in text area if < 100KB
+        if (content.length < 100000) {
+          setPgnText(content);
+        }
 
         // Auto-submit for game imports, but not for repertoire (needs name)
         if (target === 'my-games' || target === 'master-games') {
-          // Small delay to let state update
-          setTimeout(() => {
-            handleImport(content);
-          }, 100);
+          // Import immediately
+          await handleImport(content);
         } else if (target === 'repertoire') {
           // For repertoire, check if name is filled
           if (name.trim()) {
-            setTimeout(() => {
-              handleImport(content);
-            }, 100);
+            await handleImport(content);
           } else {
-            // Name not filled, just populate the text area
+            // Name not filled, show the text (if small enough) and wait
+            setFileSelected(false);
             Alert.alert('Info', 'Please enter a repertoire name and click Import');
           }
         }
       }
     } catch (error) {
       console.error('File pick error:', error);
+      setFileSelected(false);
       Alert.alert('Error', 'Failed to read file: ' + error);
     }
   };
@@ -87,10 +108,11 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
   const processBatch = async <T,>(
     items: T[],
     batchSize: number,
-    processor: (item: T, index: number) => any
+    processor: (item: T, index: number) => any,
+    phase: string
   ): Promise<any[]> => {
     const results: any[] = [];
-    const totalBatches = Math.ceil(items.length / batchSize);
+    const _totalBatches = Math.ceil(items.length / batchSize);
 
     for (let i = 0; i < items.length; i += batchSize) {
       const batch = items.slice(i, i + batchSize);
@@ -99,14 +121,55 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
 
       setProgress({
         current: Math.min(i + batchSize, items.length),
-        total: items.length
+        total: items.length,
+        phase
       });
 
-      // Allow UI to update
-      await new Promise(resolve => setTimeout(resolve, 0));
+      // Allow UI to update more frequently for large imports
+      await new Promise(resolve => setTimeout(resolve, 10));
     }
 
     return results;
+  };
+
+  const handleLichessImport = async () => {
+    if (!lichessUsername.trim()) {
+      Alert.alert('Error', 'Please enter a Lichess username');
+      return;
+    }
+
+    setIsImportingLichess(true);
+    setProgress({ current: 0, total: 0, phase: 'Fetching games from Lichess...' });
+
+    try {
+      console.log('[ImportPGN] Fetching games for username:', lichessUsername);
+
+      const pgns = await LichessService.fetchMasterGames(lichessUsername, 50);
+
+      if (pgns.length === 0) {
+        Alert.alert('No Games', `No games found for user "${lichessUsername}"`);
+        setIsImportingLichess(false);
+        return;
+      }
+
+      console.log('[ImportPGN] Fetched', pgns.length, 'PGNs from Lichess');
+
+      // Combine all PGNs with double newline separator
+      const combinedPgn = pgns.join('\n\n');
+
+      // Use existing import logic
+      setIsImporting(true);
+      await handleImport(combinedPgn);
+
+      Alert.alert('Success', `Imported ${pgns.length} games from ${lichessUsername}`);
+      setLichessUsername('');
+    } catch (error: any) {
+      console.error('[ImportPGN] Lichess import error:', error);
+      Alert.alert('Import Error', error?.message || String(error));
+    } finally {
+      setIsImportingLichess(false);
+      setIsImporting(false);
+    }
   };
 
   const handleImport = async (textOverride?: string) => {
@@ -118,7 +181,14 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
     }
 
     setIsImporting(true);
-    setProgress({ current: 0, total: 0 });
+    setProgress({ current: 0, total: 0, phase: 'Parsing PGN...' });
+
+    // Set timeout for entire import process
+    const importTimeout = setTimeout(() => {
+      setIsImporting(false);
+      setFileSelected(false);
+      Alert.alert('Import Timeout', 'Import took too long. Try importing smaller batches.');
+    }, 120000); // 2 minute max for entire import
 
     try {
       console.log('Starting PGN import, target:', target);
@@ -126,6 +196,8 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
 
       const games = PGNService.parseMultipleGames(text);
       console.log('Parsed games:', games.length);
+
+      setProgress({ current: 0, total: games.length, phase: `Processing ${games.length} games...` });
 
       if (games.length === 0) {
         Alert.alert('Error', 'No valid games found in PGN');
@@ -137,6 +209,7 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
         if (!name.trim()) {
           Alert.alert('Error', 'Please enter a repertoire name');
           setIsImporting(false);
+          setFileSelected(false);
           return;
         }
 
@@ -157,7 +230,7 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
             createdAt: new Date(),
             updatedAt: new Date(),
           };
-        });
+        }, 'Processing chapters');
 
         const firstGame = games[0];
         const classification = OpeningClassifier.classify(
@@ -176,12 +249,15 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
           updatedAt: new Date(),
         };
 
+        setProgress({ current: chapters.length, total: chapters.length, phase: 'Saving repertoire...' });
         await addRepertoire(repertoire);
 
+        clearTimeout(importTimeout);
         setIsImporting(false);
-        Alert.alert('Success', `Imported ${chapters.length} chapter(s)!`, [
-          { text: 'OK', onPress: () => navigation.goBack() }
-        ]);
+        setFileSelected(false);
+
+        // Auto-navigate back
+        navigation.goBack();
 
       } else if (target === 'my-games') {
         // Process user games in batches
@@ -190,14 +266,17 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
           ...PGNService.toUserGame(g),
           pgn: PGNService.toPGNString(g),
           importedAt: new Date(),
-        }));
+        }), 'Processing user games');
 
+        setProgress({ current: userGames.length, total: userGames.length, phase: 'Saving games...' });
         await addUserGames(userGames);
 
+        clearTimeout(importTimeout);
         setIsImporting(false);
-        Alert.alert('Success', `Imported ${userGames.length} game(s) to My Games`, [
-          { text: 'OK', onPress: () => navigation.goBack() }
-        ]);
+        setFileSelected(false);
+
+        // Auto-navigate back
+        navigation.goBack();
 
       } else if (target === 'master-games') {
         // Process master games in batches
@@ -206,18 +285,23 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
           ...PGNService.toUserGame(g),
           pgn: PGNService.toPGNString(g),
           importedAt: new Date(),
-        }));
+        }), 'Processing master games');
 
+        setProgress({ current: masterGames.length, total: masterGames.length, phase: 'Saving games...' });
         await addMasterGames(masterGames);
 
+        clearTimeout(importTimeout);
         setIsImporting(false);
-        Alert.alert('Success', `Imported ${masterGames.length} master game(s)`, [
-          { text: 'OK', onPress: () => navigation.goBack() }
-        ]);
+        setFileSelected(false);
+
+        // Auto-navigate back
+        navigation.goBack();
       }
     } catch (error: any) {
       console.error('Import error:', error);
+      clearTimeout(importTimeout);
       setIsImporting(false);
+      setFileSelected(false);
       const errorMessage = error?.message || String(error);
       Alert.alert(
         'Import Failed',
@@ -238,20 +322,59 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
     <ScrollView style={styles.container}>
       <Text style={styles.title}>{getTitle()}</Text>
 
-      {isImporting && (
+      {(isImporting || fileSelected) && (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#007AFF" />
-          <Text style={styles.loadingText}>
-            Importing {progress.current} / {progress.total} games...
-          </Text>
-          <Text style={styles.loadingSubtext}>
-            {Math.round((progress.current / progress.total) * 100)}%
-          </Text>
+          {progress.phase && (
+            <Text style={styles.loadingPhase}>
+              {progress.phase}
+            </Text>
+          )}
+          {progress.total > 0 && (
+            <>
+              <Text style={styles.loadingText}>
+                {progress.current} / {progress.total}
+              </Text>
+              <Text style={styles.loadingSubtext}>
+                {Math.round((progress.current / progress.total) * 100)}%
+              </Text>
+            </>
+          )}
         </View>
       )}
 
-      {!isImporting && (
+      {!isImporting && !fileSelected && !isImportingLichess && (
         <>
+          {/* Lichess import (Master Games only) */}
+          {target === 'master-games' && (
+            <View style={styles.lichessSection}>
+              <Text style={styles.sectionTitle}>Import from Lichess</Text>
+              <TextInput
+                style={styles.input}
+                value={lichessUsername}
+                onChangeText={setLichessUsername}
+                placeholder="Enter Lichess username"
+                placeholderTextColor="#666"
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+              <TouchableOpacity
+                style={[styles.lichessButton, (!lichessUsername.trim() || isImportingLichess) && styles.buttonDisabled]}
+                onPress={handleLichessImport}
+                disabled={!lichessUsername.trim() || isImportingLichess}
+              >
+                <Text style={styles.buttonText}>
+                  {isImportingLichess ? 'Importing from Lichess...' : 'Import from Lichess'}
+                </Text>
+              </TouchableOpacity>
+              <View style={styles.divider}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.dividerText}>OR</Text>
+                <View style={styles.dividerLine} />
+              </View>
+            </View>
+          )}
+
           {/* Repertoire-specific fields */}
           {target === 'repertoire' && (
             <>
@@ -261,6 +384,7 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
                 placeholderTextColor="#888"
                 value={name}
                 onChangeText={setName}
+                editable={!isImporting && !fileSelected}
               />
 
               {/* Color toggle */}
@@ -288,7 +412,11 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
             </>
           )}
 
-          <TouchableOpacity style={styles.button} onPress={handleFilePick}>
+          <TouchableOpacity
+            style={[styles.button, (isImporting || fileSelected) && styles.buttonDisabled]}
+            onPress={handleFilePick}
+            disabled={isImporting || fileSelected}
+          >
             <Text style={styles.buttonText}>Select PGN File</Text>
           </TouchableOpacity>
 
@@ -302,9 +430,14 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
             onChangeText={setPgnText}
             multiline
             numberOfLines={10}
+            editable={!isImporting && !fileSelected}
           />
 
-          <TouchableOpacity style={styles.importButton} onPress={handleImport}>
+          <TouchableOpacity
+            style={[styles.importButton, (isImporting || fileSelected || !pgnText.trim()) && styles.buttonDisabled]}
+            onPress={() => handleImport()}
+            disabled={isImporting || fileSelected || !pgnText.trim()}
+          >
             <Text style={styles.buttonText}>Import</Text>
           </TouchableOpacity>
         </>
@@ -371,6 +504,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
+  buttonDisabled: {
+    backgroundColor: '#555',
+    opacity: 0.5,
+  },
   buttonText: {
     color: '#fff',
     fontSize: 16,
@@ -400,14 +537,56 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     minHeight: 200,
   },
+  loadingPhase: {
+    color: '#4a9eff',
+    fontSize: 16,
+    fontWeight: '600',
+    marginTop: 16,
+  },
   loadingText: {
     color: '#e0e0e0',
     fontSize: 16,
-    marginTop: 16,
+    marginTop: 8,
   },
   loadingSubtext: {
     color: '#888',
     fontSize: 14,
     marginTop: 8,
+  },
+  lichessSection: {
+    marginBottom: 24,
+    padding: 16,
+    backgroundColor: '#3a3a3a',
+    borderRadius: 8,
+  },
+  sectionTitle: {
+    color: '#e0e0e0',
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 12,
+  },
+  lichessButton: {
+    backgroundColor: '#4a9eff',
+    padding: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 24,
+    marginBottom: 8,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#555',
+  },
+  dividerText: {
+    color: '#888',
+    fontSize: 12,
+    fontWeight: '600',
+    marginHorizontal: 12,
   },
 });

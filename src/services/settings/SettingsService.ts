@@ -14,9 +14,10 @@ export const SettingsService = {
   getDefaults(): ReviewSettings {
     return {
       engine: {
-        apiEndpoint: '',
-        depth: 20,
-        timeout: 10000,
+        moveTime: 1000,
+        depth: 10,
+        threads: 1,
+        multiPV: 3,
       },
       thresholds: {
         blunder: 200,
