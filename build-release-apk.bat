@@ -1,4 +1,9 @@
 @echo off
+setlocal
+
+set INTERACTIVE=1
+if "%~1"=="--ci" set INTERACTIVE=0
+
 echo ========================================
 echo Kingside Release Build
 echo ========================================
@@ -16,7 +21,7 @@ echo [1/3] Type checking...
 call npx tsc --noEmit
 if %ERRORLEVEL% NEQ 0 (
     echo ERROR: TypeScript errors found. Fix them before building.
-    pause
+    if %INTERACTIVE%==1 pause
     exit /b 1
 )
 
@@ -24,7 +29,7 @@ echo [2/3] Running tests...
 call npx jest --forceExit
 if %ERRORLEVEL% NEQ 0 (
     echo ERROR: Tests failed. Fix them before building.
-    pause
+    if %INTERACTIVE%==1 pause
     exit /b 1
 )
 
@@ -34,7 +39,7 @@ call gradlew assembleRelease
 if %ERRORLEVEL% NEQ 0 (
     echo ERROR: Build failed. Check the output above.
     cd ..
-    pause
+    if %INTERACTIVE%==1 pause
     exit /b 1
 )
 cd ..
@@ -44,6 +49,8 @@ echo ========================================
 echo Build complete!
 echo APK: android\app\build\outputs\apk\release\app-release.apk
 echo ========================================
+
+if %INTERACTIVE%==0 exit /b 0
 
 echo.
 set /p INSTALL="Install to connected device? (y/n): "

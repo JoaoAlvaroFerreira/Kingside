@@ -38,3 +38,6 @@ Thumbs.db
 # Release signing (never commit these)
 android/app/kingside-release.keystore
 android/keystore.properties
+
+# Release APK
+Kingside.apk
