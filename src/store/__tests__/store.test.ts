@@ -164,7 +164,9 @@ describe('useStore', () => {
 
     it('handles database init failure gracefully', async () => {
       (DatabaseService.initialize as jest.Mock).mockRejectedValueOnce(new Error('DB fail'));
-      await expect(useStore.getState().initialize()).rejects.toThrow('DB fail');
+      await useStore.getState().initialize();
+      // Should not throw — error is caught and isLoading is cleared
+      expect(useStore.getState().isLoading).toBe(false);
     });
   });
 

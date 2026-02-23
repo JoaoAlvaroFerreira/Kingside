@@ -101,34 +101,38 @@ export const useStore = create<AppState>((set, get) => ({
   initialize: async () => {
     console.log('Store: Initializing...');
 
-    // Initialize database first
-    await DatabaseService.initialize();
+    try {
+      // Initialize database first
+      await DatabaseService.initialize();
 
-    // Migrate existing AsyncStorage data to SQLite if needed
-    await MigrationService.migrateIfNeeded();
+      // Migrate existing AsyncStorage data to SQLite if needed
+      await MigrationService.migrateIfNeeded();
 
-    const [repertoires, userGamesCount, masterGamesCount, reviewCards, lineStats, reviewSettings, screenSettings, gameReviewStatuses] = await Promise.all([
-      StorageService.loadRepertoires(),
-      DatabaseService.getUserGamesCount(),
-      DatabaseService.getMasterGamesCount(),
-      StorageService.loadCards(),
-      StorageService.loadLineStats(),
-      SettingsService.loadSettings(),
-      ScreenSettingsService.loadSettings(),
-      StorageService.loadGameReviewStatuses(),
-    ]);
+      const [repertoires, userGamesCount, masterGamesCount, reviewCards, lineStats, reviewSettings, screenSettings, gameReviewStatuses] = await Promise.all([
+        StorageService.loadRepertoires(),
+        DatabaseService.getUserGamesCount(),
+        DatabaseService.getMasterGamesCount(),
+        StorageService.loadCards(),
+        StorageService.loadLineStats(),
+        SettingsService.loadSettings(),
+        ScreenSettingsService.loadSettings(),
+        StorageService.loadGameReviewStatuses(),
+      ]);
 
-    // Engine settings will be used from reviewSettings when analyzing
-
-    console.log('Store: Loaded data:', {
-      repertoires: repertoires.length,
-      userGamesCount,
-      masterGamesCount,
-      reviewCards: reviewCards.length,
-      lineStats: lineStats.length,
-      gameReviewStatuses: gameReviewStatuses.length,
-    });
-    set({ repertoires, userGamesCount, masterGamesCount, reviewCards, lineStats, reviewSettings, screenSettings, gameReviewStatuses, isLoading: false });
+      console.log('Store: Loaded data:', {
+        repertoires: repertoires.length,
+        userGamesCount,
+        masterGamesCount,
+        reviewCards: reviewCards.length,
+        lineStats: lineStats.length,
+        gameReviewStatuses: gameReviewStatuses.length,
+      });
+      set({ repertoires, userGamesCount, masterGamesCount, reviewCards, lineStats, reviewSettings, screenSettings, gameReviewStatuses, isLoading: false });
+    } catch (error) {
+      console.error('Store: Initialization failed:', error);
+      // Still clear loading so the app is usable with defaults
+      set({ isLoading: false });
+    }
   },
 
   addRepertoire: async (repertoire) => {
