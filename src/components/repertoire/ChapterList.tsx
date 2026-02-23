@@ -58,20 +58,20 @@ export function ChapterList({ chapters, selectedId, onSelect, defaultCollapsed }
 
 const styles = StyleSheet.create({
   list: {
-    maxHeight: 300,
+    maxHeight: 200,
   },
   empty: {
     color: '#888',
-    fontSize: 13,
+    fontSize: 10,
     fontStyle: 'italic',
     textAlign: 'center',
-    paddingVertical: 8,
+    paddingVertical: 4,
   },
   chapterItem: {
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 6,
-    marginBottom: 6,
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    borderRadius: 4,
+    marginBottom: 4,
     backgroundColor: '#2c2c2c',
   },
   selectedChapter: {
@@ -79,9 +79,9 @@ const styles = StyleSheet.create({
   },
   chapterName: {
     color: '#e0e0e0',
-    fontSize: 14,
+    fontSize: 11,
     fontWeight: '500',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   selectedChapterText: {
     color: '#fff',
@@ -89,6 +89,6 @@ const styles = StyleSheet.create({
   },
   chapterDate: {
     color: '#888',
-    fontSize: 11,
+    fontSize: 9,
   },
 });

@@ -82,13 +82,13 @@ export const ChessWorkspace: React.FC<ChessWorkspaceProps> = ({
   const boardSizeSetting = settings.boardSize || 'small';
 
   // Calculate actual board size in pixels
-  const maxBoardSize = Math.min(width, height) - 40;
+  const maxBoardSize = Math.min(width, height - 100) - 40;
   const sizeMap = {
-    tiny: 280,
-    small: 320,
-    medium: 380,
-    large: 440,
-    xlarge: 500,
+    tiny: 200,
+    small: 240,
+    medium: 300,
+    large: 340,
+    xlarge: 380,
   };
   const maxSize = sizeMap[boardSizeSetting];
   const actualBoardSize = Math.min(maxBoardSize, maxSize);
@@ -149,7 +149,7 @@ export const ChessWorkspace: React.FC<ChessWorkspaceProps> = ({
         <View style={styles.boardSection}>
           <View style={[
             styles.boardRow,
-            evalBarVisible && { width: actualBoardSize + 18 } // Board + EvalBar (14px) + margin (4px)
+            evalBarVisible && { width: actualBoardSize + 13 } // Board + EvalBar (14px) + margin (4px)
           ]}>
             {evalBarVisible && (
               <EvalBar
@@ -177,7 +177,7 @@ export const ChessWorkspace: React.FC<ChessWorkspaceProps> = ({
           {currentComment && (
             <View style={[
               styles.commentBox,
-              { maxWidth: evalBarVisible ? actualBoardSize + 18 : actualBoardSize }
+              { maxWidth: evalBarVisible ? actualBoardSize + 13 : actualBoardSize }
             ]}>
               <Text style={styles.commentText}>{currentComment}</Text>
             </View>
@@ -188,7 +188,7 @@ export const ChessWorkspace: React.FC<ChessWorkspaceProps> = ({
         {evalBarVisible && currentEval && (
           <View style={[
             styles.engineLinesSection,
-            { maxWidth: evalBarVisible ? actualBoardSize + 18 : actualBoardSize }
+            { maxWidth: evalBarVisible ? actualBoardSize + 13 : actualBoardSize }
           ]}>
             <EngineLines evaluation={currentEval} />
           </View>
@@ -199,7 +199,7 @@ export const ChessWorkspace: React.FC<ChessWorkspaceProps> = ({
           <View style={[
             styles.moveHistorySection,
             isWideScreen && styles.moveHistorySectionWide,
-            !isWideScreen && { maxWidth: evalBarVisible ? actualBoardSize + 18 : actualBoardSize }
+            !isWideScreen && { maxWidth: evalBarVisible ? actualBoardSize + 13 : actualBoardSize }
           ]}>
             <MoveHistory
               moves={flatMoves}
@@ -241,7 +241,7 @@ const styles = StyleSheet.create({
   mainContent: {
     flexDirection: 'column',
     alignItems: 'center',
-    gap: 8,
+    gap: 4,
     maxWidth: '100%',
   },
   mainContentWide: {
@@ -259,8 +259,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   commentBox: {
-    marginTop: 8,
-    padding: 8,
+    marginTop: 4,
+    padding: 4,
     backgroundColor: '#3a3a3a',
     borderRadius: 6,
     borderLeftWidth: 3,
@@ -268,22 +268,22 @@ const styles = StyleSheet.create({
   },
   commentText: {
     color: '#e0e0e0',
-    fontSize: 12,
-    lineHeight: 18,
+    fontSize: 10,
+    lineHeight: 14,
   },
   engineLinesSection: {
     width: '100%',
-    paddingHorizontal: 8,
+    paddingHorizontal: 4,
   },
   moveHistorySection: {
     width: '100%',
-    maxHeight: 350,
-    paddingHorizontal: 8,
+    maxHeight: 180,
+    paddingHorizontal: 4,
   },
   moveHistorySectionWide: {
     width: 'auto',
-    marginLeft: 12,
-    maxHeight: 500,
+    marginLeft: 8,
+    maxHeight: 350,
     paddingHorizontal: 0,
   },
 });

@@ -139,9 +139,9 @@ export const EvalBar: React.FC<EvalBarProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    width: 14,
+    width: 10,
     position: 'relative',
-    marginRight: 4,
+    marginRight: 3,
   },
   barContainer: {
     flex: 1,
@@ -164,18 +164,18 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 0,
     right: 0,
-    height: 3,
+    height: 2,
     backgroundColor: '#4a9eff',
-    transform: [{ translateY: -1.5 }],
+    transform: [{ translateY: -1 }],
     zIndex: 10,
   },
   keyMoveMarker: {
     position: 'absolute',
     left: '50%',
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    transform: [{ translateX: -3 }, { translateY: -3 }],
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    transform: [{ translateX: -2 }, { translateY: -2 }],
     borderWidth: 1,
     borderColor: '#000',
     zIndex: 5,

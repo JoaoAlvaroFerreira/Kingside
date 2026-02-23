@@ -108,11 +108,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   breadcrumbItem: {
-    paddingVertical: 4,
+    paddingVertical: 2,
   },
   breadcrumbText: {
     color: '#007AFF',
-    fontSize: 13,
+    fontSize: 10,
   },
   currentLevel: {
     color: '#e0e0e0',
@@ -120,7 +120,7 @@ const styles = StyleSheet.create({
   },
   separator: {
     color: '#666',
-    fontSize: 13,
-    marginHorizontal: 6,
+    fontSize: 10,
+    marginHorizontal: 4,
   },
 });

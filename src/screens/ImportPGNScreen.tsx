@@ -53,7 +53,7 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
       // Accept .pgn, .txt, and other text files
       // Using '*/*' to work around web file picker limitations
       const result = await DocumentPicker.getDocumentAsync({
-        type: Platform.OS === 'web' ? '*/*' : ['text/plain', 'application/x-chess-pgn', 'application/vnd.chess-pgn', 'text/*'],
+        type: '*/*',
         copyToCacheDirectory: true,
       });
       console.log('File picker result:', result);

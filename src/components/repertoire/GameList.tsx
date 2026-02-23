@@ -58,39 +58,39 @@ export function GameList({ title, games, onSelect, defaultCollapsed }: GameListP
 
 const styles = StyleSheet.create({
   list: {
-    maxHeight: 300,
+    maxHeight: 200,
   },
   empty: {
     color: '#888',
-    fontSize: 13,
+    fontSize: 10,
     fontStyle: 'italic',
     textAlign: 'center',
-    paddingVertical: 8,
+    paddingVertical: 4,
   },
   gameItem: {
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 6,
-    marginBottom: 6,
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    borderRadius: 4,
+    marginBottom: 4,
     backgroundColor: '#2c2c2c',
   },
   gameHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   players: {
     color: '#e0e0e0',
-    fontSize: 13,
+    fontSize: 10,
     fontWeight: '500',
     flex: 1,
   },
   result: {
     color: '#aaa',
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: '600',
-    marginLeft: 8,
+    marginLeft: 6,
   },
   whiteWin: {
     color: '#4CAF50',
@@ -103,11 +103,11 @@ const styles = StyleSheet.create({
   },
   meta: {
     color: '#888',
-    fontSize: 11,
-    marginBottom: 2,
+    fontSize: 9,
+    marginBottom: 1,
   },
   eco: {
     color: '#666',
-    fontSize: 10,
+    fontSize: 8,
   },
 });

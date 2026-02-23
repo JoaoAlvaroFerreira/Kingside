@@ -16,7 +16,7 @@ class StockfishBridge {
   start(): Promise<void> {
     if (this.readyPromise) return this.readyPromise;
 
-    if (__DEV__) console.log('[SF] Starting engine...');
+    console.log('[SF] Starting engine...');
     if (!StockfishModule) {
       console.error('[SF] Native module StockfishChessEngine not found');
       return Promise.reject(new Error('StockfishChessEngine native module not found'));
@@ -25,8 +25,17 @@ class StockfishBridge {
     this.buffer = '';
     this.emitter = new NativeEventEmitter(StockfishModule);
 
-    this.readyPromise = new Promise<void>((resolve) => {
+    const ENGINE_TIMEOUT_MS = 10000;
+
+    this.readyPromise = new Promise<void>((resolve, reject) => {
       this.readyResolve = resolve;
+
+      setTimeout(() => {
+        if (!this.ready) {
+          console.error('[SF] Engine init timed out after ' + ENGINE_TIMEOUT_MS + 'ms');
+          reject(new Error('Stockfish engine did not respond with readyok within ' + ENGINE_TIMEOUT_MS + 'ms'));
+        }
+      }, ENGINE_TIMEOUT_MS);
     });
 
     this.subscription = this.emitter.addListener(
@@ -34,7 +43,7 @@ class StockfishBridge {
       this.onFragment,
     );
 
-    if (__DEV__) console.log('[SF] Calling mainLoop...');
+    console.log('[SF] Calling mainLoop...');
     StockfishModule.mainLoop();
 
     this.sendCommand('uci');
@@ -91,7 +100,7 @@ class StockfishBridge {
   private processLine(line: string): void {
     if (!this.ready) {
       if (line === 'readyok') {
-        if (__DEV__) console.log('[SF] Engine ready (classical eval, NNUE disabled)');
+        console.log('[SF] Engine ready (classical eval, NNUE disabled)');
         this.ready = true;
         this.readyResolve?.();
         this.readyResolve = null;

@@ -92,13 +92,13 @@ export default function RepertoireStudyScreen({ navigation: _navigation, route }
   const currentComment = moveTree?.getCurrentNode()?.comment || '';
 
   // Calculate board size from settings
-  const maxBoardSize = Math.min(width, height) - 40;
+  const maxBoardSize = Math.min(width, height - 100) - 40;
   const sizeMap = {
-    tiny: 280,
-    small: 320,
-    medium: 380,
-    large: 440,
-    xlarge: 500,
+    tiny: 200,
+    small: 240,
+    medium: 300,
+    large: 340,
+    xlarge: 380,
   };
   const boardSizeSetting = settings.boardSize || 'small';
   const maxSize = sizeMap[boardSizeSetting];
@@ -395,8 +395,8 @@ const styles = StyleSheet.create({
   topSection: {
     flex: 1,
     flexDirection: 'row',
-    padding: 8,
-    gap: 12,
+    padding: 4,
+    gap: 8,
     alignItems: 'flex-start',
     minHeight: 0,
   },
@@ -405,31 +405,31 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   commentBox: {
-    marginTop: 8,
-    padding: 8,
+    marginTop: 4,
+    padding: 4,
     backgroundColor: '#3a3a3a',
-    borderRadius: 6,
-    borderLeftWidth: 3,
+    borderRadius: 4,
+    borderLeftWidth: 2,
     borderLeftColor: '#007AFF',
   },
   commentText: {
     color: '#e0e0e0',
-    fontSize: 12,
-    lineHeight: 18,
+    fontSize: 10,
+    lineHeight: 14,
   },
   moveHistoryPanel: {
     flex: 1,
-    minWidth: 280,
-    maxWidth: 450,
-    maxHeight: 500,
+    minWidth: 160,
+    maxWidth: 350,
+    maxHeight: 380,
   },
   bottomSection: {
     flexDirection: 'row',
     borderTopWidth: 1,
     borderTopColor: '#3a3a3a',
-    minHeight: 180,
-    gap: 12,
-    padding: 8,
+    minHeight: 120,
+    gap: 8,
+    padding: 4,
   },
   gameListHalf: {
     flex: 1,
@@ -437,10 +437,10 @@ const styles = StyleSheet.create({
   },
   moveHistoryContainer: {
     width: '100%',
-    maxWidth: 600,
-    maxHeight: 350,
+    maxWidth: 400,
+    maxHeight: 180,
     alignItems: 'center',
-    marginTop: 12,
-    marginBottom: 12,
+    marginTop: 8,
+    marginBottom: 8,
   },
 });

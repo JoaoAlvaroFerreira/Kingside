@@ -149,7 +149,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#2c2c2c',
   },
   statusWrapper: {
-    height: 40,
+    height: 28,
     justifyContent: 'center',
     borderBottomWidth: 1,
     borderBottomColor: '#3a3a3a',
@@ -159,12 +159,12 @@ const styles = StyleSheet.create({
   },
   gameStatus: {
     color: '#ffc107',
-    fontSize: 14,
+    fontSize: 11,
     fontWeight: '700',
   },
   analyzingText: {
     color: '#4a9eff',
-    fontSize: 12,
-    marginTop: 4,
+    fontSize: 9,
+    marginTop: 2,
   },
 });

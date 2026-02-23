@@ -169,7 +169,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
   };
 
   const handleReset = () => {
-    const confirmReset = () => {
+    const confirmReset = async () => {
       const defaults = {
         moveTime: '1000',
         depth: '16',
@@ -197,6 +197,27 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
       setAutoAdvanceDelay(defaults.autoAdvanceDelay);
       setLichessUsername(defaults.lichessUsername);
       setLichessImportDaysBack(defaults.lichessImportDaysBack);
+
+      await saveReviewSettings({
+        engine: {
+          moveTime: 1000,
+          depth: 16,
+          threads: 1,
+          multiPV: 3,
+        },
+        thresholds: {
+          blunder: 200,
+          mistake: 100,
+          inaccuracy: 50,
+        },
+        showEvalBar: true,
+        showBestMove: false,
+        autoAdvanceDelay: 0,
+        lichess: {
+          username: '',
+          importDaysBack: 1,
+        },
+      });
     };
 
     if (Platform.OS === 'web') {

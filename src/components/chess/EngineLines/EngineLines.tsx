@@ -88,13 +88,13 @@ export const EngineLines: React.FC<EngineLinesProps> = ({ evaluation, visible = 
 const styles = StyleSheet.create({
   container: {
     backgroundColor: '#1e1e1e',
-    borderRadius: 4,
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    gap: 2,
+    borderRadius: 3,
+    paddingVertical: 2,
+    paddingHorizontal: 4,
+    gap: 1,
   },
   lineText: {
-    fontSize: 11,
+    fontSize: 9,
     fontFamily: 'monospace',
   },
   scoreSpan: {

@@ -25,7 +25,8 @@ const StockfishProviderNative: React.FC<{ children: React.ReactNode }> = ({ chil
         if (mounted) setIsReady(true);
       })
       .catch((err) => {
-        console.error('[SF] Failed to start engine:', err.message);
+        console.error('[SF] Failed to start engine:', err?.message || err);
+        // Engine is optional - app continues working without it
       });
 
     return () => {

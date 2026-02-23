@@ -17,7 +17,7 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
   orientation = 'white',
 }) => {
   const { width } = useWindowDimensions();
-  const boardSize = Math.min(width - 40, 400);
+  const boardSize = Math.min(width - 40, 320);
   const squareSize = boardSize / 8;
 
   const board = useMemo(() => {
@@ -63,7 +63,7 @@ const styles = StyleSheet.create({
   boardContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 10,
+    padding: 4,
   },
   board: {
     flexDirection: 'row',
