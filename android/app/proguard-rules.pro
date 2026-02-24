@@ -28,3 +28,9 @@
 -keepclassmembers class * {
     @com.facebook.react.bridge.ReactMethod *;
 }
+
+# OkHttp (used by React Native's fetch)
+-keep class okhttp3.** { *; }
+-keep interface okhttp3.** { *; }
+-dontwarn okhttp3.**
+-dontwarn okio.**
