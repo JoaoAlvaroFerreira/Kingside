@@ -29,6 +29,9 @@
     @com.facebook.react.bridge.ReactMethod *;
 }
 
+# Expo modules
+-keep class expo.modules.** { *; }
+
 # OkHttp (used by React Native's fetch)
 -keep class okhttp3.** { *; }
 -keep interface okhttp3.** { *; }
