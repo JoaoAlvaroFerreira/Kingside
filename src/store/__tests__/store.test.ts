@@ -14,8 +14,8 @@ jest.mock('@services/storage/StorageService', () => ({
 
 jest.mock('@services/settings/SettingsService', () => ({
   SettingsService: {
-    getDefaults: jest.fn().mockReturnValue({ thresholds: { blunder: 300, mistake: 100, inaccuracy: 50 } }),
-    loadSettings: jest.fn().mockResolvedValue({ thresholds: { blunder: 300, mistake: 100, inaccuracy: 50 } }),
+    getDefaults: jest.fn().mockReturnValue({}),
+    loadSettings: jest.fn().mockResolvedValue({}),
     updateSettings: jest.fn().mockImplementation(async (updates) => ({ ...updates })),
   },
 }));
@@ -50,6 +50,13 @@ jest.mock('@services/database/DatabaseService', () => ({
     getMasterGameById: jest.fn().mockResolvedValue(null),
     getAllMasterGames: jest.fn().mockResolvedValue([]),
     getAllUserGames: jest.fn().mockResolvedValue([]),
+    getAllRepertoires: jest.fn().mockResolvedValue([]),
+    addRepertoire: jest.fn().mockResolvedValue(undefined),
+    updateRepertoire: jest.fn().mockResolvedValue(undefined),
+    deleteRepertoire: jest.fn().mockResolvedValue(undefined),
+    getRepertoiresCount: jest.fn().mockResolvedValue(0),
+    getSetting: jest.fn().mockResolvedValue(null),
+    saveSetting: jest.fn().mockResolvedValue(undefined),
   },
 }));
 
@@ -57,6 +64,21 @@ jest.mock('@services/database/MigrationService', () => ({
   MigrationService: {
     migrateIfNeeded: jest.fn().mockResolvedValue(undefined),
   },
+}));
+
+jest.mock('@services/engine/StockfishBridge', () => ({
+  stockfishBridge: {
+    sendCommand: jest.fn(),
+    setOutputHandler: jest.fn(),
+  },
+}));
+
+jest.mock('@services/engine/EngineAnalyzer', () => ({
+  EngineAnalyzer: jest.fn().mockImplementation(() => ({
+    analyze: jest.fn().mockResolvedValue(null),
+    handleLine: jest.fn(),
+    stop: jest.fn(),
+  })),
 }));
 
 import { useStore } from '../index';
@@ -130,7 +152,8 @@ beforeEach(() => {
   // Reset mocks to defaults
   (DatabaseService.getUserGamesCount as jest.Mock).mockResolvedValue(0);
   (DatabaseService.getMasterGamesCount as jest.Mock).mockResolvedValue(0);
-  (StorageService.loadRepertoires as jest.Mock).mockResolvedValue([]);
+  (DatabaseService.getAllRepertoires as jest.Mock).mockResolvedValue([]);
+  (DatabaseService.getSetting as jest.Mock).mockResolvedValue(null);
   (StorageService.loadCards as jest.Mock).mockResolvedValue([]);
   (StorageService.loadLineStats as jest.Mock).mockResolvedValue([]);
   (StorageService.loadGameReviewStatuses as jest.Mock).mockResolvedValue([]);
@@ -148,9 +171,9 @@ describe('useStore', () => {
       expect(DatabaseService.initialize).toHaveBeenCalled();
     });
 
-    it('loads repertoires from storage', async () => {
+    it('loads repertoires from database', async () => {
       const rep = makeRepertoire();
-      (StorageService.loadRepertoires as jest.Mock).mockResolvedValue([rep]);
+      (DatabaseService.getAllRepertoires as jest.Mock).mockResolvedValue([rep]);
       await useStore.getState().initialize();
       expect(useStore.getState().repertoires).toHaveLength(1);
       expect(useStore.getState().repertoires[0].id).toBe(rep.id);
@@ -176,7 +199,7 @@ describe('useStore', () => {
       await useStore.getState().addRepertoire(rep);
       expect(useStore.getState().repertoires).toHaveLength(1);
       expect(useStore.getState().repertoires[0].name).toBe('My Rep');
-      expect(StorageService.saveRepertoires).toHaveBeenCalledWith([rep]);
+      expect(DatabaseService.addRepertoire).toHaveBeenCalledWith(rep);
     });
 
     it('addRepertoire appends to existing repertoires', async () => {
@@ -195,7 +218,7 @@ describe('useStore', () => {
       await useStore.getState().updateRepertoire(updated);
 
       expect(useStore.getState().repertoires[0].name).toBe('New Name');
-      expect(StorageService.saveRepertoires).toHaveBeenLastCalledWith([updated]);
+      expect(DatabaseService.updateRepertoire).toHaveBeenCalledWith(updated);
     });
 
     it('deleteRepertoire removes from array and persists', async () => {
@@ -205,7 +228,7 @@ describe('useStore', () => {
 
       await useStore.getState().deleteRepertoire(rep.id);
       expect(useStore.getState().repertoires).toHaveLength(0);
-      expect(StorageService.saveRepertoires).toHaveBeenLastCalledWith([]);
+      expect(DatabaseService.deleteRepertoire).toHaveBeenCalledWith(rep.id);
     });
 
     it('deleteRepertoire removes associated review cards', async () => {

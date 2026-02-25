@@ -4,7 +4,7 @@
 
 import { parse } from '@mliebelt/pgn-parser';
 import { UserGame } from '@types';
-import { MoveTree } from '@utils/MoveTree';
+import { MoveTree, MoveNode } from '@utils/MoveTree';
 
 interface ParsedGame {
   headers: Record<string, string>;
@@ -130,10 +130,15 @@ export class PGNService {
         if (san) {
           moveTree.addMove(san);
 
-          // Add comment/annotation if present
           const currentNode = moveTree.getCurrentNode();
-          if (currentNode && move.commentAfter) {
-            currentNode.comment = move.commentAfter;
+          if (currentNode) {
+            if (move.commentAfter) {
+              const trimmed = move.commentAfter.trim();
+              currentNode.comment = trimmed || undefined;
+            }
+            if (move.commentDiag) {
+              this.parseCommentDiag(currentNode, move.commentDiag);
+            }
           }
         }
       }
@@ -200,6 +205,28 @@ export class PGNService {
     }
 
     return moves;
+  }
+
+  /**
+   * Extract Lichess-style annotations from the parser's commentDiag object
+   */
+  private static parseCommentDiag(node: MoveNode, diag: any): void {
+    if (diag.eval !== undefined) {
+      if (typeof diag.eval === 'string' && diag.eval.startsWith('#')) {
+        node.evalMate = parseInt(diag.eval.substring(1), 10);
+      } else {
+        node.eval = Math.round(Number(diag.eval) * 100);
+      }
+    }
+
+    if (diag.clk) {
+      const parts = String(diag.clk).split(':');
+      if (parts.length === 3) {
+        node.clock = parseInt(parts[0], 10) * 3600
+          + parseInt(parts[1], 10) * 60
+          + parseInt(parts[2], 10);
+      }
+    }
   }
 
   /**

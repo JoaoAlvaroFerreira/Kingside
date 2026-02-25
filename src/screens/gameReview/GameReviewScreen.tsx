@@ -1,19 +1,25 @@
 /**
- * GameReviewScreen - Active game review session with board and analysis
+ * GameReviewScreen - Active game review session with board, tabs, and analysis
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
   ScrollView,
+  FlatList,
   useWindowDimensions,
   ActivityIndicator,
 } from 'react-native';
 import { useStore } from '@store';
 import { InteractiveChessBoard } from '@components/chess/InteractiveChessBoard/InteractiveChessBoard';
+import { EvalGraph } from '@components/chess/EvalGraph';
+import { DatabaseService } from '@services/database/DatabaseService';
+import { UserGame, MasterGame, MoveAnalysis } from '@types';
+
+type ReviewTab = 'keyMoves' | 'graph' | 'yourGames' | 'masterGames';
 
 interface GameReviewScreenProps {
   navigation: any;
@@ -28,45 +34,95 @@ export default function GameReviewScreen({ navigation, route: _route }: GameRevi
   const { currentReviewSession, advanceReviewMove, completeGameReview } = useStore();
   const { width } = useWindowDimensions();
   const [completing, setCompleting] = useState(false);
+  const [activeTab, setActiveTab] = useState<ReviewTab>('keyMoves');
+
+  // FEN search state
+  const [fenUserGames, setFenUserGames] = useState<UserGame[]>([]);
+  const [fenMasterGames, setFenMasterGames] = useState<MasterGame[]>([]);
+  const [loadingUserGames, setLoadingUserGames] = useState(false);
+  const [loadingMasterGames, setLoadingMasterGames] = useState(false);
+  const [lastSearchedFenUser, setLastSearchedFenUser] = useState<string | null>(null);
+  const [lastSearchedFenMaster, setLastSearchedFenMaster] = useState<string | null>(null);
 
   useEffect(() => {
     if (!currentReviewSession) {
-      // Session not loaded, go back
       navigation.goBack();
     }
   }, [currentReviewSession, navigation]);
 
-  if (!currentReviewSession) {
+  const currentMove = currentReviewSession?.moves[currentReviewSession.currentMoveIndex];
+  const currentFen = currentMove?.fen;
+
+  // Load user games when tab becomes active or FEN changes
+  const loadUserGames = useCallback(async (fen: string) => {
+    if (lastSearchedFenUser === fen) return;
+    setLoadingUserGames(true);
+    try {
+      const games = await DatabaseService.searchUserGamesByFEN(fen);
+      setFenUserGames(games);
+      setLastSearchedFenUser(fen);
+    } catch {
+      setFenUserGames([]);
+    } finally {
+      setLoadingUserGames(false);
+    }
+  }, [lastSearchedFenUser]);
+
+  const loadMasterGames = useCallback(async (fen: string) => {
+    if (lastSearchedFenMaster === fen) return;
+    setLoadingMasterGames(true);
+    try {
+      const games = await DatabaseService.searchMasterGamesByFEN(fen);
+      setFenMasterGames(games);
+      setLastSearchedFenMaster(fen);
+    } catch {
+      setFenMasterGames([]);
+    } finally {
+      setLoadingMasterGames(false);
+    }
+  }, [lastSearchedFenMaster]);
+
+  // Trigger search when tab becomes active or position changes
+  useEffect(() => {
+    if (!currentFen) return;
+    if (activeTab === 'yourGames') {
+      loadUserGames(currentFen);
+    } else if (activeTab === 'masterGames') {
+      loadMasterGames(currentFen);
+    }
+  }, [activeTab, currentFen, loadUserGames, loadMasterGames]);
+
+  // Reset last searched FENs when move changes so next tab activation re-fetches
+  useEffect(() => {
+    setLastSearchedFenUser(null);
+    setLastSearchedFenMaster(null);
+  }, [currentReviewSession?.currentMoveIndex]);
+
+  if (!currentReviewSession || !currentMove) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#4a9eff" />
-        <Text style={styles.loadingText}>Loading review...</Text>
-      </View>
-    );
-  }
-
-  const currentMove = currentReviewSession.moves[currentReviewSession.currentMoveIndex];
-
-  // Handle empty moves array or invalid index
-  if (!currentMove) {
-    return (
-      <View style={styles.loadingContainer}>
-        <Text style={styles.errorText}>No moves found in this game</Text>
-        <TouchableOpacity
-          style={styles.backButtonError}
-          onPress={() => navigation.goBack()}
-        >
-          <Text style={styles.backButtonText}>← Go Back</Text>
-        </TouchableOpacity>
+        {currentReviewSession ? (
+          <>
+            <Text style={styles.errorText}>No moves found in this game</Text>
+            <TouchableOpacity
+              style={styles.backButtonError}
+              onPress={() => navigation.goBack()}
+            >
+              <Text style={styles.backButtonText}>← Go Back</Text>
+            </TouchableOpacity>
+          </>
+        ) : (
+          <>
+            <ActivityIndicator size="large" color="#4a9eff" />
+            <Text style={styles.loadingText}>Loading review...</Text>
+          </>
+        )}
       </View>
     );
   }
 
   const isFirstMove = currentReviewSession.currentMoveIndex === 0;
   const isLastMove = currentReviewSession.currentMoveIndex === currentReviewSession.moves.length - 1;
-
-  // Check if engine analysis is available
-  const hasEngineAnalysis = currentReviewSession.moves.some(m => m.evalBefore !== null && m.evalBefore !== undefined);
 
   const handleComplete = async () => {
     setCompleting(true);
@@ -91,6 +147,8 @@ export default function GameReviewScreen({ navigation, route: _route }: GameRevi
       case 'repertoire-deviation':
       case 'opponent-novelty':
         return '#8e24aa';
+      case 'transposition':
+        return '#00897b';
       case 'brilliant':
         return '#00897b';
       default:
@@ -109,7 +167,53 @@ export default function GameReviewScreen({ navigation, route: _route }: GameRevi
     return '--';
   };
 
+  const handleMoveSelect = (moveIndex: number) => {
+    useStore.setState({
+      currentReviewSession: {
+        ...currentReviewSession,
+        currentMoveIndex: moveIndex,
+      },
+    });
+  };
+
+  const keyMoves = currentReviewSession.moves.filter(m => m.isKeyMove);
+
   const isWideScreen = width > 900;
+  const boardWidth = isWideScreen ? Math.min(width * 0.5, 500) : width;
+  const graphWidth = isWideScreen ? boardWidth : width - 16;
+
+  const renderKeyMoveItem = ({ item }: { item: MoveAnalysis }) => {
+    const color = getKeyMoveColor(item.keyMoveReason);
+    const moveNum = Math.floor(item.moveIndex / 2) + 1;
+    const isWhite = item.moveIndex % 2 === 0;
+    const isCurrent = item.moveIndex === currentReviewSession.currentMoveIndex;
+    return (
+      <TouchableOpacity
+        style={[styles.keyMoveListItem, isCurrent && styles.keyMoveListItemActive]}
+        onPress={() => handleMoveSelect(item.moveIndex)}
+      >
+        <Text style={[styles.keyMoveListNum, { color }]}>
+          {moveNum}{isWhite ? '.' : '...'}
+        </Text>
+        <Text style={[styles.keyMoveListSan, { color }]}>{item.san}</Text>
+        <View style={[styles.keyMoveReasonBadge, { backgroundColor: color }]}>
+          <Text style={styles.keyMoveReasonText}>
+            {item.keyMoveReason?.replace('-', ' ')}
+          </Text>
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
+  const renderGameItem = ({ item }: { item: UserGame | MasterGame }) => (
+    <View style={styles.gameListItem}>
+      <Text style={styles.gameListPlayers}>{item.white} vs {item.black}</Text>
+      <View style={styles.gameListDetails}>
+        <Text style={styles.gameListResult}>{item.result}</Text>
+        <Text style={styles.gameListDate}>{item.date}</Text>
+      </View>
+    </View>
+  );
 
   return (
     <View style={styles.container}>
@@ -145,16 +249,6 @@ export default function GameReviewScreen({ navigation, route: _route }: GameRevi
         style={styles.scrollContainer}
         contentContainerStyle={styles.scrollContent}
       >
-        {/* Engine disabled notice */}
-        {!hasEngineAnalysis && (
-          <View style={styles.engineNotice}>
-            <Text style={styles.engineNoticeText}>
-              ℹ️ Engine analysis disabled. Configure engine in Settings to detect blunders and mistakes.
-              Only repertoire deviations are being tracked.
-            </Text>
-          </View>
-        )}
-
         {/* Main Content */}
         <View style={[styles.mainContent, isWideScreen && styles.mainContentWide]}>
           {/* Board with evaluation */}
@@ -187,7 +281,7 @@ export default function GameReviewScreen({ navigation, route: _route }: GameRevi
             </View>
           </View>
 
-          {/* Move History */}
+          {/* Move History (wide screen) */}
           {isWideScreen && (
             <View style={styles.moveHistoryPanel}>
               <Text style={styles.panelTitle}>Moves</Text>
@@ -204,16 +298,7 @@ export default function GameReviewScreen({ navigation, route: _route }: GameRevi
                         isCurrent && styles.moveItemCurrent,
                         move.isKeyMove && styles.moveItemKey,
                       ]}
-                      onPress={() => {
-                        // Jump to move
-                        const session = currentReviewSession;
-                        useStore.setState({
-                          currentReviewSession: {
-                            ...session,
-                            currentMoveIndex: index,
-                          },
-                        });
-                      }}
+                      onPress={() => handleMoveSelect(index)}
                     >
                       <Text style={[styles.moveNumber, { color: moveColor }]}>
                         {Math.floor(index / 2) + 1}{index % 2 === 0 ? '.' : '...'}
@@ -231,38 +316,6 @@ export default function GameReviewScreen({ navigation, route: _route }: GameRevi
             </View>
           )}
         </View>
-
-        {/* Key Move Info */}
-        {currentMove.isKeyMove && (
-          <View style={styles.keyMovePanel}>
-            <Text style={styles.keyMoveTitle}>
-              Key Move: {currentMove.keyMoveReason?.toUpperCase()}
-            </Text>
-            {currentMove.evalDelta !== undefined && (
-              <Text style={styles.keyMoveDetail}>
-                Evaluation change: {(currentMove.evalDelta / 100).toFixed(2)} pawns
-              </Text>
-            )}
-            {currentMove.repertoireMatch && !currentMove.repertoireMatch.matched && (
-              <View style={styles.deviationInfo}>
-                <Text style={styles.deviationTitle}>Repertoire Deviation</Text>
-                <Text style={styles.deviationText}>
-                  Type: {currentMove.repertoireMatch.deviationType}
-                </Text>
-                {currentMove.repertoireMatch.expectedMoves && currentMove.repertoireMatch.expectedMoves.length > 0 && (
-                  <Text style={styles.deviationText}>
-                    Expected: {currentMove.repertoireMatch.expectedMoves.join(', ')}
-                  </Text>
-                )}
-              </View>
-            )}
-            {currentMove.evalBefore?.bestMoveSan && currentMove.evalBefore.bestMoveSan !== currentMove.san && (
-              <Text style={styles.keyMoveDetail}>
-                Best move: {currentMove.evalBefore.bestMoveSan}
-              </Text>
-            )}
-          </View>
-        )}
 
         {/* Navigation Controls */}
         <View style={styles.navigationPanel}>
@@ -294,6 +347,130 @@ export default function GameReviewScreen({ navigation, route: _route }: GameRevi
               <Text style={styles.navButtonText}>Next →</Text>
             </TouchableOpacity>
           </View>
+        </View>
+
+        {/* Tab Bar */}
+        <View style={styles.tabBar}>
+          {(['keyMoves', 'graph', 'yourGames', 'masterGames'] as ReviewTab[]).map(tab => (
+            <TouchableOpacity
+              key={tab}
+              style={[styles.tabButton, activeTab === tab && styles.tabButtonActive]}
+              onPress={() => setActiveTab(tab)}
+            >
+              <Text style={[styles.tabButtonText, activeTab === tab && styles.tabButtonTextActive]}>
+                {tab === 'keyMoves' ? 'Key Moves' :
+                 tab === 'graph' ? 'Graph' :
+                 tab === 'yourGames' ? 'Your Games' : 'Master Games'}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Tab Content */}
+        <View style={styles.tabContent}>
+          {/* Tab 1: Key Moves */}
+          {activeTab === 'keyMoves' && (
+            <View>
+              {/* Current key move info */}
+              {currentMove.isKeyMove && (
+                <View style={styles.keyMovePanel}>
+                  <Text style={styles.keyMoveTitle}>
+                    Key Move: {currentMove.keyMoveReason?.toUpperCase()}
+                  </Text>
+                  {currentMove.evalDelta !== undefined && (
+                    <Text style={styles.keyMoveDetail}>
+                      Evaluation change: {(currentMove.evalDelta / 100).toFixed(2)} pawns
+                    </Text>
+                  )}
+                  {currentMove.repertoireMatch && !currentMove.repertoireMatch.matched && (
+                    <View style={styles.deviationInfo}>
+                      <Text style={styles.deviationTitle}>Repertoire Deviation</Text>
+                      <Text style={styles.deviationText}>
+                        Type: {currentMove.repertoireMatch.deviationType}
+                      </Text>
+                      {currentMove.repertoireMatch.expectedMoves && currentMove.repertoireMatch.expectedMoves.length > 0 && (
+                        <Text style={styles.deviationText}>
+                          Expected: {currentMove.repertoireMatch.expectedMoves.join(', ')}
+                        </Text>
+                      )}
+                    </View>
+                  )}
+                  {currentMove.evalBefore?.bestMoveSan && currentMove.evalBefore.bestMoveSan !== currentMove.san && (
+                    <Text style={styles.keyMoveDetail}>
+                      Best move: {currentMove.evalBefore.bestMoveSan}
+                    </Text>
+                  )}
+                </View>
+              )}
+
+              {/* All key moves list */}
+              {keyMoves.length > 0 ? (
+                <FlatList
+                  data={keyMoves}
+                  keyExtractor={item => item.moveIndex.toString()}
+                  renderItem={renderKeyMoveItem}
+                  scrollEnabled={false}
+                />
+              ) : (
+                <Text style={styles.emptyTabText}>No key moves in this game</Text>
+              )}
+            </View>
+          )}
+
+          {/* Tab 2: Eval Graph */}
+          {activeTab === 'graph' && (
+            <View style={styles.graphContainer}>
+              <EvalGraph
+                evaluations={currentReviewSession.moves.map(m => m.evalAfter ?? null)}
+                currentMoveIndex={currentReviewSession.currentMoveIndex}
+                onMoveSelect={handleMoveSelect}
+                width={graphWidth}
+                height={100}
+              />
+            </View>
+          )}
+
+          {/* Tab 3: Your Games */}
+          {activeTab === 'yourGames' && (
+            <View>
+              {loadingUserGames ? (
+                <View style={styles.tabLoading}>
+                  <ActivityIndicator size="small" color="#4a9eff" />
+                  <Text style={styles.tabLoadingText}>Searching games...</Text>
+                </View>
+              ) : fenUserGames.length > 0 ? (
+                <FlatList
+                  data={fenUserGames}
+                  keyExtractor={item => item.id}
+                  renderItem={renderGameItem}
+                  scrollEnabled={false}
+                />
+              ) : (
+                <Text style={styles.emptyTabText}>No games found at this position</Text>
+              )}
+            </View>
+          )}
+
+          {/* Tab 4: Master Games */}
+          {activeTab === 'masterGames' && (
+            <View>
+              {loadingMasterGames ? (
+                <View style={styles.tabLoading}>
+                  <ActivityIndicator size="small" color="#4a9eff" />
+                  <Text style={styles.tabLoadingText}>Searching games...</Text>
+                </View>
+              ) : fenMasterGames.length > 0 ? (
+                <FlatList
+                  data={fenMasterGames}
+                  keyExtractor={item => item.id}
+                  renderItem={renderGameItem}
+                  scrollEnabled={false}
+                />
+              ) : (
+                <Text style={styles.emptyTabText}>No games found at this position</Text>
+              )}
+            </View>
+          )}
         </View>
       </ScrollView>
     </View>
@@ -379,21 +556,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingBottom: 20,
-  },
-  engineNotice: {
-    backgroundColor: '#2a3a4a',
-    marginHorizontal: 8,
-    marginTop: 4,
-    padding: 6,
-    borderRadius: 4,
-    borderLeftWidth: 2,
-    borderLeftColor: '#4a9eff',
-  },
-  engineNoticeText: {
-    color: '#bbb',
-    fontSize: 10,
-    lineHeight: 14,
+    paddingBottom: 12,
   },
   mainContent: {
     paddingTop: 8,
@@ -489,14 +652,73 @@ const styles = StyleSheet.create({
     fontSize: 8,
     fontWeight: '700',
   },
-  keyMovePanel: {
+  navigationPanel: {
+    marginHorizontal: 8,
+    marginTop: 8,
+  },
+  navRow: {
+    flexDirection: 'row',
+    gap: 4,
+  },
+  navButton: {
+    flex: 1,
+    backgroundColor: '#2a2a2a',
+    paddingVertical: 6,
+    paddingHorizontal: 6,
+    borderRadius: 4,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#444',
+  },
+  navButtonDisabled: {
+    opacity: 0.3,
+  },
+  navButtonText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  // Tab bar
+  tabBar: {
+    flexDirection: 'row',
+    marginHorizontal: 8,
+    marginTop: 8,
+    backgroundColor: '#2a2a2a',
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  tabButton: {
+    flex: 1,
+    paddingVertical: 8,
+    alignItems: 'center',
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
+  },
+  tabButtonActive: {
+    borderBottomColor: '#4a9eff',
+    backgroundColor: '#333',
+  },
+  tabButtonText: {
+    color: '#999',
+    fontSize: 9,
+    fontWeight: '600',
+  },
+  tabButtonTextActive: {
+    color: '#4a9eff',
+  },
+  tabContent: {
     marginHorizontal: 8,
     marginTop: 4,
+    minHeight: 100,
+  },
+  // Key moves tab
+  keyMovePanel: {
     padding: 8,
     backgroundColor: '#2a2a2a',
     borderRadius: 4,
     borderLeftWidth: 3,
     borderLeftColor: '#fbc02d',
+    marginBottom: 8,
   },
   keyMoveTitle: {
     color: '#fbc02d',
@@ -526,30 +748,83 @@ const styles = StyleSheet.create({
     fontSize: 10,
     marginBottom: 1,
   },
-  navigationPanel: {
-    marginHorizontal: 8,
-    marginTop: 8,
-  },
-  navRow: {
+  keyMoveListItem: {
     flexDirection: 'row',
-    gap: 4,
-  },
-  navButton: {
-    flex: 1,
-    backgroundColor: '#2a2a2a',
-    paddingVertical: 6,
-    paddingHorizontal: 6,
-    borderRadius: 4,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#444',
+    padding: 6,
+    backgroundColor: '#2a2a2a',
+    borderRadius: 3,
+    marginBottom: 2,
+    gap: 6,
   },
-  navButtonDisabled: {
-    opacity: 0.3,
+  keyMoveListItemActive: {
+    backgroundColor: '#2a3a4a',
   },
-  navButtonText: {
-    color: '#fff',
+  keyMoveListNum: {
     fontSize: 10,
     fontWeight: '600',
+    width: 28,
+  },
+  keyMoveListSan: {
+    fontSize: 10,
+    fontWeight: '600',
+    width: 36,
+  },
+  keyMoveReasonBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 3,
+  },
+  keyMoveReasonText: {
+    color: '#fff',
+    fontSize: 8,
+    fontWeight: '600',
+    textTransform: 'capitalize',
+  },
+  // Graph tab
+  graphContainer: {
+    alignItems: 'center',
+    paddingVertical: 4,
+  },
+  // Game list tabs
+  tabLoading: {
+    alignItems: 'center',
+    padding: 12,
+  },
+  tabLoadingText: {
+    color: '#bbb',
+    fontSize: 11,
+    marginTop: 8,
+  },
+  emptyTabText: {
+    color: '#999',
+    fontSize: 11,
+    textAlign: 'center',
+    paddingVertical: 12,
+  },
+  gameListItem: {
+    padding: 6,
+    backgroundColor: '#2a2a2a',
+    borderRadius: 3,
+    marginBottom: 2,
+  },
+  gameListPlayers: {
+    color: '#fff',
+    fontSize: 11,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  gameListDetails: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  gameListResult: {
+    color: '#bbb',
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  gameListDate: {
+    color: '#999',
+    fontSize: 10,
   },
 });

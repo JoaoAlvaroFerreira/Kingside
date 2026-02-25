@@ -6,6 +6,9 @@ import { EngineAnalyzer } from '@services/engine/EngineAnalyzer';
 import { useStore } from '@store';
 
 const DEBOUNCE_MS = 150;
+// Stockfish sends dozens of info lines/second while deepening. Throttle UI updates
+// to avoid flooding the React render queue and blocking user interactions.
+const PARTIAL_THROTTLE_MS = 250;
 
 export function useEngine(fen: string, enabled: boolean) {
   const isReady = useStockfishReady();
@@ -53,10 +56,15 @@ export function useEngine(fen: string, enabled: boolean) {
     setIsAnalyzing(true);
 
     const timer = setTimeout(() => {
+      let lastPartialUpdate = 0;
       analyzer
         .analyze(fen, { depth, moveTime, multiPV }, (partial) => {
           if (!cancelled && partial.fen === currentFenRef.current) {
-            setEvaluation(partial);
+            const now = Date.now();
+            if (now - lastPartialUpdate >= PARTIAL_THROTTLE_MS) {
+              lastPartialUpdate = now;
+              setEvaluation(partial);
+            }
           }
         })
         .then(result => {

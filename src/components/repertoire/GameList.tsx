@@ -62,13 +62,13 @@ const styles = StyleSheet.create({
   },
   empty: {
     color: '#888',
-    fontSize: 10,
+    fontSize: 11,
     fontStyle: 'italic',
     textAlign: 'center',
-    paddingVertical: 4,
+    paddingVertical: 6,
   },
   gameItem: {
-    paddingVertical: 6,
+    paddingVertical: 7,
     paddingHorizontal: 8,
     borderRadius: 4,
     marginBottom: 4,
@@ -82,13 +82,13 @@ const styles = StyleSheet.create({
   },
   players: {
     color: '#e0e0e0',
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: '500',
     flex: 1,
   },
   result: {
     color: '#aaa',
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: '600',
     marginLeft: 6,
   },
@@ -103,11 +103,11 @@ const styles = StyleSheet.create({
   },
   meta: {
     color: '#888',
-    fontSize: 9,
+    fontSize: 11,
     marginBottom: 1,
   },
   eco: {
     color: '#666',
-    fontSize: 8,
+    fontSize: 10,
   },
 });

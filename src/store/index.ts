@@ -17,11 +17,14 @@ import {
   AllScreenSettings,
   ScreenKey,
   ScreenSettings,
+  AnalysisProgress,
 } from '@types';
 import { StorageService } from '@services/storage/StorageService';
 import { SettingsService } from '@services/settings/SettingsService';
 import { ScreenSettingsService } from '@services/settings/ScreenSettingsService';
 import { GameReviewService } from '@services/gameReview/GameReviewService';
+import { EngineAnalyzer } from '@services/engine/EngineAnalyzer';
+import { stockfishBridge } from '@services/engine/StockfishBridge';
 import { DatabaseService } from '@services/database/DatabaseService';
 import { MigrationService } from '@services/database/MigrationService';
 
@@ -38,6 +41,8 @@ interface AppState {
   gameReviewStatuses: GameReviewStatus[];
   currentReviewSession: GameReviewSession | null;
   isLoading: boolean;
+  isAnalyzing: boolean;
+  analysisProgress: AnalysisProgress | null;
 
   // Actions
   initialize: () => Promise<void>;
@@ -97,6 +102,8 @@ export const useStore = create<AppState>((set, get) => ({
   gameReviewStatuses: [],
   currentReviewSession: null,
   isLoading: true,
+  isAnalyzing: false,
+  analysisProgress: null,
 
   initialize: async () => {
     console.log('Store: Initializing...');
@@ -108,16 +115,26 @@ export const useStore = create<AppState>((set, get) => ({
       // Migrate existing AsyncStorage data to SQLite if needed
       await MigrationService.migrateIfNeeded();
 
-      const [repertoires, userGamesCount, masterGamesCount, reviewCards, lineStats, reviewSettings, screenSettings, gameReviewStatuses] = await Promise.all([
-        StorageService.loadRepertoires(),
+      const [repertoires, userGamesCount, masterGamesCount, reviewCards, lineStats, storedReviewSettings, screenSettings, gameReviewStatuses] = await Promise.all([
+        DatabaseService.getAllRepertoires(),
         DatabaseService.getUserGamesCount(),
         DatabaseService.getMasterGamesCount(),
         StorageService.loadCards(),
         StorageService.loadLineStats(),
-        SettingsService.loadSettings(),
+        DatabaseService.getSetting<ReviewSettings>('reviewSettings'),
         ScreenSettingsService.loadSettings(),
         StorageService.loadGameReviewStatuses(),
       ]);
+
+      const defaults = SettingsService.getDefaults();
+      const reviewSettings: ReviewSettings = storedReviewSettings
+        ? {
+            ...defaults,
+            ...storedReviewSettings,
+            engine: { ...defaults.engine, ...storedReviewSettings.engine },
+            lichess: { ...defaults.lichess, ...storedReviewSettings.lichess },
+          }
+        : defaults;
 
       console.log('Store: Loaded data:', {
         repertoires: repertoires.length,
@@ -139,7 +156,7 @@ export const useStore = create<AppState>((set, get) => ({
     console.log('Store: Adding repertoire:', repertoire.name);
     const repertoires = [...get().repertoires, repertoire];
     console.log('Store: Total repertoires:', repertoires.length);
-    await StorageService.saveRepertoires(repertoires);
+    await DatabaseService.addRepertoire(repertoire);
     set({ repertoires });
     console.log('Store: Repertoire added and saved');
   },
@@ -149,7 +166,7 @@ export const useStore = create<AppState>((set, get) => ({
     const repertoires = get().repertoires.map(r =>
       r.id === updatedRepertoire.id ? updatedRepertoire : r
     );
-    await StorageService.saveRepertoires(repertoires);
+    await DatabaseService.updateRepertoire(updatedRepertoire);
     set({ repertoires });
     console.log('Store: Repertoire updated and saved');
   },
@@ -171,7 +188,6 @@ export const useStore = create<AppState>((set, get) => ({
     // Delete associated review cards
     const currentReviewCards = get().reviewCards;
     const reviewCards = currentReviewCards.filter(card => {
-      // Keep cards that don't belong to any chapter in this repertoire
       return !repertoireToDelete.chapters.some(ch => ch.id === card.chapterId);
     });
     console.log('Store: Review cards after filter:', reviewCards.length, 'was:', currentReviewCards.length);
@@ -182,7 +198,7 @@ export const useStore = create<AppState>((set, get) => ({
     console.log('Store: Line stats after filter:', lineStats.length, 'was:', currentLineStats.length);
 
     await Promise.all([
-      StorageService.saveRepertoires(repertoires),
+      DatabaseService.deleteRepertoire(id),
       StorageService.saveCards(reviewCards),
       StorageService.saveLineStats(lineStats),
     ]);
@@ -286,10 +302,8 @@ export const useStore = create<AppState>((set, get) => ({
 
     let newLineStats: LineStats[];
     if (index >= 0) {
-      // Update existing stat
       newLineStats = lineStats.map(s => s.lineId === updatedStat.lineId ? updatedStat : s);
     } else {
-      // Add new stat
       newLineStats = [...lineStats, updatedStat];
     }
 
@@ -313,12 +327,28 @@ export const useStore = create<AppState>((set, get) => ({
 
   // Game Review actions
   loadReviewSettings: async () => {
-    const reviewSettings = await SettingsService.loadSettings();
+    const stored = await DatabaseService.getSetting<ReviewSettings>('reviewSettings');
+    const defaults = SettingsService.getDefaults();
+    const reviewSettings: ReviewSettings = stored
+      ? {
+          ...defaults,
+          ...stored,
+          engine: { ...defaults.engine, ...stored.engine },
+          lichess: { ...defaults.lichess, ...stored.lichess },
+        }
+      : defaults;
     set({ reviewSettings });
   },
 
   saveReviewSettings: async (updates) => {
-    const updated = await SettingsService.updateSettings(updates);
+    const current = get().reviewSettings;
+    const updated: ReviewSettings = {
+      ...current,
+      ...updates,
+      engine: updates.engine ? { ...current.engine, ...updates.engine } : current.engine,
+      lichess: updates.lichess ? { ...current.lichess, ...updates.lichess } : current.lichess,
+    };
+    await DatabaseService.saveSetting('reviewSettings', updated);
     set({ reviewSettings: updated });
   },
 
@@ -332,19 +362,55 @@ export const useStore = create<AppState>((set, get) => ({
 
     console.log('Store: Starting game review for:', game.id, 'userColor:', userColor);
 
-    // Get all master games for reference (consider optimization later)
-    const masterGames = await DatabaseService.getAllMasterGames();
+    set({
+      isAnalyzing: true,
+      analysisProgress: { current: 0, total: 0, phase: 'Starting analysis...' },
+    });
 
-    const session = await GameReviewService.startReview(
-      game,
-      userColor,
-      state.repertoires,
-      masterGames,
-      state.reviewSettings.thresholds,
-    );
+    try {
+      const masterGames = await DatabaseService.getAllMasterGames();
 
-    set({ currentReviewSession: session });
-    console.log('Store: Game review session started, key moves:', session.keyMoveIndices.length);
+      // Create analyzer using the native Stockfish bridge
+      const analyzer = new EngineAnalyzer((cmd) => stockfishBridge.sendCommand(cmd));
+      analyzer.configure(state.reviewSettings.engine.threads);
+
+      // Wire up bridge output to analyzer
+      stockfishBridge.setOutputHandler((line: string) => analyzer.handleLine(line));
+
+      const analysisOptions = {
+        depth: state.reviewSettings.engine.depth,
+        moveTime: state.reviewSettings.engine.moveTime,
+        multiPV: state.reviewSettings.engine.multiPV,
+      };
+
+      try {
+        const session = await GameReviewService.startReview(
+          game,
+          userColor,
+          state.repertoires,
+          masterGames,
+          analyzer,
+          analysisOptions,
+          (current, total) => {
+            set({
+              analysisProgress: {
+                current,
+                total,
+                phase: `Analyzing position ${current} of ${total}...`,
+              },
+            });
+          },
+        );
+
+        set({ currentReviewSession: session });
+        console.log('Store: Game review session started, key moves:', session.keyMoveIndices.length);
+      } finally {
+        // Clean up: remove our output handler
+        stockfishBridge.setOutputHandler(null);
+      }
+    } finally {
+      set({ isAnalyzing: false, analysisProgress: null });
+    }
   },
 
   advanceReviewMove: (direction) => {
@@ -387,14 +453,12 @@ export const useStore = create<AppState>((set, get) => ({
     const session = get().currentReviewSession;
     if (!session) return;
 
-    // Mark session as complete
     const completedSession: GameReviewSession = {
       ...session,
       isComplete: true,
       completedAt: new Date(),
     };
 
-    // Create or update review status
     const status = GameReviewService.createReviewStatus(completedSession);
     const statuses = get().gameReviewStatuses;
     const index = statuses.findIndex(s => s.gameId === session.gameId);

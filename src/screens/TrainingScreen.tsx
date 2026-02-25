@@ -206,14 +206,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#2c2c2c',
   },
   scrollContent: {
-    padding: 16,
+    padding: 10,
     alignItems: 'center',
   },
   emptyState: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 32,
+    padding: 20,
   },
   emptyTitle: {
     fontSize: 24,
@@ -231,7 +231,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     width: '100%',
-    marginBottom: 16,
+    marginBottom: 10,
   },
   progress: {
     fontSize: 18,
@@ -246,8 +246,8 @@ const styles = StyleSheet.create({
   contextContainer: {
     backgroundColor: '#3a3a3a',
     borderRadius: 8,
-    padding: 12,
-    marginBottom: 16,
+    padding: 8,
+    marginBottom: 10,
     width: '100%',
     maxWidth: 600,
   },
@@ -262,7 +262,7 @@ const styles = StyleSheet.create({
     fontFamily: 'monospace',
   },
   boardContainer: {
-    marginBottom: 16,
+    marginBottom: 10,
     alignItems: 'center',
   },
   animating: {
@@ -291,7 +291,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#888',
     textAlign: 'center',
-    marginBottom: 16,
+    marginBottom: 10,
   },
   ratings: {
     flexDirection: 'row',

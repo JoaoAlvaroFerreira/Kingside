@@ -54,8 +54,8 @@ export type {
   GameReviewSession,
   GameReviewStatus,
   EngineSettings,
-  EvalThresholds,
   ReviewSettings,
+  AnalysisProgress,
 } from './gameReview.types';
 
 export type {

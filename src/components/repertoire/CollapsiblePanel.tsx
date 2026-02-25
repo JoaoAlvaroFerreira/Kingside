@@ -44,19 +44,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 6,
+    padding: 8,
     backgroundColor: '#2c2c2c',
   },
   title: {
     color: '#e0e0e0',
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: '600',
     flex: 1,
     marginRight: 6,
   },
   chevron: {
     color: '#888',
-    fontSize: 9,
+    fontSize: 11,
   },
   content: {
     padding: 4,

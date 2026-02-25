@@ -43,6 +43,7 @@ export interface Chapter {
   order: number;                  // Display order within sub-variation
   createdAt: Date;
   updatedAt: Date;
+  lastStudiedAt?: Date;
 }
 
 export interface Repertoire {

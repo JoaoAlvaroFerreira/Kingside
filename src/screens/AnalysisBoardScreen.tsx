@@ -4,8 +4,6 @@ import { Chess } from 'chess.js';
 import { ChessWorkspace } from '@components/chess/ChessWorkspace/ChessWorkspace';
 import { MoveTree } from '@utils/MoveTree';
 import { UserGame, MasterGame } from '@types';
-import { useEngine } from '@hooks/useEngine';
-import { useStore } from '@store';
 
 interface AnalysisBoardScreenProps {
   route?: {
@@ -16,18 +14,11 @@ interface AnalysisBoardScreenProps {
 }
 
 export default function AnalysisBoardScreen({ route }: AnalysisBoardScreenProps) {
-  const { screenSettings, isLoading } = useStore();
   const [moveTree, setMoveTree] = useState(() => new MoveTree());
   const [_updateCounter, forceUpdate] = useState(0);
 
-  const engineEnabled = screenSettings.analysis.engineEnabled;
   const currentFen = moveTree.getCurrentFen();
   const currentNodeId = moveTree.getCurrentNode()?.id || null;
-
-  const { evaluation: currentEval, isAnalyzing } = useEngine(
-    currentFen,
-    !isLoading && engineEnabled,
-  );
 
   // Load game if provided via navigation
   useEffect(() => {
@@ -114,14 +105,13 @@ export default function AnalysisBoardScreen({ route }: AnalysisBoardScreenProps)
 
   return (
     <View style={styles.container}>
-      <View style={styles.statusWrapper}>
-        {(gameStatus || isAnalyzing) && (
+      {gameStatus && (
+        <View style={styles.statusWrapper}>
           <View style={styles.statusContainer}>
-            {gameStatus && <Text style={styles.gameStatus}>{gameStatus}</Text>}
-            {isAnalyzing && <Text style={styles.analyzingText}>Analyzing...</Text>}
+            <Text style={styles.gameStatus}>{gameStatus}</Text>
           </View>
-        )}
-      </View>
+        </View>
+      )}
 
       <ChessWorkspace
         fen={currentFen}
@@ -134,7 +124,6 @@ export default function AnalysisBoardScreen({ route }: AnalysisBoardScreenProps)
         onGoToStart={handleGoToStart}
         onGoToEnd={handleGoToEnd}
         onPromoteToMainLine={handlePromoteToMainLine}
-        currentEval={currentEval}
         screenKey="analysis"
         showMoveHistory={true}
         showSettingsGear={true}
@@ -149,7 +138,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#2c2c2c',
   },
   statusWrapper: {
-    height: 28,
+    paddingVertical: 4,
     justifyContent: 'center',
     borderBottomWidth: 1,
     borderBottomColor: '#3a3a3a',

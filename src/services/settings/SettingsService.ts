@@ -19,11 +19,6 @@ export const SettingsService = {
         threads: 1,
         multiPV: 3,
       },
-      thresholds: {
-        blunder: 200,
-        mistake: 100,
-        inaccuracy: 50,
-      },
       showEvalBar: true,
       showBestMove: false,
       autoAdvanceDelay: 0,
@@ -41,12 +36,10 @@ export const SettingsService = {
     try {
       const stored = await StorageService.load<ReviewSettings>(SETTINGS_KEY);
       if (stored) {
-        // Merge with defaults to handle new fields
         return {
           ...this.getDefaults(),
           ...stored,
           engine: { ...this.getDefaults().engine, ...stored.engine },
-          thresholds: { ...this.getDefaults().thresholds, ...stored.thresholds },
           lichess: { ...this.getDefaults().lichess, ...stored.lichess },
         };
       }
@@ -77,7 +70,6 @@ export const SettingsService = {
       ...current,
       ...updates,
       engine: updates.engine ? { ...current.engine, ...updates.engine } : current.engine,
-      thresholds: updates.thresholds ? { ...current.thresholds, ...updates.thresholds } : current.thresholds,
       lichess: updates.lichess ? { ...current.lichess, ...updates.lichess } : current.lichess,
     };
     await this.saveSettings(updated);

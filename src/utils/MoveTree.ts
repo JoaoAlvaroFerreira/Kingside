@@ -14,6 +14,9 @@ export interface MoveNode {
   parent: MoveNode | null;
   isCritical?: boolean;
   comment?: string;
+  eval?: number;       // Centipawns (e.g., 17 for 0.17 pawns)
+  evalMate?: number;   // Mate in N (positive = white mates, negative = black mates)
+  clock?: number;      // Clock time in seconds
 }
 
 export class MoveTree {
@@ -28,6 +31,10 @@ export class MoveTree {
 
   private generateId(): string {
     return `node_${++this.nodeIdCounter}`;
+  }
+
+  getStartFen(): string {
+    return this.startFen;
   }
 
   getCurrentFen(): string {
@@ -444,6 +451,9 @@ export class MoveTree {
       children: this.serializeNodes(node.children),
       isCritical: node.isCritical,
       comment: node.comment,
+      eval: node.eval,
+      evalMate: node.evalMate,
+      clock: node.clock,
     }));
   }
 
@@ -459,6 +469,9 @@ export class MoveTree {
         parent,
         isCritical: serialized.isCritical,
         comment: serialized.comment,
+        eval: serialized.eval,
+        evalMate: serialized.evalMate,
+        clock: serialized.clock,
       };
       node.children = this.deserializeNodes(serialized.children, node);
       return node;
@@ -475,6 +488,9 @@ export interface SerializedMoveNode {
   children: SerializedMoveNode[];
   isCritical?: boolean;
   comment?: string;
+  eval?: number;
+  evalMate?: number;
+  clock?: number;
 }
 
 export interface SerializedMoveTree {

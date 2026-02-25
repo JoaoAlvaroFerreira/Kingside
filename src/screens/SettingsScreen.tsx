@@ -31,11 +31,6 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
   const [threads, setThreads] = useState(reviewSettings.engine.threads.toString());
   const [multiPV, setMultiPV] = useState(reviewSettings.engine.multiPV.toString());
 
-  // Thresholds
-  const [blunder, setBlunder] = useState(reviewSettings.thresholds.blunder.toString());
-  const [mistake, setMistake] = useState(reviewSettings.thresholds.mistake.toString());
-  const [inaccuracy, setInaccuracy] = useState(reviewSettings.thresholds.inaccuracy.toString());
-
   // Display options
   const [showEvalBar, setShowEvalBar] = useState(reviewSettings.showEvalBar);
   const [showBestMove, setShowBestMove] = useState(reviewSettings.showBestMove);
@@ -51,9 +46,6 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
     setDepth(reviewSettings.engine.depth.toString());
     setThreads(reviewSettings.engine.threads.toString());
     setMultiPV(reviewSettings.engine.multiPV.toString());
-    setBlunder(reviewSettings.thresholds.blunder.toString());
-    setMistake(reviewSettings.thresholds.mistake.toString());
-    setInaccuracy(reviewSettings.thresholds.inaccuracy.toString());
     setShowEvalBar(reviewSettings.showEvalBar);
     setShowBestMove(reviewSettings.showBestMove);
     setAutoAdvanceDelay(reviewSettings.autoAdvanceDelay.toString());
@@ -80,26 +72,6 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
     const multiPVNum = parseInt(multiPV, 10);
     if (isNaN(multiPVNum) || multiPVNum < 1 || multiPVNum > 5) {
       return 'MultiPV must be between 1 and 5';
-    }
-
-    const blunderNum = parseInt(blunder, 10);
-    const mistakeNum = parseInt(mistake, 10);
-    const inaccuracyNum = parseInt(inaccuracy, 10);
-
-    if (isNaN(blunderNum) || blunderNum < 0 || blunderNum > 1000) {
-      return 'Blunder threshold must be between 0 and 1000 centipawns';
-    }
-
-    if (isNaN(mistakeNum) || mistakeNum < 0 || mistakeNum > 1000) {
-      return 'Mistake threshold must be between 0 and 1000 centipawns';
-    }
-
-    if (isNaN(inaccuracyNum) || inaccuracyNum < 0 || inaccuracyNum > 1000) {
-      return 'Inaccuracy threshold must be between 0 and 1000 centipawns';
-    }
-
-    if (blunderNum <= mistakeNum || mistakeNum <= inaccuracyNum) {
-      return 'Thresholds must be: Blunder > Mistake > Inaccuracy';
     }
 
     const delayNum = parseInt(autoAdvanceDelay, 10);
@@ -136,11 +108,6 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
           threads: parseInt(threads, 10),
           multiPV: parseInt(multiPV, 10),
         },
-        thresholds: {
-          blunder: parseInt(blunder, 10),
-          mistake: parseInt(mistake, 10),
-          inaccuracy: parseInt(inaccuracy, 10),
-        },
         showEvalBar,
         showBestMove,
         autoAdvanceDelay: parseInt(autoAdvanceDelay, 10),
@@ -175,9 +142,6 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
         depth: '16',
         threads: '1',
         multiPV: '3',
-        blunder: '200',
-        mistake: '100',
-        inaccuracy: '50',
         showEvalBar: true,
         showBestMove: false,
         autoAdvanceDelay: '0',
@@ -189,9 +153,6 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
       setDepth(defaults.depth);
       setThreads(defaults.threads);
       setMultiPV(defaults.multiPV);
-      setBlunder(defaults.blunder);
-      setMistake(defaults.mistake);
-      setInaccuracy(defaults.inaccuracy);
       setShowEvalBar(defaults.showEvalBar);
       setShowBestMove(defaults.showBestMove);
       setAutoAdvanceDelay(defaults.autoAdvanceDelay);
@@ -204,11 +165,6 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
           depth: 16,
           threads: 1,
           multiPV: 3,
-        },
-        thresholds: {
-          blunder: 200,
-          mistake: 100,
-          inaccuracy: 50,
         },
         showEvalBar: true,
         showBestMove: false,
@@ -250,7 +206,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Engine Configuration</Text>
           <Text style={styles.sectionDescription}>
-            Local Stockfish engine for position analysis and blunder detection
+            Local Stockfish engine for position analysis and move classification
           </Text>
 
           <View style={styles.row}>
@@ -309,62 +265,9 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
             </View>
           </View>
 
-          <View style={styles.thresholdNote}>
+          <View style={styles.infoNote}>
             <Text style={styles.noteText}>
-              Analysis Time: Max time per position (ms). Depth: Search depth limit. Threads: CPU threads for engine. MultiPV: Number of top lines shown.
-            </Text>
-          </View>
-        </View>
-
-        {/* Evaluation Thresholds */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Evaluation Thresholds</Text>
-          <Text style={styles.sectionDescription}>
-            Define centipawn loss thresholds for key move classification
-          </Text>
-
-          <View style={styles.field}>
-            <Text style={styles.label}>Blunder (centipawns)</Text>
-            <TextInput
-              style={styles.input}
-              value={blunder}
-              onChangeText={setBlunder}
-              placeholder="200"
-              keyboardType="numeric"
-              placeholderTextColor="#666"
-            />
-            <Text style={styles.hint}>Large evaluation loss (default: 200)</Text>
-          </View>
-
-          <View style={styles.field}>
-            <Text style={styles.label}>Mistake (centipawns)</Text>
-            <TextInput
-              style={styles.input}
-              value={mistake}
-              onChangeText={setMistake}
-              placeholder="100"
-              keyboardType="numeric"
-              placeholderTextColor="#666"
-            />
-            <Text style={styles.hint}>Medium evaluation loss (default: 100)</Text>
-          </View>
-
-          <View style={styles.field}>
-            <Text style={styles.label}>Inaccuracy (centipawns)</Text>
-            <TextInput
-              style={styles.input}
-              value={inaccuracy}
-              onChangeText={setInaccuracy}
-              placeholder="50"
-              keyboardType="numeric"
-              placeholderTextColor="#666"
-            />
-            <Text style={styles.hint}>Small evaluation loss (default: 50)</Text>
-          </View>
-
-          <View style={styles.thresholdNote}>
-            <Text style={styles.noteText}>
-              Note: Blunder threshold must be greater than Mistake, which must be greater than Inaccuracy.
+              Move classification uses Lichess-style win probability analysis. Blunders, mistakes, and inaccuracies are detected automatically based on win% changes.
             </Text>
           </View>
         </View>
@@ -480,8 +383,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
     backgroundColor: '#2a2a2a',
     borderBottomWidth: 1,
     borderBottomColor: '#444',
@@ -518,10 +421,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    padding: 16,
+    padding: 10,
   },
   section: {
-    marginBottom: 24,
+    marginBottom: 16,
   },
   sectionTitle: {
     fontSize: 16,
@@ -532,10 +435,10 @@ const styles = StyleSheet.create({
   sectionDescription: {
     fontSize: 13,
     color: '#bbb',
-    marginBottom: 16,
+    marginBottom: 10,
   },
   field: {
-    marginBottom: 16,
+    marginBottom: 10,
   },
   fieldHalf: {
     flex: 1,
@@ -565,12 +468,12 @@ const styles = StyleSheet.create({
     color: '#999',
     marginTop: 4,
   },
-  thresholdNote: {
+  infoNote: {
     backgroundColor: '#2a2a2a',
     padding: 12,
     borderRadius: 6,
     borderLeftWidth: 3,
-    borderLeftColor: '#fbc02d',
+    borderLeftColor: '#4a9eff',
   },
   noteText: {
     fontSize: 12,
@@ -586,7 +489,7 @@ const styles = StyleSheet.create({
   },
   switchLabel: {
     flex: 1,
-    marginRight: 16,
+    marginRight: 10,
   },
   saveButton: {
     backgroundColor: '#4caf50',
@@ -605,8 +508,8 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   footer: {
-    marginTop: 16,
-    paddingTop: 16,
+    marginTop: 10,
+    paddingTop: 10,
     borderTopWidth: 1,
     borderTopColor: '#444',
   },

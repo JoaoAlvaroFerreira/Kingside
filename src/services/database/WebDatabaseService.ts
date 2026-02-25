@@ -3,7 +3,7 @@
  * Provides same interface as SQLite DatabaseService but uses IndexedDB
  */
 
-import { UserGame, MasterGame } from '@types';
+import { UserGame, MasterGame, Repertoire } from '@types';
 
 const DB_NAME = 'kingside_db';
 const DB_VERSION = 1;
@@ -442,6 +442,42 @@ class WebDatabaseServiceClass {
     });
   }
 
+  // ==================== REPERTOIRES ====================
+
+  async addRepertoire(_r: Repertoire): Promise<void> {
+    throw new Error('Repertoire SQLite not supported on web platform');
+  }
+
+  async updateRepertoire(_r: Repertoire): Promise<void> {
+    throw new Error('Repertoire SQLite not supported on web platform');
+  }
+
+  async deleteRepertoire(_id: string): Promise<void> {
+    throw new Error('Repertoire SQLite not supported on web platform');
+  }
+
+  async getAllRepertoires(): Promise<Repertoire[]> {
+    throw new Error('Repertoire SQLite not supported on web platform');
+  }
+
+  async getRepertoireById(_id: string): Promise<Repertoire | null> {
+    throw new Error('Repertoire SQLite not supported on web platform');
+  }
+
+  async getRepertoiresCount(): Promise<number> {
+    throw new Error('Repertoire SQLite not supported on web platform');
+  }
+
+  // ==================== SETTINGS ====================
+
+  async saveSetting(_key: string, _value: unknown): Promise<void> {
+    throw new Error('Settings SQLite not supported on web platform');
+  }
+
+  async getSetting<T>(_key: string): Promise<T | null> {
+    throw new Error('Settings SQLite not supported on web platform');
+  }
+
   // ==================== SEARCH / FILTER ====================
 
   /**
@@ -486,6 +522,16 @@ class WebDatabaseServiceClass {
     const hasMore = offset + pageSize < totalCount;
 
     return { items, totalCount, hasMore, page };
+  }
+
+  // ==================== FEN-BASED SEARCH ====================
+
+  async searchUserGamesByFEN(_fen: string): Promise<UserGame[]> {
+    throw new Error('FEN search not supported on web platform');
+  }
+
+  async searchMasterGamesByFEN(_fen: string): Promise<MasterGame[]> {
+    throw new Error('FEN search not supported on web platform');
   }
 }
 

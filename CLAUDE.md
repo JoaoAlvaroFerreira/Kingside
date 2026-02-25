@@ -54,22 +54,25 @@ Kingside is a React Native/Expo chess training app. Personal tool for a 2000+ ra
 ## Core Features & Status
 
 ### ✅ Implemented
-- **PGN Import/Export**: Three import paths (Repertoire, My Games, Master Games) with file picker, text paste, and Lichess username import
-- **Repertoire Management**: Fixed 4-level hierarchy (Color → Opening Type → Variation → Sub-variation → Chapters), auto-categorization via ECO codes
-- **Game Review**: Engine analysis integration (local Stockfish), FEN-based repertoire matching with complete transposition detection, color-coded key move indicators
+- **PGN Import/Export**: Three import paths (Repertoire, My Games, Master Games) with file picker, text paste, and Lichess username import. Lichess import supports `evals=true` (parses `[%eval]` / `[%clk]` annotations into MoveTree nodes).
+- **Repertoire Management**: Fixed 4-level hierarchy (Color → Opening Type → Variation → Sub-variation → Chapters), auto-categorization via ECO codes, chapter select modal, `lastStudiedAt` tracking
+- **Game Review**: Engine analysis integration (local Stockfish), FEN-based repertoire matching with complete transposition detection, Lichess win-probability classification (blunder ≥30%, mistake ≥20%, inaccuracy ≥10%), eval graph, 4-tab UI (Key Moves / Graph / Your Games / Master Games)
 - **Interactive Chess Board**: Full variation support, comment display (💬 indicators), touch handling optimized for mobile
 - **Screen Settings**: Per-screen UI preferences (orientation, engine, eval bar, coordinates, move history)
-- **Database**: SQLite storage for games with migration system
+- **Database**: SQLite storage for **all data** (games + repertoires + settings). Migration service migrates from AsyncStorage on first launch.
+- **ChessWorkspace**: Centralized board+engine+movehistory layout. Engine runs internally via `useEngine` — **do not call `useEngine` in screens that use ChessWorkspace**. Percentage-based board sizing. Wide/narrow responsive layout.
+- **Orientation**: Full landscape/tablet support (`app.json "orientation": "default"`, `AndroidManifest screenOrientation="fullSensor"`)
+- **Training Services**: `LineGenerator` (lazy DFS batches), `BreadthFirstTrainer` (BFS queue for user-move positions)
 
 ### 🚧 In Progress
-- **Analysis Board**: Basic implementation, needs variation support and keyboard shortcuts
-- **Training System**: UI placeholder only, spaced repetition not implemented
+- **Training System**: LineGenerator and BreadthFirstTrainer implemented; UI/UX drill flow not yet built
+- **Local Stockfish**: Rewritten 2026-02-16, verify on device
 
 ### 📋 TODO
 - **Spaced Repetition**: SM2 algorithm with context-aware cards, mistake-driven priority, difficulty scaling
+- **Training Drill UI**: Wire up BFS queue + LineGenerator into a usable training screen
 - **Decision Tree Visualization**: Show branching points explicitly
 - **Linked Positions**: Connect similar structures across different openings
-- **Local Stockfish verification**: Rebuild and test on device (rewritten 2026-02-16)
 - **Backend & Sync**: User authentication, cloud storage, multi-device sync
 
 ## Key Implementation Patterns
@@ -233,24 +236,31 @@ src/
 │   └── gameReview/
 │       ├── GameReviewDashboardScreen.tsx  # Game list + color selection
 │       └── GameReviewScreen.tsx           # Review UI
+├── components/
+│   └── ChapterSelectModal.tsx          # Full-screen chapter picker with search
 ├── services/
-│   ├── pgn/PGNService.ts               # Parse & convert PGN
+│   ├── pgn/PGNService.ts               # Parse & convert PGN (+ Lichess eval/clock annotations)
 │   ├── openings/OpeningClassifier.ts   # Auto-categorize by ECO
-│   ├── storage/StorageService.ts       # AsyncStorage wrapper
-│   ├── lichess/LichessService.ts       # Fetch games from Lichess API
+│   ├── storage/StorageService.ts       # AsyncStorage wrapper (legacy)
+│   ├── lichess/LichessService.ts       # Fetch games from Lichess API (evals=true)
 │   ├── engine/
 │   │   ├── StockfishContext.tsx         # React Context wrapping native hook
 │   │   └── EngineAnalyzer.ts           # UCI protocol, parsing, cache
-│   ├── gameReview/GameReviewService.ts # Analysis + repertoire matching
+│   ├── gameReview/GameReviewService.ts # Analysis + Lichess win-prob classification
 │   ├── settings/
 │   │   ├── SettingsService.ts          # Review settings
 │   │   └── ScreenSettingsService.ts    # Per-screen UI preferences
 │   ├── database/
-│   │   ├── DatabaseService.ts          # SQLite database
-│   │   └── MigrationService.ts         # Schema migrations
-│   └── spaced-repetition/              # SM2Service (TODO)
-├── store/index.ts              # Zustand store
-├── utils/MoveTree.ts           # Core data structure
+│   │   ├── DatabaseService.ts          # SQLite (games + repertoires + settings)
+│   │   ├── WebDatabaseService.ts       # Web stub
+│   │   └── MigrationService.ts         # Schema migrations + AsyncStorage→SQLite
+│   └── training/
+│       ├── LineGenerator.ts            # Lazy DFS line batches from MoveTree
+│       └── BreadthFirstTrainer.ts      # BFS queue of user-decision positions
+├── store/index.ts              # Zustand store (reads/writes via DatabaseService)
+├── utils/
+│   ├── MoveTree.ts             # Core data structure
+│   └── chapterUtils.ts         # countMoveTreeNodes, formatLastStudied
 └── types/
     ├── repertoire.types.ts     # Repertoire, Chapter types
     ├── game.types.ts           # UserGame, MasterGame types
@@ -307,9 +317,10 @@ User games and master games moved to SQLite database. Repertoires still in Async
 
 ### Storage & Persistence
 - **Date objects**: Automatically serialized/deserialized with custom reviver
-- **Separate arrays**: `repertoires[]`, `userGames[]`, `masterGames[]` stored separately
-- **Automatic save**: Store mutations trigger AsyncStorage save immediately
-- **Store initialization**: `App.tsx` calls `initialize()` on mount
+- **All data in SQLite**: Repertoires, games, and settings all stored in `DatabaseService`. `StorageService` (AsyncStorage) is legacy — do not use for new data.
+- **Automatic save**: Store mutations write to `DatabaseService` immediately
+- **Store initialization**: `App.tsx` calls `initialize()` which loads from `DatabaseService`
+- **Migration**: `MigrationService.migrateRepertoiresAndSettings()` runs once on first launch to move data from AsyncStorage to SQLite
 
 ### Game Review
 - **FEN-based matching**: Uses position map built from MoveTree
@@ -317,6 +328,14 @@ User games and master games moved to SQLite database. Repertoires still in Async
 - **Color selection**: Always prompted per review session
 - **First deviation only**: Only first repertoire deviation marked as key move
 - **Engine optional**: When disabled, only repertoire deviations tracked
+
+### ChessWorkspace Engine Architecture
+**CRITICAL**: `useEngine` is called **inside** `ChessWorkspace`, not in screens. This isolates Stockfish state updates to the workspace subtree, preventing full-screen re-renders on every analysis line.
+
+- Screens pass `fen`, `moveTree`, navigation handlers — **never** `currentEval` for live analysis
+- `currentEval` prop is only for **pre-computed** data (e.g. GameReview replay). Omitting it = internal engine.
+- `useEngine` throttles partial updates to 250ms to prevent flooding the render queue
+- `evalBarReserved = 13px` is subtracted from `availableForBoard` when eval bar is visible, preventing board overflow
 
 ### Debugging
 - **Log prefixes**: "Store:", "RepertoireScreen:", "[GameReview]", "[FEN-Match]"
@@ -348,14 +367,14 @@ npm test -- --coverage            # Generate coverage report
 
 ### Immediate Priority
 1. **Verify Engine on Device**: Rebuild and test local Stockfish (rewritten 2026-02-16)
-2. **Training System**: Implement spaced repetition review flow with color-based testing
-3. **Review Card Generation**: Auto-create cards from repertoire positions
-4. **Analysis Board**: Add variation support, keyboard shortcuts
+2. **Training Drill UI**: Wire BFS queue + LineGenerator into interactive drill screen
+3. **SM2 Algorithm**: Implement spaced repetition scheduling with difficulty scaling
+4. **Review Card Generation**: Auto-create cards from repertoire positions
 
 ### Short-Term
-5. **SM2 Algorithm**: Implement spaced repetition scheduling with difficulty scaling
-6. **Position Filtering**: Filter user/master games by current board position (FEN matching)
-7. **Decision Tree Visualization**: Show branching points explicitly
+5. **Position Filtering**: Filter user/master games by current board position (FEN indexing in DB)
+6. **Decision Tree Visualization**: Show branching points explicitly
+7. **Analysis Board**: Add keyboard shortcuts (ArrowLeft/Right navigation)
 
 ### Long-Term
 8. **Linked Positions**: Connect similar structures across different openings

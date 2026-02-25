@@ -618,12 +618,11 @@ describe('GameReviewService - Transposition Detection', () => {
       let wasInRepertoireLastMove = true;
       let hasAlreadyDeviated = false;
 
-      // Move 1: d4 (in repertoire)
+      // Move 1: d4 (in repertoire, white moves)
       let isInRepertoireNow = true;
       let result = GameReviewService.identifyKeyMove(
-        undefined,
+        undefined, undefined, false,
         { matched: true, isUserMove: true, expectedMoves: ['d5'] },
-        { blunder: 300, mistake: 150, inaccuracy: 50 },
         hasAlreadyDeviated,
         wasInRepertoireLastMove,
         isInRepertoireNow
@@ -631,12 +630,11 @@ describe('GameReviewService - Transposition Detection', () => {
       expect(result.isKeyMove).toBe(false);
       wasInRepertoireLastMove = isInRepertoireNow;
 
-      // Move 2: d5 (in repertoire)
+      // Move 2: d5 (in repertoire, black moves)
       isInRepertoireNow = true;
       result = GameReviewService.identifyKeyMove(
-        undefined,
+        undefined, undefined, true,
         { matched: true, isUserMove: false, expectedMoves: ['c4'] },
-        { blunder: 300, mistake: 150, inaccuracy: 50 },
         hasAlreadyDeviated,
         wasInRepertoireLastMove,
         isInRepertoireNow
@@ -644,12 +642,11 @@ describe('GameReviewService - Transposition Detection', () => {
       expect(result.isKeyMove).toBe(false);
       wasInRepertoireLastMove = isInRepertoireNow;
 
-      // Move 3: c4 (in repertoire)
+      // Move 3: c4 (in repertoire, white moves)
       isInRepertoireNow = true;
       result = GameReviewService.identifyKeyMove(
-        undefined,
+        undefined, undefined, false,
         { matched: true, isUserMove: true, expectedMoves: ['e6'] },
-        { blunder: 300, mistake: 150, inaccuracy: 50 },
         hasAlreadyDeviated,
         wasInRepertoireLastMove,
         isInRepertoireNow
@@ -657,12 +654,11 @@ describe('GameReviewService - Transposition Detection', () => {
       expect(result.isKeyMove).toBe(false);
       wasInRepertoireLastMove = isInRepertoireNow;
 
-      // Move 4: c6 (DEVIATION - not in repertoire)
+      // Move 4: c6 (DEVIATION - not in repertoire, black moves)
       isInRepertoireNow = false;
       result = GameReviewService.identifyKeyMove(
-        undefined,
+        undefined, undefined, true,
         { matched: false, isUserMove: false, deviationType: 'opponent-novelty', expectedMoves: ['e6'] },
-        { blunder: 300, mistake: 150, inaccuracy: 50 },
         hasAlreadyDeviated,
         wasInRepertoireLastMove,
         isInRepertoireNow
@@ -672,12 +668,11 @@ describe('GameReviewService - Transposition Detection', () => {
       hasAlreadyDeviated = true;
       wasInRepertoireLastMove = isInRepertoireNow;
 
-      // Move 5: Nc3 (still out of repertoire)
+      // Move 5: Nc3 (still out of repertoire, white moves)
       isInRepertoireNow = false;
       result = GameReviewService.identifyKeyMove(
-        undefined,
+        undefined, undefined, false,
         { matched: false, isUserMove: true, deviationType: 'coverage-gap' },
-        { blunder: 300, mistake: 150, inaccuracy: 50 },
         hasAlreadyDeviated,
         wasInRepertoireLastMove,
         isInRepertoireNow
@@ -685,12 +680,11 @@ describe('GameReviewService - Transposition Detection', () => {
       expect(result.isKeyMove).toBe(false); // Not a key move (already deviated)
       wasInRepertoireLastMove = isInRepertoireNow;
 
-      // Move 6: e6 (still out of repertoire)
+      // Move 6: e6 (still out of repertoire, black moves)
       isInRepertoireNow = false;
       result = GameReviewService.identifyKeyMove(
-        undefined,
+        undefined, undefined, true,
         { matched: false, isUserMove: false, deviationType: 'coverage-gap' },
-        { blunder: 300, mistake: 150, inaccuracy: 50 },
         hasAlreadyDeviated,
         wasInRepertoireLastMove,
         isInRepertoireNow
@@ -698,12 +692,11 @@ describe('GameReviewService - Transposition Detection', () => {
       expect(result.isKeyMove).toBe(false);
       wasInRepertoireLastMove = isInRepertoireNow;
 
-      // Move 7: Nf3 (still out of repertoire)
+      // Move 7: Nf3 (still out of repertoire, white moves)
       isInRepertoireNow = false;
       result = GameReviewService.identifyKeyMove(
-        undefined,
+        undefined, undefined, false,
         { matched: false, isUserMove: true, deviationType: 'coverage-gap' },
-        { blunder: 300, mistake: 150, inaccuracy: 50 },
         hasAlreadyDeviated,
         wasInRepertoireLastMove,
         isInRepertoireNow
@@ -711,12 +704,11 @@ describe('GameReviewService - Transposition Detection', () => {
       expect(result.isKeyMove).toBe(false);
       wasInRepertoireLastMove = isInRepertoireNow;
 
-      // Move 8: Nf6 (TRANSPOSITION BACK - now in repertoire!)
+      // Move 8: Nf6 (TRANSPOSITION BACK - now in repertoire!, black moves)
       isInRepertoireNow = true;
       result = GameReviewService.identifyKeyMove(
-        undefined,
+        undefined, undefined, true,
         { matched: true, isUserMove: false, expectedMoves: [] }, // End of line
-        { blunder: 300, mistake: 150, inaccuracy: 50 },
         hasAlreadyDeviated,
         wasInRepertoireLastMove,
         isInRepertoireNow

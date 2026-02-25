@@ -2,7 +2,7 @@
  * GameReviewDashboardScreen - Dashboard for game review with status tracking
  */
 
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -26,12 +26,23 @@ interface GameReviewDashboardScreenProps {
 type FilterTab = 'all' | 'reviewed' | 'unreviewed';
 
 export default function GameReviewDashboardScreen({ navigation }: GameReviewDashboardScreenProps) {
-  const { userGamesCount, gameReviewStatuses, startGameReview } = useStore();
+  const { userGamesCount, gameReviewStatuses, startGameReview, isAnalyzing, analysisProgress } = useStore();
   const [filterTab, setFilterTab] = useState<FilterTab>('all');
   const [startingReview, setStartingReview] = useState(false);
   const [colorPromptGameId, setColorPromptGameId] = useState<string | null>(null);
   const [games, setGames] = useState<UserGame[]>([]);
   const [isLoadingGames, setIsLoadingGames] = useState(false);
+  const pendingGameId = useRef<string | null>(null);
+
+  // Navigate to GameReview once analysis completes
+  useEffect(() => {
+    if (!isAnalyzing && pendingGameId.current) {
+      const gameId = pendingGameId.current;
+      pendingGameId.current = null;
+      setStartingReview(false);
+      navigation.navigate('GameReview', { gameId });
+    }
+  }, [isAnalyzing, navigation]);
 
   // Load games when tab changes or screen focuses
   useEffect(() => {
@@ -47,7 +58,6 @@ export default function GameReviewDashboardScreen({ navigation }: GameReviewDash
   const loadGames = async () => {
     setIsLoadingGames(true);
     try {
-      // Load all user games (for now, can add pagination later if needed)
       const allGames = await DatabaseService.getAllUserGames();
       const reviewedIds = new Set(gameReviewStatuses.filter(s => s.reviewed).map(s => s.gameId));
 
@@ -74,7 +84,6 @@ export default function GameReviewDashboardScreen({ navigation }: GameReviewDash
   // Count stats
   const stats = useMemo(() => {
     const reviewedIds = new Set(gameReviewStatuses.filter(s => s.reviewed).map(s => s.gameId));
-    // Use counts from loaded games for accuracy
     return {
       total: userGamesCount,
       reviewed: games.filter(g => reviewedIds.has(g.id)).length,
@@ -85,10 +94,11 @@ export default function GameReviewDashboardScreen({ navigation }: GameReviewDash
   const handleColorSelected = async (gameId: string, color: 'white' | 'black') => {
     setColorPromptGameId(null);
     setStartingReview(true);
+    pendingGameId.current = gameId;
     try {
       await startGameReview(gameId, color);
-      navigation.navigate('GameReview', { gameId });
     } catch (error) {
+      pendingGameId.current = null;
       console.error('Failed to start review:', error);
       const errorMsg = error instanceof Error ? error.message : 'Unknown error occurred';
       if (Platform.OS === 'web') {
@@ -96,7 +106,6 @@ export default function GameReviewDashboardScreen({ navigation }: GameReviewDash
       } else {
         Alert.alert('Error', `Failed to start review: ${errorMsg}`);
       }
-    } finally {
       setStartingReview(false);
     }
   };
@@ -111,12 +120,10 @@ export default function GameReviewDashboardScreen({ navigation }: GameReviewDash
       return;
     }
 
-    // Always show color selection modal
     setColorPromptGameId(unreviewedGames[0].id);
   };
 
   const handleReviewGame = async (gameId: string) => {
-    // Always show color selection modal
     setColorPromptGameId(gameId);
   };
 
@@ -132,7 +139,7 @@ export default function GameReviewDashboardScreen({ navigation }: GameReviewDash
         <TouchableOpacity
           style={[styles.startButton, stats.unreviewed === 0 && styles.startButtonDisabled]}
           onPress={handleStartReviewAll}
-          disabled={stats.unreviewed === 0 || startingReview}
+          disabled={stats.unreviewed === 0 || startingReview || isAnalyzing}
         >
           {startingReview ? (
             <ActivityIndicator size="small" color="#fff" />
@@ -142,105 +149,135 @@ export default function GameReviewDashboardScreen({ navigation }: GameReviewDash
         </TouchableOpacity>
       </View>
 
+      {/* Analysis Loading Overlay */}
+      {isAnalyzing && (
+        <View style={styles.analysisOverlay}>
+          <ActivityIndicator size="large" color="#4a9eff" />
+          {analysisProgress && (
+            <>
+              <Text style={styles.analysisPhase}>{analysisProgress.phase}</Text>
+              {analysisProgress.total > 0 && (
+                <>
+                  <Text style={styles.analysisCount}>
+                    {analysisProgress.current} / {analysisProgress.total}
+                  </Text>
+                  <Text style={styles.analysisPercent}>
+                    {Math.round((analysisProgress.current / analysisProgress.total) * 100)}%
+                  </Text>
+                </>
+              )}
+            </>
+          )}
+        </View>
+      )}
+
       {/* Stats */}
-      <View style={styles.statsContainer}>
-        <View style={styles.statItem}>
-          <Text style={styles.statValue}>{stats.total}</Text>
-          <Text style={styles.statLabel}>Total</Text>
+      {!isAnalyzing && (
+        <View style={styles.statsContainer}>
+          <View style={styles.statItem}>
+            <Text style={styles.statValue}>{stats.total}</Text>
+            <Text style={styles.statLabel}>Total</Text>
+          </View>
+          <View style={styles.statItem}>
+            <Text style={[styles.statValue, styles.reviewedColor]}>{stats.reviewed}</Text>
+            <Text style={styles.statLabel}>Reviewed</Text>
+          </View>
+          <View style={styles.statItem}>
+            <Text style={[styles.statValue, styles.unreviewedColor]}>{stats.unreviewed}</Text>
+            <Text style={styles.statLabel}>Unreviewed</Text>
+          </View>
         </View>
-        <View style={styles.statItem}>
-          <Text style={[styles.statValue, styles.reviewedColor]}>{stats.reviewed}</Text>
-          <Text style={styles.statLabel}>Reviewed</Text>
-        </View>
-        <View style={styles.statItem}>
-          <Text style={[styles.statValue, styles.unreviewedColor]}>{stats.unreviewed}</Text>
-          <Text style={styles.statLabel}>Unreviewed</Text>
-        </View>
-      </View>
+      )}
 
       {/* Filter Tabs */}
-      <View style={styles.tabs}>
-        <TouchableOpacity
-          style={[styles.tab, filterTab === 'all' && styles.tabActive]}
-          onPress={() => setFilterTab('all')}
-        >
-          <Text style={[styles.tabText, filterTab === 'all' && styles.tabTextActive]}>
-            All ({stats.total})
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, filterTab === 'reviewed' && styles.tabActive]}
-          onPress={() => setFilterTab('reviewed')}
-        >
-          <Text style={[styles.tabText, filterTab === 'reviewed' && styles.tabTextActive]}>
-            Reviewed ({stats.reviewed})
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, filterTab === 'unreviewed' && styles.tabActive]}
-          onPress={() => setFilterTab('unreviewed')}
-        >
-          <Text style={[styles.tabText, filterTab === 'unreviewed' && styles.tabTextActive]}>
-            Unreviewed ({stats.unreviewed})
-          </Text>
-        </TouchableOpacity>
-      </View>
+      {!isAnalyzing && (
+        <View style={styles.tabs}>
+          <TouchableOpacity
+            style={[styles.tab, filterTab === 'all' && styles.tabActive]}
+            onPress={() => setFilterTab('all')}
+          >
+            <Text style={[styles.tabText, filterTab === 'all' && styles.tabTextActive]}>
+              All ({stats.total})
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tab, filterTab === 'reviewed' && styles.tabActive]}
+            onPress={() => setFilterTab('reviewed')}
+          >
+            <Text style={[styles.tabText, filterTab === 'reviewed' && styles.tabTextActive]}>
+              Reviewed ({stats.reviewed})
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tab, filterTab === 'unreviewed' && styles.tabActive]}
+            onPress={() => setFilterTab('unreviewed')}
+          >
+            <Text style={[styles.tabText, filterTab === 'unreviewed' && styles.tabTextActive]}>
+              Unreviewed ({stats.unreviewed})
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* Game List */}
-      {isLoadingGames ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#4a9eff" />
-          <Text style={styles.loadingText}>Loading games...</Text>
-        </View>
-      ) : (
-        <FlatList
-          style={styles.list}
-          contentContainerStyle={styles.listContent}
-          data={games}
-          keyExtractor={(item) => item.id}
-          ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>No games found</Text>
+      {!isAnalyzing && (
+        <>
+          {isLoadingGames ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#4a9eff" />
+              <Text style={styles.loadingText}>Loading games...</Text>
             </View>
-          }
-          renderItem={({ item: game }) => {
-            const status = getStatus(game.id);
-            return (
-              <TouchableOpacity
-                style={styles.gameCard}
-                onPress={() => handleReviewGame(game.id)}
-              >
-                <View style={styles.gameHeader}>
-                  <View style={styles.gameInfo}>
-                    <Text style={styles.gameOpponent}>
-                      {game.white} vs {game.black}
-                    </Text>
-                    <Text style={styles.gameDate}>{game.date}</Text>
-                  </View>
-                  {status?.reviewed && (
-                    <View style={styles.reviewedBadge}>
-                      <Text style={styles.reviewedBadgeText}>✓</Text>
+          ) : (
+            <FlatList
+              style={styles.list}
+              contentContainerStyle={styles.listContent}
+              data={games}
+              keyExtractor={(item) => item.id}
+              ListEmptyComponent={
+                <View style={styles.emptyContainer}>
+                  <Text style={styles.emptyText}>No games found</Text>
+                </View>
+              }
+              renderItem={({ item: game }) => {
+                const status = getStatus(game.id);
+                return (
+                  <TouchableOpacity
+                    style={styles.gameCard}
+                    onPress={() => handleReviewGame(game.id)}
+                  >
+                    <View style={styles.gameHeader}>
+                      <View style={styles.gameInfo}>
+                        <Text style={styles.gameOpponent}>
+                          {game.white} vs {game.black}
+                        </Text>
+                        <Text style={styles.gameDate}>{game.date}</Text>
+                      </View>
+                      {status?.reviewed && (
+                        <View style={styles.reviewedBadge}>
+                          <Text style={styles.reviewedBadgeText}>✓</Text>
+                        </View>
+                      )}
                     </View>
-                  )}
-                </View>
-                <View style={styles.gameDetails}>
-                  <Text style={styles.gameResult}>{game.result}</Text>
-                  {game.event && <Text style={styles.gameEvent}>{game.event}</Text>}
-                </View>
-                {status?.reviewed && (
-                  <View style={styles.gameStats}>
-                    <Text style={styles.gameStatText}>
-                      {status.keyMovesCount} key moves
-                    </Text>
-                    {status.followedRepertoire && (
-                      <Text style={styles.repertoireMatch}>✓ Followed repertoire</Text>
+                    <View style={styles.gameDetails}>
+                      <Text style={styles.gameResult}>{game.result}</Text>
+                      {game.event && <Text style={styles.gameEvent}>{game.event}</Text>}
+                    </View>
+                    {status?.reviewed && (
+                      <View style={styles.gameStats}>
+                        <Text style={styles.gameStatText}>
+                          {status.keyMovesCount} key moves
+                        </Text>
+                        {status.followedRepertoire && (
+                          <Text style={styles.repertoireMatch}>Followed repertoire</Text>
+                        )}
+                      </View>
                     )}
-                  </View>
-                )}
-              </TouchableOpacity>
-            );
-          }}
-        />
+                  </TouchableOpacity>
+                );
+              }}
+            />
+          )}
+        </>
       )}
 
       {/* Color Selection Modal */}
@@ -324,6 +361,29 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 11,
     fontWeight: '600',
+  },
+  analysisOverlay: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 40,
+  },
+  analysisPhase: {
+    color: '#4a9eff',
+    fontSize: 14,
+    fontWeight: '600',
+    marginTop: 16,
+    textAlign: 'center',
+  },
+  analysisCount: {
+    color: '#fff',
+    fontSize: 14,
+    marginTop: 8,
+  },
+  analysisPercent: {
+    color: '#bbb',
+    fontSize: 12,
+    marginTop: 4,
   },
   statsContainer: {
     flexDirection: 'row',
@@ -478,12 +538,12 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.8)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: 12,
   },
   modalContent: {
     backgroundColor: '#2a2a2a',
     borderRadius: 10,
-    padding: 16,
+    padding: 10,
     width: '100%',
     maxWidth: 320,
     borderWidth: 1,

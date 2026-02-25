@@ -26,12 +26,14 @@ export interface MoveAnalysis {
   keyMoveReason?: KeyMoveReason;
   repertoireMatch?: RepertoireMatchResult;
   masterGameRefs?: MasterGameReference[];
+  lichessEval?: number;      // Centipawns from Lichess PGN annotation
+  lichessEvalMate?: number;  // Mate in N from Lichess PGN annotation
 }
 
 export type KeyMoveReason =
-  | 'blunder'              // Large eval loss (configurable threshold)
-  | 'mistake'              // Medium eval loss
-  | 'inaccuracy'           // Small eval loss
+  | 'blunder'              // Large win% loss
+  | 'mistake'              // Medium win% loss
+  | 'inaccuracy'           // Small win% loss
   | 'brilliant'            // Good move in complex position
   | 'repertoire-deviation' // User deviated from repertoire
   | 'opponent-novelty'     // Opponent played move not in repertoire
@@ -85,12 +87,6 @@ export interface EngineSettings {
   multiPV: number;          // Number of principal variations (1-5, default: 3)
 }
 
-export interface EvalThresholds {
-  blunder: number;          // e.g., 200 centipawns
-  mistake: number;          // e.g., 100 centipawns
-  inaccuracy: number;       // e.g., 50 centipawns
-}
-
 export interface LichessSettings {
   username: string;
   importDaysBack: number;  // Number of days to look back (default 1 for last 24h)
@@ -98,9 +94,14 @@ export interface LichessSettings {
 
 export interface ReviewSettings {
   engine: EngineSettings;
-  thresholds: EvalThresholds;
   showEvalBar: boolean;
   showBestMove: boolean;
   autoAdvanceDelay: number; // ms, 0 = manual
   lichess: LichessSettings;
+}
+
+export interface AnalysisProgress {
+  current: number;
+  total: number;
+  phase: string;
 }

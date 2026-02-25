@@ -7,6 +7,11 @@
  * - Automatically handles transpositions (different move orders to same position)
  * - Aggregates moves from ALL chapters covering a position
  * - O(1) lookup per move during review
+ *
+ * MOVE CLASSIFICATION:
+ * - Uses Lichess-style win-probability classification instead of centipawn thresholds
+ * - Converts centipawn evaluations to win probability using the Lichess formula
+ * - Classification based on win% loss from the moving player's perspective
  */
 
 import { Chess } from 'chess.js';
@@ -22,11 +27,29 @@ import {
   RepertoireMatchResult,
   MasterGameReference,
   EngineEvaluation,
-  EvalThresholds,
 } from '@types';
 import { EngineAnalyzer, AnalysisOptions } from '@services/engine/EngineAnalyzer';
 import { normalizeFen } from '@types';
 import { MoveTree } from '@utils/MoveTree';
+
+/**
+ * Convert centipawn score to win probability (0-100) from White's perspective.
+ * Uses the Lichess formula: 50 + 50 * (2 / (1 + exp(-0.00368208 * cp)) - 1)
+ */
+export function centipawnsToWinProbability(cp: number): number {
+  return 50 + 50 * (2 / (1 + Math.exp(-0.00368208 * cp)) - 1);
+}
+
+/**
+ * Get win probability for an evaluation, handling mate scores.
+ * Returns win probability from White's perspective (0-100).
+ */
+function evalToWinProbability(eval_: EngineEvaluation): number {
+  if (eval_.mate !== undefined) {
+    return eval_.mate > 0 ? 100 : 0;
+  }
+  return centipawnsToWinProbability(eval_.score);
+}
 
 export const GameReviewService = {
   /**
@@ -37,9 +60,9 @@ export const GameReviewService = {
     userColor: 'white' | 'black',
     repertoires: Repertoire[],
     masterGames: MasterGame[],
-    thresholds: EvalThresholds,
-    analyzer?: EngineAnalyzer,
-    analysisOptions?: AnalysisOptions,
+    analyzer: EngineAnalyzer,
+    analysisOptions: AnalysisOptions,
+    onProgress?: (current: number, total: number) => void,
   ): Promise<GameReviewSession> {
     console.log('[GameReview] Starting review with userColor:', userColor);
     console.log('[GameReview] Available repertoires:', repertoires.length);
@@ -59,15 +82,6 @@ export const GameReviewService = {
     // Helper function to check if a string looks like a valid chess move
     const looksLikeChessMove = (str: string): boolean => {
       if (!str || str.length < 2 || str.length > 10) return false;
-
-      // Valid chess move patterns:
-      // - Piece moves: Nf3, Bb5, Qd4, Rf1, Kg1
-      // - Pawn moves: e4, d5, a3, h8
-      // - Captures: Nxf3, exd5, Bxc6, axb5
-      // - Castle: O-O, O-O-O (or 0-0, 0-0-0)
-      // - Promotions: e8=Q, a1=N, exd8=Q
-      // - With check/mate: Nf3+, Qh7#, e4+, Rxh7#
-
       const chessMove = /^([NBRQK])?[a-h]?[1-8]?x?[a-h][1-8](=[NBRQ])?[+#]?$|^O-O(-O)?[+#]?$/i;
       return chessMove.test(str);
     };
@@ -77,6 +91,25 @@ export const GameReviewService = {
 
     // Remove all header lines (anything in square brackets on its own line)
     pgnMovesText = pgnMovesText.replace(/^\[.*?\]$/gm, '');
+
+    // Extract Lichess eval annotations from comment blocks before stripping
+    const lichessEvalsByCommentIndex: Array<{eval?: number, evalMate?: number} | null> = [];
+    const commentBlocks = pgnMovesText.match(/\{[^}]*\}/g) || [];
+    for (const block of commentBlocks) {
+      const entry: {eval?: number, evalMate?: number} = {};
+      const mateMatch = block.match(/\[%eval\s+#(-?\d+)\]/);
+      if (mateMatch) {
+        entry.evalMate = parseInt(mateMatch[1], 10);
+      } else {
+        const evalMatch = block.match(/\[%eval\s+([-\d.]+)\]/);
+        if (evalMatch) {
+          entry.eval = Math.round(parseFloat(evalMatch[1]) * 100);
+        }
+      }
+      lichessEvalsByCommentIndex.push(
+        (entry.eval !== undefined || entry.evalMate !== undefined) ? entry : null
+      );
+    }
 
     // Remove comments (anything in curly braces)
     pgnMovesText = pgnMovesText.replace(/\{[^}]*\}/g, '');
@@ -94,19 +127,16 @@ export const GameReviewService = {
     const moveSections = pgnMovesText.split(/\d+\.\s*/).filter(s => s.trim());
 
     for (const section of moveSections) {
-      // Split by whitespace to get individual moves
       const movesInSection = section.trim().split(/\s+/).filter(m => m.trim());
 
       for (const move of movesInSection) {
-        // Clean up move (remove annotations and extra characters)
         const cleanMove = move
-          .replace(/[!?]+$/, '')        // Remove ! and ? annotations
-          .replace(/\(.*?\)/g, '')       // Remove parenthetical variations
-          .replace(/\[.*?\]/g, '')       // Remove any remaining brackets
-          .replace(/[",]/g, '')          // Remove quotes and commas
+          .replace(/[!?]+$/, '')
+          .replace(/\(.*?\)/g, '')
+          .replace(/\[.*?\]/g, '')
+          .replace(/[",]/g, '')
           .trim();
 
-        // Only include if it looks like a chess move
         if (cleanMove && looksLikeChessMove(cleanMove)) {
           flatMoves.push(cleanMove);
         }
@@ -127,7 +157,6 @@ export const GameReviewService = {
         positions.push(chess.fen());
       } catch (error) {
         console.warn(`Invalid move in game ${game.id}: "${san}" (after ${positions.length - 1} valid moves)`);
-        // Stop processing this game if we hit an invalid move
         break;
       }
     }
@@ -136,26 +165,26 @@ export const GameReviewService = {
       throw new Error('Failed to parse game moves');
     }
 
-    // Get engine evaluations for all positions (if analyzer is provided)
+    // Get engine evaluations for all positions
     console.log(`Analyzing ${positions.length} positions...`);
     const evaluations: Array<EngineEvaluation | null> = new Array(positions.length).fill(null);
-    if (analyzer && analysisOptions) {
-      for (let i = 0; i < positions.length; i++) {
-        try {
-          evaluations[i] = await analyzer.analyze(positions[i], analysisOptions);
-        } catch {
-          evaluations[i] = null;
-        }
+    for (let i = 0; i < positions.length; i++) {
+      try {
+        evaluations[i] = await analyzer.analyze(positions[i], analysisOptions);
+      } catch {
+        evaluations[i] = null;
+      }
+      if (onProgress) {
+        onProgress(i + 1, positions.length);
       }
     }
-    const hasEngineAnalysis = evaluations.some(e => e !== null);
-    console.log(`Received ${evaluations.length} evaluations (${hasEngineAnalysis ? 'engine active' : 'engine disabled'})`);
+    console.log(`Received ${evaluations.length} evaluations`);
 
     // Rebuild game and analyze each move
     chess.load(positions[0]);
     let moveIndex = 0;
-    let hasEverDeviated = false; // Track if we've ever deviated (for "only mark first deviation" logic)
-    let wasInRepertoireLastMove = true; // Track if we were in repertoire on the previous move
+    let hasEverDeviated = false;
+    let wasInRepertoireLastMove = true;
 
     console.log('[GameReview] Starting move-by-move analysis...');
 
@@ -171,35 +200,34 @@ export const GameReviewService = {
 
       const fen = chess.fen();
       const evalAfter = evaluations[moveIndex + 1];
-      // Only calculate evalDelta if both evaluations exist (engine is configured)
       const evalDelta = evalAfter && evalBefore ? this.calculateEvalDelta(evalBefore, evalAfter) : undefined;
 
       // Determine if this was Black's move (after move(), chess.turn() shows NEXT player)
-      const isBlackMove = chess.turn() === 'w'; // If it's now White's turn, Black just moved
+      const isBlackMove = chess.turn() === 'w';
 
       console.log(`\n[GameReview] === Processing move ${moveIndex + 1}/${flatMoves.length}: ${san} ===`);
 
-      // Check repertoire match using FEN-based position matching with move-count filtering (handles transpositions)
+      // Check repertoire match using FEN-based position matching
       const repertoireMatch = this.checkRepertoireMatchFEN(
         preFen,
         san,
-        moveIndex,  // Pass ply count (0-indexed)
+        moveIndex,
         isBlackMove,
         userColor,
         positionMap
       );
 
-      // Determine if we're currently in repertoire
       const isInRepertoireNow = repertoireMatch?.matched ?? false;
 
       // Find master game references
       const masterGameRefs = this.findMasterGames(preFen, san, masterGames);
 
-      // Determine if this is a key move
+      // Determine if this is a key move using win-probability classification
       const { isKeyMove, keyMoveReason } = this.identifyKeyMove(
-        evalDelta,
+        evalBefore ?? undefined,
+        evalAfter ?? undefined,
+        isBlackMove,
         repertoireMatch,
-        thresholds,
         hasEverDeviated,
         wasInRepertoireLastMove,
         isInRepertoireNow
@@ -211,6 +239,7 @@ export const GameReviewService = {
       }
       wasInRepertoireLastMove = isInRepertoireNow;
 
+      const lichessEntry = lichessEvalsByCommentIndex[moveIndex] ?? null;
       moves.push({
         moveIndex,
         san,
@@ -223,6 +252,8 @@ export const GameReviewService = {
         keyMoveReason,
         repertoireMatch,
         masterGameRefs,
+        lichessEval: lichessEntry?.eval,
+        lichessEvalMate: lichessEntry?.evalMate,
       });
 
       moveIndex++;
@@ -232,12 +263,10 @@ export const GameReviewService = {
       throw new Error('Failed to analyze game moves. Check engine configuration.');
     }
 
-    // Find key move indices
     const keyMoveIndices = moves
       .map((m, i) => (m.isKeyMove ? i : -1))
       .filter(i => i !== -1);
 
-    // Check if entire game followed repertoire
     const followedRepertoire = moves.every(m => !m.repertoireMatch || m.repertoireMatch.matched);
 
     console.log(`Review session created: ${moves.length} moves, ${keyMoveIndices.length} key moves`);
@@ -259,34 +288,21 @@ export const GameReviewService = {
    * Calculate evaluation delta between two positions
    */
   calculateEvalDelta(before: EngineEvaluation, after: EngineEvaluation): number {
-    // If either position is mate, handle specially
     if (before.mate !== undefined) {
       return before.mate > 0 ? -10000 : 10000;
     }
     if (after.mate !== undefined) {
       return after.mate > 0 ? 10000 : -10000;
     }
-
-    // Normal centipawn delta
     return after.score - before.score;
   },
 
   /**
    * Extract all positions from a chapter by playing through its PGN linearly
-   * Returns positions indexed by move count for efficient transposition detection
-   *
-   * Structure: Map<moveCount, Map<normalizedFEN, Set<possibleMoves>>>
-   *
-   * This approach:
-   * - Plays through ALL variations in the chapter as separate lines
-   * - Records each position with its ply count (half-move number)
-   * - Enables transposition detection by comparing positions at same move count
-   * - More expensive than tree traversal, but catches all transpositions
    */
   extractPositionsFromChapter(chapter: Chapter): Map<number, Map<string, Set<string>>> {
     const positionsByMoveCount = new Map<number, Map<string, Set<string>>>();
 
-    // Helper to add a position at a specific move count
     const addPosition = (moveCount: number, fen: string, nextMove: string) => {
       if (!positionsByMoveCount.has(moveCount)) {
         positionsByMoveCount.set(moveCount, new Map());
@@ -300,28 +316,23 @@ export const GameReviewService = {
       positionsAtMoveCount.get(normalizedFen)!.add(nextMove);
     };
 
-    // Reconstruct MoveTree and extract all possible lines
     const moveTree = MoveTree.fromJSON(chapter.moveTree);
     const allLines: string[][] = [];
 
-    // Recursively extract all lines from the tree
     const extractLines = (node: any, currentLine: string[]) => {
       if (!node) return;
 
       const lineWithThisMove = [...currentLine, node.san];
 
       if (!node.children || node.children.length === 0) {
-        // Leaf node - this is a complete line
         allLines.push(lineWithThisMove);
       } else {
-        // Branch node - recurse into all children
         for (const child of node.children) {
           extractLines(child, lineWithThisMove);
         }
       }
     };
 
-    // Start extraction from all root moves
     const rootMoves = moveTree.getRootMoves();
     for (const rootMove of rootMoves) {
       extractLines(rootMove, []);
@@ -329,19 +340,16 @@ export const GameReviewService = {
 
     console.log(`    [ExtractPositions] Found ${allLines.length} lines in chapter "${chapter.name}"`);
 
-    // Play through each line and record positions
     for (const line of allLines) {
       const chess = new Chess();
 
       for (let i = 0; i < line.length; i++) {
         const preFen = chess.fen();
-        const moveCount = i; // 0-indexed ply count
+        const moveCount = i;
         const nextMove = line[i];
 
-        // Record this position with the next move
         addPosition(moveCount, preFen, nextMove);
 
-        // Play the move
         try {
           chess.move(nextMove);
         } catch (error) {
@@ -350,11 +358,8 @@ export const GameReviewService = {
         }
       }
 
-      // IMPORTANT: Also record the FINAL position (end of line) with no next moves
-      // This allows us to detect when we've reached a known end-of-line position
       const finalFen = chess.fen();
       const finalMoveCount = line.length;
-      // Add final position with empty move set (explicitly, not through addPosition)
       if (!positionsByMoveCount.has(finalMoveCount)) {
         positionsByMoveCount.set(finalMoveCount, new Map());
       }
@@ -363,7 +368,6 @@ export const GameReviewService = {
       if (!finalPositions.has(normalizedFinalFen)) {
         finalPositions.set(normalizedFinalFen, new Set());
       }
-      // If this position already has moves from another line, that's fine - keep them
     }
 
     const totalPositions = Array.from(positionsByMoveCount.values())
@@ -375,9 +379,6 @@ export const GameReviewService = {
 
   /**
    * Build a comprehensive position map from all repertoire chapters
-   * Returns positions indexed by move count for efficient transposition detection
-   *
-   * Structure: Map<moveCount, Map<normalizedFEN, Set<possibleMoves>>>
    */
   buildRepertoirePositionMap(
     repertoires: Repertoire[],
@@ -394,7 +395,6 @@ export const GameReviewService = {
       for (const chapter of repertoire.chapters) {
         const chapterMap = this.extractPositionsFromChapter(chapter);
 
-        // Merge chapter map into combined map
         for (const [moveCount, positionsAtMoveCount] of chapterMap.entries()) {
           if (!combinedMap.has(moveCount)) {
             combinedMap.set(moveCount, new Map());
@@ -424,18 +424,14 @@ export const GameReviewService = {
 
   /**
    * Check if move matches repertoire by verifying the RESULTING position exists in repertoire
-   * This handles transpositions correctly: doesn't matter how we got here, only that we reach a known position
-   *
-   * Key insight: Check if playing the move reaches a position in the repertoire, not if the move
-   * is expected from the current position at the current ply
    */
   checkRepertoireMatchFEN(
-    preFen: string,  // Position BEFORE the move was played
-    movePlayed: string,  // The move that was played (SAN)
-    moveCount: number,  // Ply count (0-indexed: 0=first move, 1=second move, etc.)
-    isBlackMove: boolean,  // Whether this was Black's move
+    preFen: string,
+    movePlayed: string,
+    moveCount: number,
+    isBlackMove: boolean,
     userColor: 'white' | 'black',
-    positionMap: Map<number, Map<string, Set<string>>>  // Pre-built map from buildRepertoirePositionMap
+    positionMap: Map<number, Map<string, Set<string>>>
   ): RepertoireMatchResult {
     const isUserMove = (userColor === 'white' && !isBlackMove) || (userColor === 'black' && isBlackMove);
 
@@ -444,12 +440,11 @@ export const GameReviewService = {
     console.log('  [FEN-Match] User is playing as:', userColor.toUpperCase());
     console.log('  [FEN-Match] Is this a user move?', isUserMove);
 
-    // Calculate the RESULTING position after playing the move
     const chess = new Chess(preFen);
     try {
       chess.move(movePlayed);
     } catch (error) {
-      console.log(`  [FEN-Match] ✗ Invalid move "${movePlayed}"\n`);
+      console.log(`  [FEN-Match] Invalid move "${movePlayed}"\n`);
       return {
         matched: false,
         isUserMove,
@@ -463,14 +458,14 @@ export const GameReviewService = {
     console.log('  [FEN-Match] Resulting position:', resultingFen.substring(0, 60) + '...');
     console.log(`  [FEN-Match] Checking if resulting position exists in repertoire at ply ${resultingMoveCount}...`);
 
-    // First, check if resulting position exists at the expected ply (moveCount + 1)
+    // First, check if resulting position exists at the expected ply
     const positionsAtNextPly = positionMap.get(resultingMoveCount);
 
     if (positionsAtNextPly && positionsAtNextPly.has(resultingFen)) {
       const expectedMovesFromThisPosition = positionsAtNextPly.get(resultingFen);
       const expectedMoves = expectedMovesFromThisPosition ? Array.from(expectedMovesFromThisPosition) : [];
 
-      console.log(`  [FEN-Match] ✓ MATCH - Resulting position found in repertoire at ply ${resultingMoveCount}`);
+      console.log(`  [FEN-Match] MATCH - Resulting position found in repertoire at ply ${resultingMoveCount}`);
       console.log(`  [FEN-Match] Expected next moves from this position: ${expectedMoves.join(', ') || 'none (end of line)'}\n`);
 
       return {
@@ -488,7 +483,7 @@ export const GameReviewService = {
         const expectedMovesFromThisPosition = positions.get(resultingFen);
         const expectedMoves = expectedMovesFromThisPosition ? Array.from(expectedMovesFromThisPosition) : [];
 
-        console.log(`  [FEN-Match] ✓ MATCH - Resulting position found in repertoire at ply ${ply} (transposition!)`);
+        console.log(`  [FEN-Match] MATCH - Resulting position found in repertoire at ply ${ply} (transposition!)`);
         console.log(`  [FEN-Match] Expected next moves from this position: ${expectedMoves.join(', ') || 'none (end of line)'}\n`);
 
         return {
@@ -500,12 +495,10 @@ export const GameReviewService = {
     }
 
     // Resulting position not found anywhere in repertoire
-    // Need to determine deviation type: was the BEFORE position in repertoire?
     const beforeFen = normalizeFen(preFen);
     let beforePositionInRepertoire = false;
     let expectedMovesFromBeforePosition: string[] = [];
 
-    // Check if the position before this move exists in repertoire
     for (const [, positions] of positionMap) {
       if (positions.has(beforeFen)) {
         beforePositionInRepertoire = true;
@@ -516,8 +509,7 @@ export const GameReviewService = {
     }
 
     if (beforePositionInRepertoire) {
-      // We were in a known position but played a move that leads outside the repertoire
-      console.log(`  [FEN-Match] ✗ DEVIATION - Before position was in repertoire, but move leads outside`);
+      console.log(`  [FEN-Match] DEVIATION - Before position was in repertoire, but move leads outside`);
       console.log(`  [FEN-Match] Expected moves were: ${expectedMovesFromBeforePosition.join(', ')}\n`);
       return {
         matched: false,
@@ -526,8 +518,7 @@ export const GameReviewService = {
         deviationType: isUserMove ? 'user-misplay' : 'opponent-novelty',
       };
     } else {
-      // We weren't in a known position (already off-book)
-      console.log(`  [FEN-Match] ✗ COVERAGE-GAP - Before position was not in repertoire (already off-book)\n`);
+      console.log(`  [FEN-Match] COVERAGE-GAP - Before position was not in repertoire (already off-book)\n`);
       return {
         matched: false,
         isUserMove,
@@ -562,7 +553,6 @@ export const GameReviewService = {
         const currentFen = normalizeFen(chess.fen());
 
         if (currentFen === normalizedFen) {
-          // Position found - record move played
           moveFrequency[san] = (moveFrequency[san] || 0) + 1;
 
           if (san === movePlayed) {
@@ -575,7 +565,7 @@ export const GameReviewService = {
               year,
               event: game.event,
               movePlayed: san,
-              frequency: 0, // Will be calculated below
+              frequency: 0,
             });
           }
         }
@@ -588,7 +578,6 @@ export const GameReviewService = {
       }
     }
 
-    // Update frequencies
     const total = Object.values(moveFrequency).reduce((sum, count) => sum + count, 0);
     for (const ref of references) {
       ref.frequency = total > 0 ? (moveFrequency[ref.movePlayed] || 0) / total : 0;
@@ -598,18 +587,25 @@ export const GameReviewService = {
   },
 
   /**
-   * Identify if a move is a key move and why
+   * Identify if a move is a key move using win-probability classification.
+   *
+   * Classification logic:
+   * 1. Convert evalBefore/evalAfter to win probability from the moving player's perspective
+   * 2. Compute winProbLoss = winProbBefore - winProbAfter
+   * 3. Gate: if winProbBefore <= 30, skip blunder/mistake (already losing)
+   * 4. Blunder: winProbLoss >= 30, Mistake: >= 20, Inaccuracy: >= 10
+   * 5. Missing forced mate: always blunder regardless of gate
    */
   identifyKeyMove(
-    evalDelta: number | undefined,
+    evalBefore: EngineEvaluation | undefined,
+    evalAfter: EngineEvaluation | undefined,
+    isBlackMove: boolean,
     repertoireMatch: RepertoireMatchResult,
-    thresholds: EvalThresholds,
     hasAlreadyDeviated: boolean = false,
     wasInRepertoireLastMove: boolean = true,
     isInRepertoireNow: boolean = false
   ): { isKeyMove: boolean; keyMoveReason?: KeyMoveReason } {
     // Check for transposition back into repertoire
-    // If we were OUT of repertoire and are now back IN, mark as transposition
     if (!wasInRepertoireLastMove && isInRepertoireNow) {
       console.log('[identifyKeyMove] Transposition back into repertoire detected!');
       return {
@@ -619,7 +615,6 @@ export const GameReviewService = {
     }
 
     // Repertoire deviations are key moves ONLY if this is the first deviation
-    // After the first deviation, all subsequent moves will naturally not be in the repertoire
     if (repertoireMatch && !repertoireMatch.matched && !hasAlreadyDeviated) {
       return {
         isKeyMove: true,
@@ -627,29 +622,52 @@ export const GameReviewService = {
       };
     }
 
-    // Check eval-based key moves (only if engine analysis is available)
-    if (evalDelta !== undefined) {
-      const absLoss = Math.abs(evalDelta);
+    // Check eval-based key moves (only if both evaluations are available)
+    if (evalBefore && evalAfter) {
+      // Check for missing forced mate: had mate, lost it or it reversed
+      const hadWinningMate = evalBefore.mate !== undefined && (
+        (!isBlackMove && evalBefore.mate > 0) ||  // White had mate and White moved
+        (isBlackMove && evalBefore.mate < 0)       // Black had mate and Black moved
+      );
 
-      if (evalDelta < -thresholds.blunder) {
-        return { isKeyMove: true, keyMoveReason: 'blunder' };
+      if (hadWinningMate) {
+        // Check if mate is gone or reversed
+        const mateStillExists = evalAfter.mate !== undefined && (
+          (!isBlackMove && evalAfter.mate > 0) ||
+          (isBlackMove && evalAfter.mate < 0)
+        );
+        if (!mateStillExists) {
+          return { isKeyMove: true, keyMoveReason: 'blunder' };
+        }
       }
 
-      if (evalDelta < -thresholds.mistake) {
-        return { isKeyMove: true, keyMoveReason: 'mistake' };
-      }
+      // Convert to win probability from the moving player's perspective
+      const whiteWinProbBefore = evalToWinProbability(evalBefore);
+      const whiteWinProbAfter = evalToWinProbability(evalAfter);
 
-      if (evalDelta < -thresholds.inaccuracy) {
+      // If black just moved, invert to get black's win probability
+      const winProbBefore = isBlackMove ? (100 - whiteWinProbBefore) : whiteWinProbBefore;
+      const winProbAfter = isBlackMove ? (100 - whiteWinProbAfter) : whiteWinProbAfter;
+
+      const winProbLoss = winProbBefore - winProbAfter;
+
+      // Inaccuracy can always apply
+      if (winProbLoss >= 10) {
+        // Gate: if already losing (winProbBefore <= 30), only inaccuracy applies
+        if (winProbBefore <= 30) {
+          return { isKeyMove: true, keyMoveReason: 'inaccuracy' };
+        }
+
+        if (winProbLoss >= 30) {
+          return { isKeyMove: true, keyMoveReason: 'blunder' };
+        }
+        if (winProbLoss >= 20) {
+          return { isKeyMove: true, keyMoveReason: 'mistake' };
+        }
         return { isKeyMove: true, keyMoveReason: 'inaccuracy' };
-      }
-
-      // Check for brilliant moves (significant eval improvement in complex position)
-      if (evalDelta > 100 && absLoss > 50) {
-        return { isKeyMove: true, keyMoveReason: 'brilliant' };
       }
     }
 
-    // If no engine analysis and no repertoire deviation, not a key move
     return { isKeyMove: false };
   },
 

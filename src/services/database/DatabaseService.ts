@@ -4,7 +4,8 @@
  */
 
 import { Platform } from 'react-native';
-import { UserGame, MasterGame } from '@types';
+import { UserGame, MasterGame, Repertoire, normalizeFen } from '@types';
+import { Chess } from 'chess.js';
 import { WebDatabaseService } from './WebDatabaseService';
 
 const DB_NAME = 'kingside.db';
@@ -26,6 +27,8 @@ if (Platform.OS !== 'web') {
 class DatabaseServiceClass {
   private db: any | null = null;
   private isWeb = Platform.OS === 'web';
+  private fenSearchCache = new Map<string, UserGame[]>();
+  private masterFenSearchCache = new Map<string, MasterGame[]>();
 
   /**
    * Initialize database and create tables
@@ -86,6 +89,28 @@ class DatabaseServiceClass {
         CREATE INDEX IF NOT EXISTS idx_master_games_date ON master_games(date DESC);
         CREATE INDEX IF NOT EXISTS idx_master_games_eco ON master_games(eco);
         CREATE INDEX IF NOT EXISTS idx_master_games_imported ON master_games(imported_at DESC);
+      `);
+
+      // Create repertoires table
+      await this.db.execAsync(`
+        CREATE TABLE IF NOT EXISTS repertoires (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          color TEXT NOT NULL,
+          data TEXT NOT NULL,
+          created_at INTEGER NOT NULL,
+          updated_at INTEGER NOT NULL
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_repertoires_color ON repertoires(color);
+      `);
+
+      // Create settings table
+      await this.db.execAsync(`
+        CREATE TABLE IF NOT EXISTS settings (
+          key TEXT PRIMARY KEY,
+          value TEXT NOT NULL
+        );
       `);
 
       console.log('[DatabaseService] Database initialized successfully');
@@ -169,6 +194,7 @@ class DatabaseServiceClass {
         }
       });
 
+      this.fenSearchCache.clear();
       console.log(`[DatabaseService] Added ${games.length} user games successfully`);
     } catch (error) {
       console.error('[DatabaseService] Failed to add user games:', error);
@@ -233,6 +259,7 @@ class DatabaseServiceClass {
     if (!this.db) throw new Error('Database not initialized');
 
     await this.db.runAsync('DELETE FROM user_games WHERE id = ?', [id]);
+    this.fenSearchCache.clear();
     console.log(`[DatabaseService] Deleted user game: ${id}`);
   }
 
@@ -244,6 +271,7 @@ class DatabaseServiceClass {
     if (!this.db) throw new Error('Database not initialized');
 
     await this.db.runAsync('DELETE FROM user_games');
+    this.fenSearchCache.clear();
     console.log('[DatabaseService] Deleted all user games');
   }
 
@@ -296,6 +324,7 @@ class DatabaseServiceClass {
         }
       });
 
+      this.masterFenSearchCache.clear();
       console.log(`[DatabaseService] Added ${games.length} master games successfully`);
     } catch (error) {
       console.error('[DatabaseService] Failed to add master games:', error);
@@ -360,6 +389,7 @@ class DatabaseServiceClass {
     if (!this.db) throw new Error('Database not initialized');
 
     await this.db.runAsync('DELETE FROM master_games WHERE id = ?', [id]);
+    this.masterFenSearchCache.clear();
     console.log(`[DatabaseService] Deleted master game: ${id}`);
   }
 
@@ -371,6 +401,7 @@ class DatabaseServiceClass {
     if (!this.db) throw new Error('Database not initialized');
 
     await this.db.runAsync('DELETE FROM master_games');
+    this.masterFenSearchCache.clear();
     console.log('[DatabaseService] Deleted all master games');
   }
 
@@ -385,6 +416,97 @@ class DatabaseServiceClass {
       'SELECT COUNT(*) as count FROM master_games'
     ) as { count: number } | null;
     return result?.count || 0;
+  }
+
+  // ==================== REPERTOIRES ====================
+
+  private dateReviver(_key: string, value: any): any {
+    if (typeof value === 'string') {
+      const datePattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/;
+      if (datePattern.test(value)) {
+        return new Date(value);
+      }
+    }
+    return value;
+  }
+
+  async addRepertoire(repertoire: Repertoire): Promise<void> {
+    if (this.isWeb) return WebDatabaseService.addRepertoire(repertoire);
+    if (!this.db) throw new Error('Database not initialized');
+
+    const now = Date.now();
+    await this.db.runAsync(
+      `INSERT OR IGNORE INTO repertoires (id, name, color, data, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [repertoire.id, repertoire.name, repertoire.color, JSON.stringify(repertoire), now, now]
+    );
+  }
+
+  async updateRepertoire(repertoire: Repertoire): Promise<void> {
+    if (this.isWeb) return WebDatabaseService.updateRepertoire(repertoire);
+    if (!this.db) throw new Error('Database not initialized');
+
+    await this.db.runAsync(
+      `UPDATE repertoires SET name = ?, color = ?, data = ?, updated_at = ? WHERE id = ?`,
+      [repertoire.name, repertoire.color, JSON.stringify(repertoire), Date.now(), repertoire.id]
+    );
+  }
+
+  async deleteRepertoire(id: string): Promise<void> {
+    if (this.isWeb) return WebDatabaseService.deleteRepertoire(id);
+    if (!this.db) throw new Error('Database not initialized');
+
+    await this.db.runAsync('DELETE FROM repertoires WHERE id = ?', [id]);
+  }
+
+  async getAllRepertoires(): Promise<Repertoire[]> {
+    if (this.isWeb) return WebDatabaseService.getAllRepertoires();
+    if (!this.db) throw new Error('Database not initialized');
+
+    const rows = await this.db.getAllAsync('SELECT data FROM repertoires ORDER BY created_at ASC');
+    return (rows as any[]).map((row: any) =>
+      JSON.parse(row.data, (key, value) => this.dateReviver(key, value)) as Repertoire
+    );
+  }
+
+  async getRepertoireById(id: string): Promise<Repertoire | null> {
+    if (this.isWeb) return WebDatabaseService.getRepertoireById(id);
+    if (!this.db) throw new Error('Database not initialized');
+
+    const row = await this.db.getFirstAsync('SELECT data FROM repertoires WHERE id = ?', [id]) as any;
+    if (!row) return null;
+    return JSON.parse(row.data, (key, value) => this.dateReviver(key, value)) as Repertoire;
+  }
+
+  async getRepertoiresCount(): Promise<number> {
+    if (this.isWeb) return WebDatabaseService.getRepertoiresCount();
+    if (!this.db) throw new Error('Database not initialized');
+
+    const result = await this.db.getFirstAsync(
+      'SELECT COUNT(*) as count FROM repertoires'
+    ) as { count: number } | null;
+    return result?.count || 0;
+  }
+
+  // ==================== SETTINGS ====================
+
+  async saveSetting(key: string, value: unknown): Promise<void> {
+    if (this.isWeb) return WebDatabaseService.saveSetting(key, value);
+    if (!this.db) throw new Error('Database not initialized');
+
+    await this.db.runAsync(
+      `INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)`,
+      [key, JSON.stringify(value)]
+    );
+  }
+
+  async getSetting<T>(key: string): Promise<T | null> {
+    if (this.isWeb) return WebDatabaseService.getSetting<T>(key);
+    if (!this.db) throw new Error('Database not initialized');
+
+    const row = await this.db.getFirstAsync('SELECT value FROM settings WHERE key = ?', [key]) as any;
+    if (!row) return null;
+    return JSON.parse(row.value, (k, v) => this.dateReviver(k, v)) as T;
   }
 
   // ==================== SEARCH / FILTER ====================
@@ -451,6 +573,77 @@ class DatabaseServiceClass {
     const hasMore = offset + pageSize < totalCount;
 
     return { items, totalCount, hasMore, page };
+  }
+
+  // ==================== FEN-BASED SEARCH ====================
+
+  /**
+   * Replay a PGN's moves and check if any position matches the target FEN
+   */
+  private gameContainsFen(pgn: string, normalizedTarget: string): boolean {
+    const chess = new Chess();
+
+    // Check starting position
+    if (normalizeFen(chess.fen()) === normalizedTarget) return true;
+
+    // Strip headers and comments, extract moves
+    let movesText = pgn.replace(/^\[.*?\]$/gm, '');
+    movesText = movesText.replace(/\{[^}]*\}/g, '');
+    movesText = movesText.replace(/;.*$/gm, '');
+    movesText = movesText.replace(/\s+(1-0|0-1|1\/2-1\/2|\*)\s*$/g, '');
+
+    const sections = movesText.split(/\d+\.\s*/).filter(s => s.trim());
+    for (const section of sections) {
+      const tokens = section.trim().split(/\s+/).filter(t => t.trim());
+      for (const token of tokens) {
+        const clean = token.replace(/[!?]+$/, '').replace(/[",]/g, '').trim();
+        if (!clean) continue;
+        try {
+          chess.move(clean);
+          if (normalizeFen(chess.fen()) === normalizedTarget) return true;
+        } catch {
+          // Not a valid move token, skip
+        }
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * Search user games that contain a specific FEN position
+   */
+  async searchUserGamesByFEN(fen: string): Promise<UserGame[]> {
+    if (this.isWeb) return WebDatabaseService.searchUserGamesByFEN(fen);
+
+    const cached = this.fenSearchCache.get(fen);
+    if (cached) return cached;
+
+    const allGames = await this.getAllUserGames();
+    const normalizedTarget = normalizeFen(fen);
+
+    const matches = allGames.filter(game => this.gameContainsFen(game.pgn, normalizedTarget));
+
+    this.fenSearchCache.set(fen, matches);
+    return matches;
+  }
+
+  /**
+   * Search master games that contain a specific FEN position
+   */
+  async searchMasterGamesByFEN(fen: string): Promise<MasterGame[]> {
+    if (this.isWeb) return WebDatabaseService.searchMasterGamesByFEN(fen);
+
+    const cached = this.masterFenSearchCache.get(fen);
+    if (cached) return cached;
+
+    const allGames = await this.getAllMasterGames();
+    const normalizedTarget = normalizeFen(fen);
+
+    const matches = allGames.filter(game => this.gameContainsFen(game.pgn, normalizedTarget));
+
+    this.masterFenSearchCache.set(fen, matches);
+    return matches;
   }
 }
 

@@ -33,8 +33,10 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
   const [progress, setProgress] = useState({ current: 0, total: 0, phase: '' });
   const [fileSelected, setFileSelected] = useState(false);
   const [lichessUsername, setLichessUsername] = useState('');
+  const [masterGameCount, setMasterGameCount] = useState('50');
+  const [masterDaysBack, setMasterDaysBack] = useState('0');
   const [isImportingLichess, setIsImportingLichess] = useState(false);
-  const { addRepertoire, addUserGames, addMasterGames } = useStore();
+  const { addRepertoire, addUserGames, addMasterGames, reviewSettings } = useStore();
 
   const readFileWithTimeout = async (uri: string, timeoutMs: number = 15000): Promise<string> => {
     const fileReadPromise = Platform.OS === 'web'
@@ -132,9 +134,16 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
     return results;
   };
 
-  const handleLichessImport = async () => {
-    if (!lichessUsername.trim()) {
-      Alert.alert('Error', 'Please enter a Lichess username');
+  const handleLichessImport = async (mode: 'master' | 'user') => {
+    const username = mode === 'master'
+      ? lichessUsername.trim()
+      : reviewSettings.lichess.username?.trim();
+
+    if (!username) {
+      const msg = mode === 'master'
+        ? 'Please enter a Lichess username'
+        : 'Please set your Lichess username in Settings';
+      Alert.alert('Error', msg);
       return;
     }
 
@@ -142,27 +151,33 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
     setProgress({ current: 0, total: 0, phase: 'Fetching games from Lichess...' });
 
     try {
-      console.log('[ImportPGN] Fetching games for username:', lichessUsername);
+      console.log('[ImportPGN] Fetching games for username:', username);
 
-      const pgns = await LichessService.fetchMasterGames(lichessUsername, 50);
+      let pgns: string[];
+      if (mode === 'master') {
+        const max = parseInt(masterGameCount, 10) || 50;
+        const daysBack = parseInt(masterDaysBack, 10) || 0;
+        pgns = await LichessService.fetchMasterGames(username, max, daysBack || undefined);
+      } else {
+        const daysBack = reviewSettings.lichess.importDaysBack;
+        pgns = await LichessService.fetchUserGames(username, 50, daysBack || undefined);
+      }
 
       if (pgns.length === 0) {
-        Alert.alert('No Games', `No games found for user "${lichessUsername}"`);
+        Alert.alert('No Games', `No games found for user "${username}"`);
         setIsImportingLichess(false);
         return;
       }
 
       console.log('[ImportPGN] Fetched', pgns.length, 'PGNs from Lichess');
 
-      // Combine all PGNs with double newline separator
       const combinedPgn = pgns.join('\n\n');
 
-      // Use existing import logic
       setIsImporting(true);
       await handleImport(combinedPgn);
 
-      Alert.alert('Success', `Imported ${pgns.length} games from ${lichessUsername}`);
-      setLichessUsername('');
+      Alert.alert('Success', `Imported ${pgns.length} games from ${username}`);
+      if (mode === 'master') setLichessUsername('');
     } catch (error: any) {
       console.error('[ImportPGN] Lichess import error:', error);
       Alert.alert('Import Error', error?.message || String(error));
@@ -345,7 +360,7 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
 
       {!isImporting && !fileSelected && !isImportingLichess && (
         <>
-          {/* Lichess import (Master Games only) */}
+          {/* Lichess import (Master Games) */}
           {target === 'master-games' && (
             <View style={styles.lichessSection}>
               <Text style={styles.sectionTitle}>Import from Lichess</Text>
@@ -358,10 +373,59 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
                 autoCapitalize="none"
                 autoCorrect={false}
               />
+              <View style={styles.inlineRow}>
+                <View style={styles.inlineField}>
+                  <Text style={styles.label}>Game count</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={masterGameCount}
+                    onChangeText={setMasterGameCount}
+                    placeholder="50"
+                    placeholderTextColor="#666"
+                    keyboardType="numeric"
+                  />
+                </View>
+                <View style={styles.inlineField}>
+                  <Text style={styles.label}>Days back (0 = all time)</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={masterDaysBack}
+                    onChangeText={setMasterDaysBack}
+                    placeholder="0"
+                    placeholderTextColor="#666"
+                    keyboardType="numeric"
+                  />
+                </View>
+              </View>
               <TouchableOpacity
                 style={[styles.lichessButton, (!lichessUsername.trim() || isImportingLichess) && styles.buttonDisabled]}
-                onPress={handleLichessImport}
+                onPress={() => handleLichessImport('master')}
                 disabled={!lichessUsername.trim() || isImportingLichess}
+              >
+                <Text style={styles.buttonText}>
+                  {isImportingLichess ? 'Importing from Lichess...' : 'Import from Lichess'}
+                </Text>
+              </TouchableOpacity>
+              <View style={styles.divider}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.dividerText}>OR</Text>
+                <View style={styles.dividerLine} />
+              </View>
+            </View>
+          )}
+
+          {/* Lichess import (My Games) */}
+          {target === 'my-games' && reviewSettings.lichess.username && (
+            <View style={styles.lichessSection}>
+              <Text style={styles.sectionTitle}>Import from Lichess</Text>
+              <Text style={styles.label}>
+                Username: {reviewSettings.lichess.username}
+                {reviewSettings.lichess.importDaysBack > 0 && ` | Last ${reviewSettings.lichess.importDaysBack} days`}
+              </Text>
+              <TouchableOpacity
+                style={[styles.lichessButton, isImportingLichess && styles.buttonDisabled]}
+                onPress={() => handleLichessImport('user')}
+                disabled={isImportingLichess}
               >
                 <Text style={styles.buttonText}>
                   {isImportingLichess ? 'Importing from Lichess...' : 'Import from Lichess'}
@@ -449,21 +513,21 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
+    padding: 10,
     backgroundColor: '#2c2c2c',
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#e0e0e0',
-    marginBottom: 20,
+    marginBottom: 12,
   },
   input: {
     backgroundColor: '#3a3a3a',
     borderRadius: 8,
     padding: 12,
     color: '#e0e0e0',
-    marginBottom: 16,
+    marginBottom: 10,
     fontSize: 16,
   },
   label: {
@@ -472,7 +536,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   colorToggle: {
-    marginBottom: 16,
+    marginBottom: 10,
   },
   colorButtons: {
     flexDirection: 'row',
@@ -502,7 +566,7 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 8,
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 10,
   },
   buttonDisabled: {
     backgroundColor: '#555',
@@ -522,17 +586,17 @@ const styles = StyleSheet.create({
     fontFamily: 'monospace',
     minHeight: 200,
     textAlignVertical: 'top',
-    marginBottom: 16,
+    marginBottom: 10,
   },
   importButton: {
     backgroundColor: '#34C759',
-    padding: 16,
+    padding: 14,
     borderRadius: 8,
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: 24,
   },
   loadingContainer: {
-    padding: 32,
+    padding: 20,
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 200,
@@ -541,7 +605,7 @@ const styles = StyleSheet.create({
     color: '#4a9eff',
     fontSize: 16,
     fontWeight: '600',
-    marginTop: 16,
+    marginTop: 10,
   },
   loadingText: {
     color: '#e0e0e0',
@@ -554,8 +618,8 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   lichessSection: {
-    marginBottom: 24,
-    padding: 16,
+    marginBottom: 16,
+    padding: 10,
     backgroundColor: '#3a3a3a',
     borderRadius: 8,
   },
@@ -563,7 +627,7 @@ const styles = StyleSheet.create({
     color: '#e0e0e0',
     fontSize: 18,
     fontWeight: '600',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   lichessButton: {
     backgroundColor: '#4a9eff',
@@ -575,7 +639,7 @@ const styles = StyleSheet.create({
   divider: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 24,
+    marginTop: 16,
     marginBottom: 8,
   },
   dividerLine: {
@@ -588,5 +652,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     marginHorizontal: 12,
+  },
+  inlineRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  inlineField: {
+    flex: 1,
   },
 });

@@ -27,8 +27,17 @@ class LichessServiceClass {
    * @param max Maximum number of games to fetch (default 50)
    * @returns Array of PGN strings
    */
-  async fetchUserGames(username: string, max: number = 50): Promise<string[]> {
-    const url = `${this.BASE_URL}/games/user/${username}?max=${max}&pgnInJson=true&opening=true`;
+  async fetchUserGames(
+    username: string,
+    max: number = 50,
+    sinceDaysBack?: number,
+  ): Promise<string[]> {
+    let url = `${this.BASE_URL}/games/user/${username}?max=${max}&pgnInJson=true&opening=true&evals=true`;
+
+    if (sinceDaysBack !== undefined && sinceDaysBack > 0) {
+      const since = Date.now() - sinceDaysBack * 86400 * 1000;
+      url += `&since=${since}`;
+    }
 
     console.log('[LichessService] Fetching games for:', username);
 
@@ -75,8 +84,12 @@ class LichessServiceClass {
   /**
    * Fetch master games (same as user games - any player can be imported as "master")
    */
-  async fetchMasterGames(username: string, max: number = 50): Promise<string[]> {
-    return this.fetchUserGames(username, max);
+  async fetchMasterGames(
+    username: string,
+    max: number = 50,
+    sinceDaysBack?: number,
+  ): Promise<string[]> {
+    return this.fetchUserGames(username, max, sinceDaysBack);
   }
 }
 

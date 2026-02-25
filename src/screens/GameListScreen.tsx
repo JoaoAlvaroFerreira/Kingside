@@ -468,7 +468,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: 12,
   },
   emptyTitle: {
     fontSize: 16,
@@ -480,7 +480,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#888',
     textAlign: 'center',
-    marginBottom: 16,
+    marginBottom: 10,
   },
   emptyButton: {
     backgroundColor: '#007AFF',

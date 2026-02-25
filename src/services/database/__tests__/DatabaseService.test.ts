@@ -36,12 +36,44 @@ jest.mock('../WebDatabaseService', () => ({
     getMasterGamesCount: jest.fn(),
     searchUserGames: jest.fn(),
     searchMasterGames: jest.fn(),
+    addRepertoire: jest.fn(),
+    updateRepertoire: jest.fn(),
+    deleteRepertoire: jest.fn(),
+    getAllRepertoires: jest.fn(),
+    getRepertoireById: jest.fn(),
+    getRepertoiresCount: jest.fn(),
+    saveSetting: jest.fn(),
+    getSetting: jest.fn(),
   },
 }));
 
-import { UserGame } from '@types';
+import { UserGame, Repertoire } from '@types';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { DatabaseService } = require('../DatabaseService');
+
+function makeRepertoire(overrides: Partial<Repertoire> = {}): Repertoire {
+  return {
+    id: `rep-${Math.random().toString(36).slice(2)}`,
+    name: 'Sicilian Defense',
+    color: 'black',
+    openingType: 'e4',
+    eco: 'B20',
+    chapters: [
+      {
+        id: `ch-${Math.random().toString(36).slice(2)}`,
+        name: 'Main Line',
+        pgn: '1. e4 c5 *',
+        moveTree: { root: { san: null, children: [] } },
+        order: 0,
+        createdAt: new Date('2025-06-01T10:00:00.000Z'),
+        updatedAt: new Date('2025-06-01T10:00:00.000Z'),
+      },
+    ],
+    createdAt: new Date('2025-06-01T10:00:00.000Z'),
+    updatedAt: new Date('2025-06-01T10:00:00.000Z'),
+    ...overrides,
+  };
+}
 
 function makeGame(overrides: Partial<UserGame> = {}): UserGame {
   return {
@@ -211,6 +243,157 @@ describe('DatabaseService', () => {
     it('getMasterGamesCount returns count', async () => {
       mockDb.getFirstAsync.mockResolvedValueOnce({ count: 7 });
       expect(await DatabaseService.getMasterGamesCount()).toBe(7);
+    });
+  });
+
+  describe('repertoires', () => {
+    beforeEach(() => DatabaseService.initialize());
+
+    it('addRepertoire then getAllRepertoires returns the repertoire', async () => {
+      const rep = makeRepertoire();
+      await DatabaseService.addRepertoire(rep);
+
+      // Verify INSERT OR IGNORE was called with correct params
+      expect(mockDb.runAsync).toHaveBeenCalledWith(
+        expect.stringContaining('INSERT OR IGNORE INTO repertoires'),
+        expect.arrayContaining([rep.id, rep.name, rep.color])
+      );
+
+      // Simulate getAllRepertoires returning the stored data
+      mockDb.getAllAsync.mockResolvedValueOnce([{ data: JSON.stringify(rep) }]);
+      const all = await DatabaseService.getAllRepertoires();
+      expect(all).toHaveLength(1);
+      expect(all[0].id).toBe(rep.id);
+      expect(all[0].name).toBe(rep.name);
+    });
+
+    it('updateRepertoire changes the data', async () => {
+      const rep = makeRepertoire();
+      const updated = { ...rep, name: 'Updated Name' };
+      await DatabaseService.updateRepertoire(updated);
+
+      expect(mockDb.runAsync).toHaveBeenCalledWith(
+        expect.stringContaining('UPDATE repertoires SET'),
+        expect.arrayContaining([updated.name, updated.color, expect.any(String), expect.any(Number), updated.id])
+      );
+    });
+
+    it('deleteRepertoire removes it', async () => {
+      await DatabaseService.deleteRepertoire('rep-123');
+      expect(mockDb.runAsync).toHaveBeenCalledWith(
+        'DELETE FROM repertoires WHERE id = ?',
+        ['rep-123']
+      );
+    });
+
+    it('getRepertoireById finds by ID', async () => {
+      const rep = makeRepertoire();
+      mockDb.getFirstAsync.mockResolvedValueOnce({ data: JSON.stringify(rep) });
+      const result = await DatabaseService.getRepertoireById(rep.id);
+      expect(result?.id).toBe(rep.id);
+    });
+
+    it('getRepertoireById returns null for missing ID', async () => {
+      mockDb.getFirstAsync.mockResolvedValueOnce(null);
+      const result = await DatabaseService.getRepertoireById('nonexistent');
+      expect(result).toBeNull();
+    });
+
+    it('repertoire with chapters survives JSON round-trip', async () => {
+      const rep = makeRepertoire({
+        chapters: [
+          {
+            id: 'ch-1',
+            name: 'Chapter 1',
+            pgn: '1. e4 c5 2. Nf3 *',
+            moveTree: { root: { san: null, children: [{ san: 'e4', children: [{ san: 'c5', children: [] }] }] } },
+            order: 0,
+            createdAt: new Date('2025-06-01T10:00:00.000Z'),
+            updatedAt: new Date('2025-06-15T12:00:00.000Z'),
+          },
+        ],
+      });
+
+      mockDb.getAllAsync.mockResolvedValueOnce([{ data: JSON.stringify(rep) }]);
+      const all = await DatabaseService.getAllRepertoires();
+      expect(all[0].chapters[0].moveTree.root.children).toHaveLength(1);
+      expect(all[0].chapters[0].moveTree.root.children[0].san).toBe('e4');
+    });
+
+    it('Date fields in repertoire survive serialization', async () => {
+      const rep = makeRepertoire({
+        chapters: [
+          {
+            id: 'ch-dates',
+            name: 'Date Test',
+            pgn: '1. e4 *',
+            moveTree: {},
+            order: 0,
+            createdAt: new Date('2025-06-01T10:00:00.000Z'),
+            updatedAt: new Date('2025-06-15T12:00:00.000Z'),
+            lastStudiedAt: new Date('2025-07-01T08:30:00.000Z'),
+          },
+        ],
+      });
+
+      mockDb.getAllAsync.mockResolvedValueOnce([{ data: JSON.stringify(rep) }]);
+      const all = await DatabaseService.getAllRepertoires();
+      const chapter = all[0].chapters[0];
+      expect(chapter.createdAt).toBeInstanceOf(Date);
+      expect(chapter.updatedAt).toBeInstanceOf(Date);
+      expect(chapter.lastStudiedAt).toBeInstanceOf(Date);
+      expect((chapter.lastStudiedAt as Date).toISOString()).toBe('2025-07-01T08:30:00.000Z');
+    });
+
+    it('getRepertoiresCount returns count', async () => {
+      mockDb.getFirstAsync.mockResolvedValueOnce({ count: 3 });
+      expect(await DatabaseService.getRepertoiresCount()).toBe(3);
+    });
+
+    it('getRepertoiresCount returns 0 when null', async () => {
+      mockDb.getFirstAsync.mockResolvedValueOnce(null);
+      expect(await DatabaseService.getRepertoiresCount()).toBe(0);
+    });
+  });
+
+  describe('settings', () => {
+    beforeEach(() => DatabaseService.initialize());
+
+    it('saveSetting then getSetting returns the same value', async () => {
+      const settings = { engine: { depth: 20 }, thresholds: { blunder: 200 } };
+      await DatabaseService.saveSetting('reviewSettings', settings);
+
+      expect(mockDb.runAsync).toHaveBeenCalledWith(
+        expect.stringContaining('INSERT OR REPLACE INTO settings'),
+        ['reviewSettings', JSON.stringify(settings)]
+      );
+
+      mockDb.getFirstAsync.mockResolvedValueOnce({ value: JSON.stringify(settings) });
+      const result = await DatabaseService.getSetting('reviewSettings');
+      expect(result).toEqual(settings);
+    });
+
+    it('getSetting returns null for missing key', async () => {
+      mockDb.getFirstAsync.mockResolvedValueOnce(null);
+      const result = await DatabaseService.getSetting('nonexistent');
+      expect(result).toBeNull();
+    });
+
+    it('getSetting revives Date objects', async () => {
+      const data = { lastUpdated: new Date('2025-08-01T00:00:00.000Z') };
+      mockDb.getFirstAsync.mockResolvedValueOnce({ value: JSON.stringify(data) });
+      const result = await DatabaseService.getSetting('dateKey') as typeof data | null;
+      expect(result?.lastUpdated).toBeInstanceOf(Date);
+    });
+  });
+
+  describe('initialize creates repertoires and settings tables', () => {
+    it('creates repertoires table and settings table', async () => {
+      await DatabaseService.initialize();
+      const sql = mockDb.execAsync.mock.calls.map(([s]: [string]) => s).join('\n');
+      expect(sql).toMatch(/CREATE TABLE IF NOT EXISTS repertoires/);
+      expect(sql).toMatch(/CREATE INDEX IF NOT EXISTS idx_repertoires_color/);
+      expect(sql).toMatch(/CREATE TABLE IF NOT EXISTS settings/);
     });
   });
 });

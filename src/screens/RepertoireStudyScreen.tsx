@@ -1,19 +1,24 @@
 /**
  * Repertoire Study Screen
- * 5-component layout: Hierarchy Browser, Chapter List, Board + Move History, Game Lists
+ * Wide: [left panel toggle] + [ChessWorkspace] + [Game Lists at bottom]
+ * Narrow: ScrollView with hierarchy, chapter selector, game lists, ChessWorkspace
  */
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { View, StyleSheet, useWindowDimensions, ScrollView, TouchableOpacity, Text, Platform } from 'react-native';
 import { useStore } from '@store';
 import { MoveTree } from '@utils/MoveTree';
-import { InteractiveChessBoard } from '@components/chess/InteractiveChessBoard/InteractiveChessBoard';
-import { MoveHistory } from '@components/chess/MoveHistory/MoveHistory';
-import { SettingsModal } from '@components/chess/ChessWorkspace/SettingsModal';
+import { ChessWorkspace } from '@components/chess/ChessWorkspace/ChessWorkspace';
 import { HierarchyBrowser } from '@components/repertoire/HierarchyBrowser';
 import { ChapterList } from '@components/repertoire/ChapterList';
+import { ChapterSelectModal } from '@components/ChapterSelectModal';
 import { GameList } from '@components/repertoire/GameList';
-import { computeFensFromMoves, normalizeFen, UserGame, MasterGame } from '@types';
+import { computeFensFromMoves, normalizeFen, UserGame, MasterGame, Line } from '@types';
+import { createLineGenerator, LineGeneratorState } from '@services/training/LineGenerator';
+
+// Height reserved for the game lists section in wide mode.
+// Passed as verticalOffset to ChessWorkspace so board sizing accounts for it.
+const GAME_LIST_HEIGHT = 180;
 
 interface RepertoireStudyScreenProps {
   navigation: any;
@@ -27,10 +32,9 @@ interface RepertoireStudyScreenProps {
 
 export default function RepertoireStudyScreen({ navigation: _navigation, route }: RepertoireStudyScreenProps) {
   const { repertoireId, chapterId } = route.params;
-  const { repertoires, screenSettings } = useStore();
-  const { width, height } = useWindowDimensions();
+  const { repertoires } = useStore();
+  const { width } = useWindowDimensions();
   const isWide = width > 700;
-  const settings = screenSettings.repertoire;
 
   const repertoire = useMemo(
     () => repertoires.find(r => r.id === repertoireId),
@@ -41,7 +45,7 @@ export default function RepertoireStudyScreen({ navigation: _navigation, route }
   const [moveTree, setMoveTree] = useState<MoveTree | null>(null);
   const [, forceUpdate] = useState(0);
   const [leftPanelVisible, setLeftPanelVisible] = useState(false);
-  const [settingsVisible, setSettingsVisible] = useState(false);
+  const [chapterModalVisible, setChapterModalVisible] = useState(false);
   const [gamesAtPosition, setGamesAtPosition] = useState<{ userGames: UserGame[]; masterGames: MasterGame[] }>({
     userGames: [],
     masterGames: [],
@@ -52,35 +56,36 @@ export default function RepertoireStudyScreen({ navigation: _navigation, route }
     [repertoire, selectedChapterId]
   );
 
+  const [_lineGenerator, setLineGenerator] = useState<LineGeneratorState | null>(null);
+  const [_currentLines, setCurrentLines] = useState<Line[]>([]);
+
   useEffect(() => {
-    if (currentChapter) {
+    if (currentChapter && repertoire) {
       const tree = MoveTree.fromJSON(currentChapter.moveTree);
       setMoveTree(tree);
-    }
-  }, [currentChapter]);
 
-  // Keyboard navigation support (web only)
+      const generator = createLineGenerator(
+        currentChapter.moveTree,
+        repertoire.id,
+        currentChapter.id,
+        repertoire.color
+      );
+      setLineGenerator(generator);
+      const initialBatch = generator.loadNextBatch();
+      setCurrentLines(initialBatch);
+    }
+  }, [currentChapter, repertoire]);
+
+  // Keyboard navigation (web only)
   useEffect(() => {
     if (Platform.OS !== 'web' || !moveTree) return;
 
     const handleKeyDown = (event: KeyboardEvent) => {
       switch (event.key) {
-        case 'ArrowLeft':
-          event.preventDefault();
-          handleGoBack();
-          break;
-        case 'ArrowRight':
-          event.preventDefault();
-          handleGoForward();
-          break;
-        case 'Home':
-          event.preventDefault();
-          handleGoToStart();
-          break;
-        case 'End':
-          event.preventDefault();
-          handleGoToEnd();
-          break;
+        case 'ArrowLeft': event.preventDefault(); handleGoBack(); break;
+        case 'ArrowRight': event.preventDefault(); handleGoForward(); break;
+        case 'Home': event.preventDefault(); handleGoToStart(); break;
+        case 'End': event.preventDefault(); handleGoToEnd(); break;
       }
     };
 
@@ -89,33 +94,10 @@ export default function RepertoireStudyScreen({ navigation: _navigation, route }
   }, [moveTree]);
 
   const currentFen = moveTree?.getCurrentFen() || '';
-  const currentComment = moveTree?.getCurrentNode()?.comment || '';
+  const currentNodeId = moveTree?.getCurrentNode()?.id || null;
 
-  // Calculate board size from settings
-  const maxBoardSize = Math.min(width, height - 100) - 40;
-  const sizeMap = {
-    tiny: 200,
-    small: 240,
-    medium: 300,
-    large: 340,
-    xlarge: 380,
-  };
-  const boardSizeSetting = settings.boardSize || 'small';
-  const maxSize = sizeMap[boardSizeSetting];
-  const boardSizePixels = Math.min(maxBoardSize, maxSize);
-
-  console.log('[RepertoireStudyScreen] Board size:', {
-    boardSizeSetting,
-    maxSize,
-    maxBoardSize,
-    boardSizePixels,
-  });
-
-  // Load games that match current position from database (disabled for now - performance issue)
-  // TODO: Add FEN indexing to database for efficient position search
+  // Disabled: loading all games is too slow without FEN indexing
   useEffect(() => {
-    // Temporarily disabled - loading all games is too slow for large databases
-    // Will need to implement FEN indexing in database to make this performant
     setGamesAtPosition({ userGames: [], masterGames: [] });
   }, [currentFen]);
 
@@ -136,7 +118,6 @@ export default function RepertoireStudyScreen({ navigation: _navigation, route }
     for (const san of continuation) {
       moveTree.addMove(san);
     }
-
     forceUpdate(n => n + 1);
   };
 
@@ -165,29 +146,10 @@ export default function RepertoireStudyScreen({ navigation: _navigation, route }
     forceUpdate(n => n + 1);
   };
 
-  const handleGoBack = () => {
-    if (!moveTree) return;
-    moveTree.goBack();
-    forceUpdate(n => n + 1);
-  };
-
-  const handleGoForward = () => {
-    if (!moveTree) return;
-    moveTree.goForward();
-    forceUpdate(n => n + 1);
-  };
-
-  const handleGoToStart = () => {
-    if (!moveTree) return;
-    moveTree.goToStart();
-    forceUpdate(n => n + 1);
-  };
-
-  const handleGoToEnd = () => {
-    if (!moveTree) return;
-    moveTree.goToEnd();
-    forceUpdate(n => n + 1);
-  };
+  const handleGoBack = () => { if (!moveTree) return; moveTree.goBack(); forceUpdate(n => n + 1); };
+  const handleGoForward = () => { if (!moveTree) return; moveTree.goForward(); forceUpdate(n => n + 1); };
+  const handleGoToStart = () => { if (!moveTree) return; moveTree.goToStart(); forceUpdate(n => n + 1); };
+  const handleGoToEnd = () => { if (!moveTree) return; moveTree.goToEnd(); forceUpdate(n => n + 1); };
 
   const handlePromoteToMainLine = (nodeId: string) => {
     if (!moveTree) return;
@@ -199,11 +161,50 @@ export default function RepertoireStudyScreen({ navigation: _navigation, route }
     return null;
   }
 
+  const chessWorkspaceProps = {
+    fen: currentFen,
+    onMove: handleMoveClick,
+    moveTree,
+    currentNodeId,
+    onNavigate: handleNavigate,
+    onGoBack: handleGoBack,
+    onGoForward: handleGoForward,
+    onGoToStart: handleGoToStart,
+    onGoToEnd: handleGoToEnd,
+    onMarkCritical: handleMarkCritical,
+    onPromoteToMainLine: handlePromoteToMainLine,
+    screenKey: 'repertoire' as const,
+    orientationOverride: repertoire.color,
+    showMoveHistory: true,
+    showSettingsGear: true,
+  };
+
+  const gameLists = (collapsed: boolean) => (
+    <View style={styles.bottomSection}>
+      <View style={styles.gameListHalf}>
+        <GameList
+          title="Your Games"
+          games={gamesAtPosition.userGames}
+          onSelect={handleSelectGame}
+          defaultCollapsed={collapsed}
+        />
+      </View>
+      <View style={styles.gameListHalf}>
+        <GameList
+          title="Master Games"
+          games={gamesAtPosition.masterGames}
+          onSelect={handleSelectGame}
+          defaultCollapsed={collapsed}
+        />
+      </View>
+    </View>
+  );
+
   return (
     <View style={styles.container}>
       {isWide ? (
         <View style={styles.wideLayout}>
-          {/* Collapsible Left Panel - Hierarchy + Chapters */}
+          {/* Collapsible Left Panel */}
           {leftPanelVisible && (
             <ScrollView style={styles.leftPanel}>
               <HierarchyBrowser
@@ -221,7 +222,6 @@ export default function RepertoireStudyScreen({ navigation: _navigation, route }
             </ScrollView>
           )}
 
-          {/* Toggle Button */}
           <TouchableOpacity
             style={styles.toggleButton}
             onPress={() => setLeftPanelVisible(!leftPanelVisible)}
@@ -231,62 +231,10 @@ export default function RepertoireStudyScreen({ navigation: _navigation, route }
             </Text>
           </TouchableOpacity>
 
-          {/* Main Content - Board, Move History, and Game Lists */}
-          <View style={styles.mainContent}>
-            {/* Top Section - Board + Move History */}
-            <View style={styles.topSection}>
-              <View style={styles.boardContainer}>
-                <InteractiveChessBoard
-                  fen={currentFen}
-                  onMove={handleMoveClick}
-                  orientation={repertoire.color}
-                  showCoordinates={settings.coordinatesVisible}
-                  boardSizePixels={boardSizePixels}
-                />
-                {currentComment && (
-                  <View style={[styles.commentBox, { maxWidth: boardSizePixels }]}>
-                    <Text style={styles.commentText}>{currentComment}</Text>
-                  </View>
-                )}
-              </View>
-
-              <View style={styles.moveHistoryPanel}>
-                <MoveHistory
-                  moves={moveTree.getFlatMoves()}
-                  currentNodeId={moveTree.getCurrentNode()?.id || null}
-                  onNavigate={handleNavigate}
-                  onGoBack={handleGoBack}
-                  onGoForward={handleGoForward}
-                  onGoToStart={handleGoToStart}
-                  onGoToEnd={handleGoToEnd}
-                  onPromoteToMainLine={handlePromoteToMainLine}
-                  onMarkCritical={handleMarkCritical}
-                  onSettingsPress={() => setSettingsVisible(true)}
-                  canGoBack={!moveTree.isAtStart()}
-                  canGoForward={!moveTree.isAtEnd()}
-                />
-              </View>
-            </View>
-
-            {/* Bottom Section - Game Lists */}
-            <View style={styles.bottomSection}>
-              <View style={styles.gameListHalf}>
-                <GameList
-                  title="Your Games"
-                  games={gamesAtPosition.userGames}
-                  onSelect={handleSelectGame}
-                  defaultCollapsed={false}
-                />
-              </View>
-              <View style={styles.gameListHalf}>
-                <GameList
-                  title="Master Games"
-                  games={gamesAtPosition.masterGames}
-                  onSelect={handleSelectGame}
-                  defaultCollapsed={false}
-                />
-              </View>
-            </View>
+          {/* Main area: ChessWorkspace (flex:1) + game lists (fixed height) */}
+          <View style={styles.wideMain}>
+            <ChessWorkspace {...chessWorkspaceProps} verticalOffset={GAME_LIST_HEIGHT} />
+            {gameLists(false)}
           </View>
         </View>
       ) : (
@@ -297,65 +245,27 @@ export default function RepertoireStudyScreen({ navigation: _navigation, route }
             openingName={repertoire.name}
             defaultCollapsed={true}
           />
-          <ChapterList
-            chapters={repertoire.chapters}
-            selectedId={selectedChapterId}
-            onSelect={handleSelectChapter}
-            defaultCollapsed={true}
-          />
-          <GameList
-            title="Your Games"
-            games={gamesAtPosition.userGames}
-            onSelect={handleSelectGame}
-            defaultCollapsed={true}
-          />
-          <GameList
-            title="Master Games"
-            games={gamesAtPosition.masterGames}
-            onSelect={handleSelectGame}
-            defaultCollapsed={true}
-          />
-
-          <View style={styles.boardContainer}>
-            <InteractiveChessBoard
-              fen={currentFen}
-              onMove={handleMoveClick}
-              orientation={repertoire.color}
-              showCoordinates={settings.coordinatesVisible}
-              boardSizePixels={boardSizePixels}
-            />
-            {currentComment && (
-              <View style={[styles.commentBox, { maxWidth: boardSizePixels }]}>
-                <Text style={styles.commentText}>{currentComment}</Text>
-              </View>
-            )}
-          </View>
-
-          <View style={styles.moveHistoryContainer}>
-            <MoveHistory
-              moves={moveTree.getFlatMoves()}
-              currentNodeId={moveTree.getCurrentNode()?.id || null}
-              onNavigate={handleNavigate}
-              onGoBack={handleGoBack}
-              onGoForward={handleGoForward}
-              onGoToStart={handleGoToStart}
-              onGoToEnd={handleGoToEnd}
-              onPromoteToMainLine={handlePromoteToMainLine}
-              onMarkCritical={handleMarkCritical}
-              onSettingsPress={() => setSettingsVisible(true)}
-              canGoBack={!moveTree.isAtStart()}
-              canGoForward={!moveTree.isAtEnd()}
-            />
-          </View>
+          <TouchableOpacity
+            style={styles.chapterButton}
+            onPress={() => setChapterModalVisible(true)}
+          >
+            <Text style={styles.chapterButtonText} numberOfLines={1}>
+              {currentChapter.name}
+            </Text>
+            <Text style={styles.chapterButtonArrow}>&#9662;</Text>
+          </TouchableOpacity>
+          {gameLists(true)}
+          {/* ChessWorkspace in narrow mode has no flex:1 — sizes to content for ScrollView */}
+          <ChessWorkspace {...chessWorkspaceProps} />
         </ScrollView>
       )}
 
-      {/* Settings Modal */}
-      <SettingsModal
-        visible={settingsVisible}
-        onClose={() => setSettingsVisible(false)}
-        screenKey="repertoire"
-        currentSettings={settings}
+      <ChapterSelectModal
+        visible={chapterModalVisible}
+        chapters={repertoire.chapters}
+        selectedChapterId={selectedChapterId}
+        onSelect={handleSelectChapter}
+        onClose={() => setChapterModalVisible(false)}
       />
     </View>
   );
@@ -388,59 +298,41 @@ const styles = StyleSheet.create({
     color: '#888',
     fontSize: 16,
   },
-  mainContent: {
+  wideMain: {
     flex: 1,
     flexDirection: 'column',
-  },
-  topSection: {
-    flex: 1,
-    flexDirection: 'row',
-    padding: 4,
-    gap: 8,
-    alignItems: 'flex-start',
-    minHeight: 0,
-  },
-  boardContainer: {
-    alignItems: 'center',
-    flexShrink: 0,
-  },
-  commentBox: {
-    marginTop: 4,
-    padding: 4,
-    backgroundColor: '#3a3a3a',
-    borderRadius: 4,
-    borderLeftWidth: 2,
-    borderLeftColor: '#007AFF',
-  },
-  commentText: {
-    color: '#e0e0e0',
-    fontSize: 10,
-    lineHeight: 14,
-  },
-  moveHistoryPanel: {
-    flex: 1,
-    minWidth: 160,
-    maxWidth: 350,
-    maxHeight: 380,
   },
   bottomSection: {
     flexDirection: 'row',
     borderTopWidth: 1,
     borderTopColor: '#3a3a3a',
-    minHeight: 120,
+    height: GAME_LIST_HEIGHT,
     gap: 8,
     padding: 4,
   },
   gameListHalf: {
     flex: 1,
-    minWidth: 0, // Allow flex to shrink properly
+    minWidth: 0,
   },
-  moveHistoryContainer: {
-    width: '100%',
-    maxWidth: 400,
-    maxHeight: 180,
+  chapterButton: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 8,
-    marginBottom: 8,
+    backgroundColor: '#3a3a3a',
+    marginHorizontal: 8,
+    marginVertical: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 6,
+  },
+  chapterButtonText: {
+    flex: 1,
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  chapterButtonArrow: {
+    color: '#888',
+    fontSize: 14,
+    marginLeft: 8,
   },
 });

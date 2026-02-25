@@ -41,3 +41,6 @@ android/keystore.properties
 
 # Release APK
 Kingside.apk
+
+# Lichess API spec (contains example tokens flagged by secret scanning)
+lichess-api.json
