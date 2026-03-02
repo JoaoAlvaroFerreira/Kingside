@@ -7,7 +7,7 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import { View, StyleSheet, Text, ScrollView, useWindowDimensions } from 'react-native';
+import { View, StyleSheet, Text, ScrollView, TouchableOpacity, useWindowDimensions } from 'react-native';
 import { InteractiveChessBoard } from '@components/chess/InteractiveChessBoard/InteractiveChessBoard';
 import { MoveHistory } from '@components/chess/MoveHistory/MoveHistory';
 import { EvalBar, KeyMoveMarker } from '@components/chess/EvalBar/EvalBar';
@@ -34,6 +34,7 @@ interface ChessWorkspaceProps {
   onGoToEnd?: () => void;
   onMarkCritical?: (nodeId: string, isCritical: boolean) => void;
   onPromoteToMainLine?: (nodeId: string) => void;
+  onDeleteMove?: (nodeId: string) => void;
 
   // Engine analysis — leave undefined to let ChessWorkspace run the engine internally.
   // Pass an explicit value (including null) to override with pre-computed data (e.g. GameReview).
@@ -50,6 +51,10 @@ interface ChessWorkspaceProps {
 
   // Orientation override (e.g., from repertoire.color)
   orientationOverride?: 'white' | 'black';
+
+  // Hint arrow (UCI format e.g. "e2e4") — shown independently of engine state
+  hintArrow?: string;
+  hintArrowColor?: string;
 
   // Extra vertical px already consumed by siblings (e.g. game lists below).
   // Subtracted from available height when computing board size.
@@ -69,6 +74,7 @@ export const ChessWorkspace: React.FC<ChessWorkspaceProps> = ({
   onGoToEnd,
   onMarkCritical,
   onPromoteToMainLine,
+  onDeleteMove,
   currentEval,
   moveEvals = [],
   keyMoves = [],
@@ -76,6 +82,8 @@ export const ChessWorkspace: React.FC<ChessWorkspaceProps> = ({
   showMoveHistory = true,
   showSettingsGear = true,
   orientationOverride,
+  hintArrow,
+  hintArrowColor,
   verticalOffset = 0,
 }) => {
   const { width, height } = useWindowDimensions();
@@ -142,6 +150,9 @@ export const ChessWorkspace: React.FC<ChessWorkspaceProps> = ({
   // Total width of board area including eval bar (9 px bar + 4 px gap)
   const contentWidth = evalBarVisible ? actualBoardSize + 13 : actualBoardSize;
 
+  // MoveHistory renders only when visible AND has required props
+  const isMoveHistoryRendered = Boolean(moveHistoryVisible && moveTree && onNavigate);
+
   return (
     // Wide: flex:1 to fill parent. Narrow: no flex so it sizes to content (works in ScrollViews).
     <View style={[styles.container, isWideScreen && styles.containerWide]}>
@@ -169,7 +180,8 @@ export const ChessWorkspace: React.FC<ChessWorkspaceProps> = ({
               showCoordinates={coordinatesVisible}
               disabled={disabled}
               boardSizePixels={actualBoardSize}
-              bestMove={evalBarVisible ? activeEval?.bestMove : undefined}
+              bestMove={hintArrow || (evalBarVisible ? activeEval?.bestMove : undefined)}
+              arrowColor={hintArrow ? (hintArrowColor || 'rgba(198, 40, 40, 0.75)') : undefined}
             />
           </View>
         </View>
@@ -194,6 +206,7 @@ export const ChessWorkspace: React.FC<ChessWorkspaceProps> = ({
                   onGoToEnd={handleGoToEnd}
                   onPromoteToMainLine={onPromoteToMainLine}
                   onMarkCritical={onMarkCritical}
+                  onDeleteMove={onDeleteMove}
                   onSettingsPress={showSettingsGear ? () => setSettingsVisible(true) : undefined}
                   canGoBack={canGoBack}
                   canGoForward={canGoForward}
@@ -228,6 +241,16 @@ export const ChessWorkspace: React.FC<ChessWorkspaceProps> = ({
           </View>
         )}
       </View>
+
+      {/* Floating settings gear when MoveHistory is not rendered */}
+      {showSettingsGear && !isMoveHistoryRendered && (
+        <TouchableOpacity
+          onPress={() => setSettingsVisible(true)}
+          style={styles.floatingGear}
+        >
+          <Text style={styles.floatingGearText}>⚙️</Text>
+        </TouchableOpacity>
+      )}
 
       {/* Comment — spans the full workspace width, scrollable for long texts */}
       {currentComment && (
@@ -323,5 +346,17 @@ const styles = StyleSheet.create({
   },
   engineLinesNarrow: {
     paddingHorizontal: 4,
+  },
+  floatingGear: {
+    alignSelf: 'center',
+    marginTop: 4,
+    padding: 6,
+    backgroundColor: '#2a2a2a',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#444',
+  },
+  floatingGearText: {
+    fontSize: 16,
   },
 });

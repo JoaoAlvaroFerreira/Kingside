@@ -31,6 +31,7 @@ export type RootStackParamList = {
     mode: 'depth-first' | 'width-first';
     maxDepth?: number;
     includeOnlyDueLines?: boolean;
+    learnMode?: boolean;
   };
   GameReview: { gameId: string };
   RepertoireLibrary?: undefined;

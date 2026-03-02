@@ -25,6 +25,8 @@ export default function TrainingDashboardScreen({ navigation }: TrainingDashboar
   const [mode, setMode] = useState<TrainingMode>('depth-first');
   const [maxDepth, setMaxDepth] = useState<string>('');
   const [includeOnlyDue, setIncludeOnlyDue] = useState(false);
+  const [learnMode, setLearnMode] = useState(false);
+  const [chaptersExpanded, setChaptersExpanded] = useState(false);
 
   // Get selected repertoire
   const selectedRepertoire = useMemo(
@@ -97,6 +99,7 @@ export default function TrainingDashboardScreen({ navigation }: TrainingDashboar
       mode,
       maxDepth: maxDepth ? parseInt(maxDepth, 10) : undefined,
       includeOnlyDueLines: includeOnlyDue,
+      learnMode,
     });
   };
 
@@ -117,7 +120,8 @@ export default function TrainingDashboardScreen({ navigation }: TrainingDashboar
               ]}
               onPress={() => {
                 setSelectedRepertoireId(rep.id);
-                setSelectedChapterId(null); // Reset chapter when repertoire changes
+                setSelectedChapterId(null);
+                setChaptersExpanded(false);
               }}
             >
               <Text
@@ -136,41 +140,57 @@ export default function TrainingDashboardScreen({ navigation }: TrainingDashboar
       {/* Chapter Selector */}
       {selectedRepertoire && (
         <View style={styles.section}>
-          <Text style={styles.label}>Select Chapter (Optional)</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipRow}>
-            <TouchableOpacity
-              style={[styles.chip, selectedChapterId === null && styles.chipSelected]}
-              onPress={() => setSelectedChapterId(null)}
-            >
-              <Text
-                style={[
-                  styles.chipText,
-                  selectedChapterId === null && styles.chipTextSelected,
-                ]}
-              >
-                All Chapters
+          <TouchableOpacity
+            style={styles.chapterHeader}
+            onPress={() => setChaptersExpanded(!chaptersExpanded)}
+          >
+            <Text style={styles.label}>
+              Select Chapter (Optional)
+            </Text>
+            <View style={styles.chapterHeaderRight}>
+              <Text style={styles.chapterSelection}>
+                {selectedChapterId
+                  ? selectedRepertoire.chapters.find(c => c.id === selectedChapterId)?.name ?? 'All Chapters'
+                  : 'All Chapters'}
               </Text>
-            </TouchableOpacity>
-            {selectedRepertoire.chapters.map(ch => (
+              <Text style={styles.expandIcon}>{chaptersExpanded ? '▲' : '▼'}</Text>
+            </View>
+          </TouchableOpacity>
+          {chaptersExpanded && (
+            <ScrollView style={styles.chapterList} nestedScrollEnabled>
               <TouchableOpacity
-                key={ch.id}
-                style={[
-                  styles.chip,
-                  selectedChapterId === ch.id && styles.chipSelected,
-                ]}
-                onPress={() => setSelectedChapterId(ch.id)}
+                style={[styles.chapterItem, selectedChapterId === null && styles.chapterItemSelected]}
+                onPress={() => {
+                  setSelectedChapterId(null);
+                  setChaptersExpanded(false);
+                }}
               >
                 <Text
-                  style={[
-                    styles.chipText,
-                    selectedChapterId === ch.id && styles.chipTextSelected,
-                  ]}
+                  style={[styles.chapterItemText, selectedChapterId === null && styles.chapterItemTextSelected]}
+                  numberOfLines={2}
                 >
-                  {ch.name}
+                  All Chapters
                 </Text>
               </TouchableOpacity>
-            ))}
-          </ScrollView>
+              {selectedRepertoire.chapters.map(ch => (
+                <TouchableOpacity
+                  key={ch.id}
+                  style={[styles.chapterItem, selectedChapterId === ch.id && styles.chapterItemSelected]}
+                  onPress={() => {
+                    setSelectedChapterId(ch.id);
+                    setChaptersExpanded(false);
+                  }}
+                >
+                  <Text
+                    style={[styles.chapterItemText, selectedChapterId === ch.id && styles.chapterItemTextSelected]}
+                    numberOfLines={2}
+                  >
+                    {ch.name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          )}
         </View>
       )}
 
@@ -208,7 +228,7 @@ export default function TrainingDashboardScreen({ navigation }: TrainingDashboar
         />
       </View>
 
-      {/* Only Due Lines */}
+      {/* Options */}
       <View style={styles.section}>
         <TouchableOpacity
           style={styles.checkboxRow}
@@ -218,6 +238,15 @@ export default function TrainingDashboardScreen({ navigation }: TrainingDashboar
             {includeOnlyDue && <Text style={styles.checkmark}>✓</Text>}
           </View>
           <Text style={styles.checkboxLabel}>Only drill lines due for review</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.checkboxRow, { marginTop: 12 }]}
+          onPress={() => setLearnMode(!learnMode)}
+        >
+          <View style={[styles.checkbox, learnMode && styles.checkboxSelected]}>
+            {learnMode && <Text style={styles.checkmark}>✓</Text>}
+          </View>
+          <Text style={styles.checkboxLabel}>Learn mode (show arrows + comments)</Text>
         </TouchableOpacity>
       </View>
 
@@ -301,6 +330,52 @@ const styles = StyleSheet.create({
   },
   chipTextSelected: {
     color: '#fff',
+    fontWeight: '600',
+  },
+  chapterHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  chapterHeaderRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'flex-end',
+    marginLeft: 12,
+  },
+  chapterSelection: {
+    color: '#4a9eff',
+    fontSize: 13,
+    marginRight: 6,
+    flexShrink: 1,
+  },
+  expandIcon: {
+    color: '#888',
+    fontSize: 12,
+  },
+  chapterList: {
+    backgroundColor: '#2a2a2a',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#444',
+    maxHeight: 250,
+    overflow: 'hidden',
+  },
+  chapterItem: {
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#333',
+  },
+  chapterItemSelected: {
+    backgroundColor: '#4a9eff',
+  },
+  chapterItemText: {
+    color: '#fff',
+    fontSize: 14,
+  },
+  chapterItemTextSelected: {
     fontWeight: '600',
   },
   radioGroup: {

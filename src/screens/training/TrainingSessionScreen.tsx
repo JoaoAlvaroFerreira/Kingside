@@ -12,7 +12,7 @@ import {
 import { useStore } from '@store';
 import { TrainingSession, TrainingConfig } from '@types';
 import { TrainingService } from '@services/training/TrainingService';
-import { InteractiveChessBoard } from '@components/chess/InteractiveChessBoard/InteractiveChessBoard';
+import { ChessWorkspace } from '@components/chess/ChessWorkspace/ChessWorkspace';
 import { VariationSelector } from '@components/training/VariationSelector';
 import { Chess } from 'chess.js';
 
@@ -32,6 +32,39 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
   const [feedback, setFeedback] = useState<'correct' | 'incorrect' | null>(null);
   const [isAnimating, setIsAnimating] = useState(false);
   const [expectedMove, setExpectedMove] = useState<string>('');
+  const [hintArrowUci, setHintArrowUci] = useState<string | undefined>(undefined);
+  const [currentComment, setCurrentComment] = useState<string | undefined>(undefined);
+
+  const isLearnMode = session?.learnMode ?? false;
+
+  // Compute learn mode hint arrow for current user move
+  const learnArrowUci = useMemo(() => {
+    if (!session || !isLearnMode || isAnimating || session.awaitingRating) return undefined;
+    const currentLine = session.lines[session.currentLineIndex];
+    if (!currentLine) return undefined;
+    const userMoves = currentLine.moves.filter(m => m.isUserMove);
+    const currentUserMove = userMoves[session.currentMoveIndex];
+    if (!currentUserMove) return undefined;
+    try {
+      const chess = new Chess(currentUserMove.preFen);
+      const move = chess.move(currentUserMove.san);
+      if (move) return `${move.from}${move.to}`;
+    } catch { /* ignore */ }
+    return undefined;
+  }, [session, isLearnMode, isAnimating]);
+
+  // Update comment when position changes
+  const updateComment = (sess: TrainingSession) => {
+    if (!sess.learnMode) {
+      setCurrentComment(undefined);
+      return;
+    }
+    const currentLine = sess.lines[sess.currentLineIndex];
+    if (!currentLine) { setCurrentComment(undefined); return; }
+    const userMoves = currentLine.moves.filter(m => m.isUserMove);
+    const currentUserMove = userMoves[sess.currentMoveIndex];
+    setCurrentComment(currentUserMove?.comment || undefined);
+  };
 
   // Initialize session
   useEffect(() => {
@@ -69,6 +102,7 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
       setCurrentFen(position.fen);
       setExpectedMove(position.expectedMove);
     }
+    updateComment(newSession);
   }, []);
 
   // Progress info
@@ -77,54 +111,62 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
     return TrainingService.getProgress(session);
   }, [session]);
 
-  // Get move path for display
-  const movePath = useMemo(() => {
-    if (!session) return '';
-    const currentLine = session.lines[session.currentLineIndex];
-    if (!currentLine) return '';
-
-    // Find current position in line
-    const userMoves = currentLine.moves.filter(m => m.isUserMove);
-    const currentMove = userMoves[session.currentMoveIndex];
-    if (!currentMove) return '';
-
-    const currentMoveIndexInLine = currentLine.moves.findIndex(
-      m => m.nodeId === currentMove.nodeId
-    );
-
-    // Build move path up to current position
-    const moves = currentLine.moves.slice(0, currentMoveIndexInLine);
-    const chess = new Chess();
-    moves.forEach(m => chess.move(m.san));
-
-    return chess.history().join(' ');
-  }, [session]);
-
   const handleMove = async (from: string, to: string) => {
     if (!session || isAnimating || session.awaitingRating) return;
 
     const result = TrainingService.processUserMove(session, from, to);
 
     if (!result.isCorrect) {
-      // Wrong move - show feedback
+      // Wrong move - show feedback and hint arrow
       setFeedback('incorrect');
-      setTimeout(() => setFeedback(null), 1500);
+      try {
+        const hint = new Chess(currentFen);
+        const move = hint.move(result.expectedMove);
+        if (move) setHintArrowUci(`${move.from}${move.to}`);
+      } catch { /* ignore */ }
+      setTimeout(() => {
+        setFeedback(null);
+        setHintArrowUci(undefined);
+      }, 2500);
       return;
     }
 
     // Correct move
     setFeedback('correct');
+    setHintArrowUci(undefined);
 
     if (result.feedback === 'line-complete') {
-      // Line is complete - show rating buttons
-      setSession({ ...session, awaitingRating: true });
-      setFeedback(null);
+      if (isLearnMode) {
+        // Learn mode: brief feedback then auto-advance
+        setFeedback('correct');
+        setCurrentComment(undefined);
+        setTimeout(() => {
+          setFeedback(null);
+          completeLineAndAdvance();
+        }, 1500);
+      } else {
+        setSession({ ...session, awaitingRating: true });
+      }
       return;
     }
 
     // Check if there's an opponent move to animate
     if (result.opponentMove && result.opponentFen) {
       setIsAnimating(true);
+
+      // Show opponent's comment during animation if in learn mode
+      if (isLearnMode) {
+        const currentLine = session.lines[session.currentLineIndex];
+        const userMoves = currentLine.moves.filter(m => m.isUserMove);
+        const currentUserMove = userMoves[session.currentMoveIndex];
+        if (currentUserMove) {
+          const currentIdx = currentLine.moves.findIndex(m => m.nodeId === currentUserMove.nodeId);
+          const opponentMove = currentLine.moves[currentIdx + 1];
+          if (opponentMove?.comment) {
+            setCurrentComment(opponentMove.comment);
+          }
+        }
+      }
 
       // Brief pause to show correct feedback
       setTimeout(() => {
@@ -146,9 +188,15 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
             if (position) {
               setExpectedMove(position.expectedMove);
             }
+            updateComment(session);
           } else {
             // Line complete
-            setSession({ ...session, awaitingRating: true });
+            if (isLearnMode) {
+              setCurrentComment(undefined);
+              setTimeout(() => completeLineAndAdvance(), 1500);
+            } else {
+              setSession({ ...session, awaitingRating: true });
+            }
           }
         }, 200);
       }, 500);
@@ -164,7 +212,39 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
         if (position) {
           setExpectedMove(position.expectedMove);
         }
+        updateComment(session);
       }, 500);
+    }
+  };
+
+  const completeLineAndAdvance = async () => {
+    if (!session) return;
+
+    const { updatedStats, hasMore } = TrainingService.completeLineAndAdvance(
+      session,
+      4, // quality=4 for learn mode (just tracks totalDrills)
+      lineStats
+    );
+
+    await updateLineStats(updatedStats);
+
+    if (hasMore) {
+      setSession({ ...session });
+      const position = TrainingService.getCurrentPosition(session);
+      if (position) {
+        setCurrentFen(position.fen);
+        setExpectedMove(position.expectedMove);
+      }
+      updateComment(session);
+    } else {
+      const msg = `Training complete! You studied ${session.linesCompleted} of ${session.totalLineCount} lines.`;
+      if (Platform.OS === 'web') {
+        window.alert(msg);
+      } else {
+        Alert.alert('Session Complete', msg);
+      }
+      setTrainingSession(null);
+      navigation.goBack();
     }
   };
 
@@ -190,7 +270,7 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
       }
     } else {
       // Session complete
-      const msg = `Training complete! You drilled ${session.linesCompleted} lines.`;
+      const msg = `Training complete! You drilled ${session.linesCompleted} of ${session.totalLineCount} lines.`;
       if (Platform.OS === 'web') {
         window.alert(msg);
       } else {
@@ -240,6 +320,7 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
       setCurrentFen(position.fen);
       setExpectedMove(position.expectedMove);
     }
+    updateComment(session);
   };
 
   if (!session || !progress) {
@@ -256,13 +337,19 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
     <View style={styles.container}>
       {/* Progress Header */}
       <View style={styles.header}>
-        <View>
-          <Text style={styles.progressText}>
-            Line {progress.lineNumber}/{progress.totalLines}
-          </Text>
-          <Text style={styles.subProgressText}>
-            Move {progress.moveNumber}/{progress.totalMovesInLine}
-          </Text>
+        <View style={styles.headerLeft}>
+          <View style={[styles.modeBadge, isLearnMode && styles.modeBadgeLearn]}>
+            <Text style={styles.modeBadgeText}>{isLearnMode ? 'Learn' : 'Drill'}</Text>
+          </View>
+          <View>
+            <Text style={styles.progressText}>
+              Line {progress.lineNumber}/{progress.totalLines}
+            </Text>
+            <Text style={styles.subProgressText}>
+              Move {progress.moveNumber}/{progress.totalMovesInLine}
+              {progress.holdbackCount > 0 && ` · ${progress.holdbackCount} on hold`}
+            </Text>
+          </View>
         </View>
         <TouchableOpacity onPress={handleEndSession} style={styles.endButton}>
           <Text style={styles.endButtonText}>End Session</Text>
@@ -278,11 +365,15 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
         <View style={[styles.mainContent, isWideScreen && styles.mainContentWide]}>
           {/* Chess Board */}
           <View style={styles.boardContainer}>
-            <InteractiveChessBoard
+            <ChessWorkspace
               fen={currentFen}
               onMove={handleMove}
-              orientation={session.color}
               disabled={isAnimating || session.awaitingRating}
+              screenKey="training"
+              showMoveHistory={false}
+              orientationOverride={session.color}
+              hintArrow={isLearnMode ? learnArrowUci : hintArrowUci}
+              hintArrowColor={isLearnMode ? 'rgba(74, 158, 255, 0.7)' : undefined}
             />
           </View>
 
@@ -293,30 +384,19 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
               currentLineIndex={session.currentLineIndex}
               onSelectLine={handleSelectLine}
               lineProgress={session.lineProgress}
+              holdbackCount={session.holdbackLines.length}
             />
           )}
         </View>
 
-        {/* Move Path */}
-        {movePath && (
-          <ScrollView horizontal style={styles.movePathContainer} showsHorizontalScrollIndicator={false}>
-            <Text style={styles.movePathText}>{movePath}</Text>
+        {/* Comment Box (learn mode) */}
+        {isLearnMode && currentComment && (
+          <ScrollView style={styles.commentBox} nestedScrollEnabled>
+            <Text style={styles.commentText}>{currentComment}</Text>
           </ScrollView>
         )}
 
-        {/* Variation Selector (narrow screens) */}
-        {!isWideScreen && (
-          <View style={styles.variationSelectorNarrow}>
-            <VariationSelector
-              lines={session.lines}
-              currentLineIndex={session.currentLineIndex}
-              onSelectLine={handleSelectLine}
-              lineProgress={session.lineProgress}
-            />
-          </View>
-        )}
-
-        {/* Feedback */}
+        {/* Feedback — directly below board so it's always visible */}
         {feedback && (
           <View style={[styles.feedbackContainer, feedback === 'incorrect' && styles.feedbackIncorrect]}>
             <Text style={styles.feedbackText}>
@@ -330,7 +410,7 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
           </View>
         )}
 
-        {/* Rating Buttons (shown when line is complete) */}
+        {/* Rating Buttons — directly below board so it's always visible */}
         {session.awaitingRating && (
           <View style={styles.ratingContainer}>
             <Text style={styles.ratingTitle}>How difficult was this line?</Text>
@@ -366,6 +446,19 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
             </View>
           </View>
         )}
+
+        {/* Variation Selector (narrow screens) */}
+        {!isWideScreen && (
+          <View style={styles.variationSelectorNarrow}>
+            <VariationSelector
+              lines={session.lines}
+              currentLineIndex={session.currentLineIndex}
+              onSelectLine={handleSelectLine}
+              lineProgress={session.lineProgress}
+              holdbackCount={session.holdbackLines.length}
+            />
+          </View>
+        )}
       </ScrollView>
     </View>
   );
@@ -391,6 +484,25 @@ const styles = StyleSheet.create({
     backgroundColor: '#2a2a2a',
     borderBottomWidth: 1,
     borderBottomColor: '#444',
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  modeBadge: {
+    backgroundColor: '#f57c00',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 4,
+  },
+  modeBadgeLearn: {
+    backgroundColor: '#1976d2',
+  },
+  modeBadgeText: {
+    color: '#fff',
+    fontSize: 11,
+    fontWeight: '700',
   },
   progressText: {
     color: '#fff',
@@ -437,19 +549,21 @@ const styles = StyleSheet.create({
     marginHorizontal: 12,
     marginTop: 8,
   },
-  movePathContainer: {
+  commentBox: {
     marginHorizontal: 12,
     marginTop: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    backgroundColor: '#2a2a2a',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: '#3a3a3a',
+    borderLeftWidth: 3,
+    borderLeftColor: '#87CEEB',
     borderRadius: 4,
-    maxHeight: 32,
+    maxHeight: 80,
   },
-  movePathText: {
-    color: '#fff',
-    fontSize: 12,
-    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+  commentText: {
+    color: '#e0e0e0',
+    fontSize: 13,
+    lineHeight: 18,
   },
   feedbackContainer: {
     marginHorizontal: 12,

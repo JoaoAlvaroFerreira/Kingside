@@ -11,6 +11,7 @@ interface VariationSelectorProps {
   currentLineIndex: number;
   onSelectLine: (index: number) => void;
   lineProgress?: Record<string, number>;
+  holdbackCount?: number;
 }
 
 export const VariationSelector: React.FC<VariationSelectorProps> = ({
@@ -18,14 +19,29 @@ export const VariationSelector: React.FC<VariationSelectorProps> = ({
   currentLineIndex,
   onSelectLine,
   lineProgress = {},
+  holdbackCount = 0,
 }) => {
-  const getLinePreview = (line: Line, maxMoves: number = 10): string => {
-    // Show the END of the line instead of the start (more useful for recognizing positions)
-    const allMoves = line.moves.map(m => m.san);
-    const startIndex = Math.max(0, allMoves.length - maxMoves);
-    const moves = allMoves.slice(startIndex);
-    const preview = moves.join(' ');
-    return startIndex > 0 ? `...${preview}` : preview;
+  const getLinePreview = (line: Line, maxMoves: number = 12): string => {
+    // Show moves from the branch point (where this line diverges from main)
+    const startPly = line.branchPoint ?? 0;
+    const branchMoves = line.moves.slice(startPly);
+    const displayMoves = branchMoves.slice(0, maxMoves);
+
+    if (displayMoves.length === 0) return line.moves.map(m => m.san).join(' ');
+
+    // Build formatted string with move numbers
+    let result = '';
+    for (const move of displayMoves) {
+      if (!move.isBlack) {
+        result += `${move.moveNumber}.`;
+      } else if (result === '') {
+        result += `${move.moveNumber}...`;
+      }
+      result += `${move.san} `;
+    }
+
+    if (startPly > 0) result = `...${result}`;
+    return result.trim();
   };
 
   const getLineStatus = (line: Line): 'complete' | 'in-progress' | 'pending' => {
@@ -39,7 +55,9 @@ export const VariationSelector: React.FC<VariationSelectorProps> = ({
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Variations</Text>
+      {holdbackCount > 0 && (
+        <Text style={styles.holdbackText}>+{holdbackCount} on hold</Text>
+      )}
       <ScrollView style={styles.list} showsVerticalScrollIndicator={true}>
         {lines.map((line, index) => {
           const isCurrent = index === currentLineIndex;
@@ -94,15 +112,12 @@ const styles = StyleSheet.create({
     padding: 8,
     width: '100%',
   },
-  title: {
-    color: '#fff',
-    fontSize: 13,
-    fontWeight: '600',
-    marginBottom: 8,
+  holdbackText: {
+    color: '#999',
+    fontSize: 11,
   },
   list: {
     maxHeight: 400,
-    flex: 1,
   },
   lineItem: {
     backgroundColor: '#1e1e1e',

@@ -251,49 +251,45 @@ export class MoveTree {
     if (this.rootMoves.length === 0) return [];
 
     const moves: FlatMove[] = [];
-
-    // Process main line first move
     this.flattenMainLine(this.rootMoves[0], moves, 0);
-
-    // Add alternative first moves as variations
-    for (let i = 1; i < this.rootMoves.length; i++) {
-      this.flattenVariation(this.rootMoves[i], moves, 1);
-    }
-
     return moves;
   }
 
-  private flattenMainLine(node: MoveNode, moves: FlatMove[], depth: number): void {
-    const prevMove = moves.length > 0 ? moves[moves.length - 1] : null;
+  private flattenMainLine(startNode: MoveNode, moves: FlatMove[], depth: number): void {
+    let current: MoveNode | null = startNode;
 
-    // Black needs "..." only if previous move isn't the white ply of same move number
-    const needsMoveNumber = !node.isBlack ||
-      !prevMove ||
-      prevMove.isBlack ||
-      prevMove.moveNumber !== node.moveNumber ||
-      prevMove.depth !== depth;
+    while (current) {
+      const prevMove = moves.length > 0 ? moves[moves.length - 1] : null;
 
-    moves.push({
-      id: node.id,
-      san: node.san,
-      moveNumber: node.moveNumber,
-      isBlack: node.isBlack,
-      depth,
-      isMainLine: depth === 0,
-      isVariationStart: false,
-      needsMoveNumber,
-      isCritical: node.isCritical,
-      comment: node.comment,
-    });
+      const needsMoveNumber = !current.isBlack ||
+        !prevMove ||
+        prevMove.isBlack ||
+        prevMove.moveNumber !== current.moveNumber ||
+        prevMove.depth !== depth;
 
-    // Continue main line
-    if (node.children.length > 0) {
-      this.flattenMainLine(node.children[0], moves, depth);
+      moves.push({
+        id: current.id,
+        san: current.san,
+        moveNumber: current.moveNumber,
+        isBlack: current.isBlack,
+        depth,
+        isMainLine: depth === 0,
+        isVariationStart: false,
+        needsMoveNumber,
+        isCritical: current.isCritical,
+        comment: current.comment,
+      });
 
-      // Add variations after the main continuation
-      for (let i = 1; i < node.children.length; i++) {
-        this.flattenVariation(node.children[i], moves, depth + 1);
+      // Add variations (siblings) right after this node, before continuing the main line.
+      // Siblings are alternatives to this node: parent.children[1..n] where this node is [0].
+      const siblings: MoveNode[] = current.parent ? current.parent.children : this.rootMoves;
+      if (siblings[0] === current) {
+        for (let i = 1; i < siblings.length; i++) {
+          this.flattenVariation(siblings[i], moves, depth + 1);
+        }
       }
+
+      current = current.children.length > 0 ? current.children[0] : null;
     }
   }
 
@@ -408,6 +404,26 @@ export class MoveTree {
     const node = this.findNode(nodeId);
     if (!node) return false;
     node.comment = comment || undefined;
+    return true;
+  }
+
+  /**
+   * Delete a node and all its descendants from the tree.
+   * Navigates to the parent node (or root if it was a first move).
+   */
+  deleteFromNode(nodeId: string): boolean {
+    const node = this.findNode(nodeId);
+    if (!node) return false;
+
+    const parent = node.parent;
+    const siblings = parent ? parent.children : this.rootMoves;
+    const index = siblings.indexOf(node);
+    if (index === -1) return false;
+
+    siblings.splice(index, 1);
+
+    // Navigate to parent (or root if no parent)
+    this.currentNode = parent;
     return true;
   }
 

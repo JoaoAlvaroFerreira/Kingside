@@ -1,9 +1,13 @@
-import React, { useState, useCallback, useEffect, useMemo } from 'react';
-import { View, StyleSheet, Text } from 'react-native';
+import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
+import { View, StyleSheet, Text, useWindowDimensions } from 'react-native';
 import { Chess } from 'chess.js';
 import { ChessWorkspace } from '@components/chess/ChessWorkspace/ChessWorkspace';
+import { GameList } from '@components/repertoire/GameList';
 import { MoveTree } from '@utils/MoveTree';
-import { UserGame, MasterGame } from '@types';
+import { UserGame, MasterGame, computeFensFromMoves, normalizeFen } from '@types';
+import { DatabaseService } from '@services/database/DatabaseService';
+
+const GAME_LIST_HEIGHT = 180;
 
 interface AnalysisBoardScreenProps {
   route?: {
@@ -16,6 +20,11 @@ interface AnalysisBoardScreenProps {
 export default function AnalysisBoardScreen({ route }: AnalysisBoardScreenProps) {
   const [moveTree, setMoveTree] = useState(() => new MoveTree());
   const [_updateCounter, forceUpdate] = useState(0);
+  const [userGames, setUserGames] = useState<UserGame[]>([]);
+  const [masterGames, setMasterGames] = useState<MasterGame[]>([]);
+  const lastSearchedFenRef = useRef<string | null>(null);
+  const { width } = useWindowDimensions();
+  const isWide = width > 700;
 
   const currentFen = moveTree.getCurrentFen();
   const currentNodeId = moveTree.getCurrentNode()?.id || null;
@@ -32,6 +41,48 @@ export default function AnalysisBoardScreen({ route }: AnalysisBoardScreenProps)
       forceUpdate(n => n + 1);
     }
   }, [route?.params?.game]);
+
+  // Search games by FEN when position changes
+  useEffect(() => {
+    if (!currentFen) return;
+    const normalized = normalizeFen(currentFen);
+    if (normalized === lastSearchedFenRef.current) return;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const [uGames, mGames] = await Promise.all([
+          DatabaseService.searchUserGamesByFEN(normalized),
+          DatabaseService.searchMasterGamesByFEN(normalized),
+        ]);
+        if (!cancelled) {
+          setUserGames(uGames);
+          setMasterGames(mGames);
+          lastSearchedFenRef.current = normalized;
+        }
+      } catch {
+        if (!cancelled) {
+          setUserGames([]);
+          setMasterGames([]);
+        }
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [currentFen]);
+
+  const handleSelectGame = useCallback((game: UserGame | MasterGame) => {
+    if (!currentFen) return;
+    const gameFens = computeFensFromMoves(game.moves);
+    const normalized = normalizeFen(currentFen);
+    const posIndex = gameFens.indexOf(normalized);
+    if (posIndex === -1) return;
+
+    const continuation = game.moves.slice(posIndex);
+    for (const san of continuation) {
+      moveTree.addMove(san);
+    }
+    forceUpdate(n => n + 1);
+  }, [moveTree, currentFen]);
 
   const triggerUpdate = useCallback(() => {
     forceUpdate(n => n + 1);
@@ -61,6 +112,11 @@ export default function AnalysisBoardScreen({ route }: AnalysisBoardScreenProps)
 
   const handlePromoteToMainLine = useCallback((nodeId: string) => {
     moveTree.promoteToMainLine(nodeId);
+    triggerUpdate();
+  }, [moveTree, triggerUpdate]);
+
+  const handleDeleteMove = useCallback((nodeId: string) => {
+    moveTree.deleteFromNode(nodeId);
     triggerUpdate();
   }, [moveTree, triggerUpdate]);
 
@@ -124,10 +180,30 @@ export default function AnalysisBoardScreen({ route }: AnalysisBoardScreenProps)
         onGoToStart={handleGoToStart}
         onGoToEnd={handleGoToEnd}
         onPromoteToMainLine={handlePromoteToMainLine}
+        onDeleteMove={handleDeleteMove}
         screenKey="analysis"
         showMoveHistory={true}
         showSettingsGear={true}
+        verticalOffset={GAME_LIST_HEIGHT}
       />
+      <View style={styles.bottomSection}>
+        <View style={styles.gameListHalf}>
+          <GameList
+            title="Your Games"
+            games={userGames}
+            onSelect={handleSelectGame}
+            defaultCollapsed={!isWide}
+          />
+        </View>
+        <View style={styles.gameListHalf}>
+          <GameList
+            title="Master Games"
+            games={masterGames}
+            onSelect={handleSelectGame}
+            defaultCollapsed={!isWide}
+          />
+        </View>
+      </View>
     </View>
   );
 }
@@ -155,5 +231,17 @@ const styles = StyleSheet.create({
     color: '#4a9eff',
     fontSize: 9,
     marginTop: 2,
+  },
+  bottomSection: {
+    flexDirection: 'row',
+    borderTopWidth: 1,
+    borderTopColor: '#3a3a3a',
+    height: GAME_LIST_HEIGHT,
+    gap: 8,
+    padding: 4,
+  },
+  gameListHalf: {
+    flex: 1,
+    minWidth: 0,
   },
 });

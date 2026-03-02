@@ -36,6 +36,7 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
   const [masterGameCount, setMasterGameCount] = useState('50');
   const [masterDaysBack, setMasterDaysBack] = useState('0');
   const [isImportingLichess, setIsImportingLichess] = useState(false);
+  const [lichessStudyUrl, setLichessStudyUrl] = useState('');
   const { addRepertoire, addUserGames, addMasterGames, reviewSettings } = useStore();
 
   const readFileWithTimeout = async (uri: string, timeoutMs: number = 15000): Promise<string> => {
@@ -180,6 +181,32 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
       if (mode === 'master') setLichessUsername('');
     } catch (error: any) {
       console.error('[ImportPGN] Lichess import error:', error);
+      Alert.alert('Import Error', error?.message || String(error));
+    } finally {
+      setIsImportingLichess(false);
+      setIsImporting(false);
+    }
+  };
+
+  const handleLichessStudyImport = async () => {
+    const studyId = LichessService.parseStudyId(lichessStudyUrl);
+    if (!studyId) {
+      Alert.alert('Invalid Study', 'Please enter a valid Lichess study URL or ID.');
+      return;
+    }
+
+    setIsImportingLichess(true);
+    setProgress({ current: 0, total: 0, phase: 'Fetching study from Lichess...' });
+
+    try {
+      const pgn = await LichessService.fetchStudyPGN(studyId);
+
+      setIsImporting(true);
+      await handleImport(pgn);
+
+      setLichessStudyUrl('');
+    } catch (error: any) {
+      console.error('[ImportPGN] Lichess study import error:', error);
       Alert.alert('Import Error', error?.message || String(error));
     } finally {
       setIsImportingLichess(false);
@@ -475,6 +502,34 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
               </View>
             </>
           )}
+
+          {/* Lichess Study Import */}
+          <View style={styles.lichessSection}>
+            <Text style={styles.sectionTitle}>Import from Lichess Study</Text>
+            <TextInput
+              style={styles.input}
+              value={lichessStudyUrl}
+              onChangeText={setLichessStudyUrl}
+              placeholder="Lichess study URL or ID"
+              placeholderTextColor="#666"
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+            <TouchableOpacity
+              style={[styles.lichessButton, (!lichessStudyUrl.trim() || isImportingLichess) && styles.buttonDisabled]}
+              onPress={handleLichessStudyImport}
+              disabled={!lichessStudyUrl.trim() || isImportingLichess}
+            >
+              <Text style={styles.buttonText}>
+                {isImportingLichess ? 'Importing Study...' : 'Import Study'}
+              </Text>
+            </TouchableOpacity>
+            <View style={styles.divider}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>OR</Text>
+              <View style={styles.dividerLine} />
+            </View>
+          </View>
 
           <TouchableOpacity
             style={[styles.button, (isImporting || fileSelected) && styles.buttonDisabled]}

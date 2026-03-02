@@ -26,6 +26,7 @@ interface MoveHistoryProps {
   onPromoteToMainLine?: (nodeId: string) => void;
   onMarkCritical?: (nodeId: string, isCritical: boolean) => void;
   onAddComment?: (nodeId: string) => void;
+  onDeleteMove?: (nodeId: string) => void;
   onSettingsPress?: () => void;
   canGoBack: boolean;
   canGoForward: boolean;
@@ -42,6 +43,7 @@ export const MoveHistory: React.FC<MoveHistoryProps> = ({
   onPromoteToMainLine,
   onMarkCritical,
   onAddComment,
+  onDeleteMove,
   onSettingsPress,
   canGoBack,
   canGoForward,
@@ -76,6 +78,13 @@ export const MoveHistory: React.FC<MoveHistoryProps> = ({
   const handleAddComment = () => {
     if (contextMenu && onAddComment) {
       onAddComment(contextMenu.nodeId);
+    }
+    setContextMenu(null);
+  };
+
+  const handleDeleteMove = () => {
+    if (contextMenu && onDeleteMove) {
+      onDeleteMove(contextMenu.nodeId);
     }
     setContextMenu(null);
   };
@@ -267,9 +276,15 @@ export const MoveHistory: React.FC<MoveHistoryProps> = ({
               contextMenu && { top: contextMenu.y, left: contextMenu.x },
             ]}
           >
-            {contextMenu?.isVariation && onPromoteToMainLine && (
-              <TouchableOpacity style={styles.contextMenuItem} onPress={handlePromote}>
-                <Text style={styles.contextMenuText}>Promote to main line</Text>
+            {onPromoteToMainLine && (
+              <TouchableOpacity
+                style={styles.contextMenuItem}
+                onPress={handlePromote}
+                disabled={!contextMenu?.isVariation}
+              >
+                <Text style={[styles.contextMenuText, !contextMenu?.isVariation && styles.contextMenuTextDisabled]}>
+                  Make main line
+                </Text>
               </TouchableOpacity>
             )}
             {onMarkCritical && (
@@ -282,6 +297,11 @@ export const MoveHistory: React.FC<MoveHistoryProps> = ({
             {onAddComment && (
               <TouchableOpacity style={styles.contextMenuItem} onPress={handleAddComment}>
                 <Text style={styles.contextMenuText}>Add comment</Text>
+              </TouchableOpacity>
+            )}
+            {onDeleteMove && (
+              <TouchableOpacity style={styles.contextMenuItem} onPress={handleDeleteMove}>
+                <Text style={[styles.contextMenuText, styles.contextMenuTextDestructive]}>Delete move</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -406,6 +426,12 @@ const styles = StyleSheet.create({
   contextMenuText: {
     color: '#e0e0e0',
     fontSize: 12,
+  },
+  contextMenuTextDisabled: {
+    color: '#666',
+  },
+  contextMenuTextDestructive: {
+    color: '#e57373',
   },
   criticalStar: {
     color: '#FFD700',

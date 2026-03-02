@@ -77,6 +77,7 @@ export interface TrainingConfig {
   mode: TrainingMode;
   maxDepth?: number;              // Optional: limit drilling depth
   includeOnlyDueLines?: boolean;  // Filter to lines due for review
+  learnMode?: boolean;            // Show arrows + comments, skip rating
 }
 
 /**
@@ -88,10 +89,13 @@ export interface TrainingSession {
   chapterId: string | null;       // null = all chapters
   color: RepertoireColor;         // Which side user plays
   mode: TrainingMode;
+  learnMode: boolean;             // Guided study with arrows + comments
   maxDepth: number | null;        // null = no limit
 
-  // Lines to drill
+  // Lines to drill (active batch, max ACTIVE_BATCH_SIZE at a time)
   lines: Line[];
+  holdbackLines: Line[];          // Lines waiting to be promoted into the active set
+  totalLineCount: number;         // Total lines including holdback (for progress display)
   currentLineIndex: number;
   currentMoveIndex: number;       // Index within current line's user moves
 

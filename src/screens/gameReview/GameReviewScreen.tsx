@@ -14,7 +14,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useStore } from '@store';
-import { InteractiveChessBoard } from '@components/chess/InteractiveChessBoard/InteractiveChessBoard';
+import { ChessWorkspace } from '@components/chess/ChessWorkspace/ChessWorkspace';
 import { EvalGraph } from '@components/chess/EvalGraph';
 import { DatabaseService } from '@services/database/DatabaseService';
 import { UserGame, MasterGame, MoveAnalysis } from '@types';
@@ -156,17 +156,6 @@ export default function GameReviewScreen({ navigation, route: _route }: GameRevi
     }
   };
 
-  const formatEval = (score?: number, mate?: number): string => {
-    if (mate !== undefined) {
-      return `M${Math.abs(mate)}`;
-    }
-    if (score !== undefined) {
-      const pawns = (score / 100).toFixed(2);
-      return score > 0 ? `+${pawns}` : pawns;
-    }
-    return '--';
-  };
-
   const handleMoveSelect = (moveIndex: number) => {
     useStore.setState({
       currentReviewSession: {
@@ -179,8 +168,7 @@ export default function GameReviewScreen({ navigation, route: _route }: GameRevi
   const keyMoves = currentReviewSession.moves.filter(m => m.isKeyMove);
 
   const isWideScreen = width > 900;
-  const boardWidth = isWideScreen ? Math.min(width * 0.5, 500) : width;
-  const graphWidth = isWideScreen ? boardWidth : width - 16;
+  const graphWidth = isWideScreen ? Math.min(width * 0.5, 500) : width - 16;
 
   const renderKeyMoveItem = ({ item }: { item: MoveAnalysis }) => {
     const color = getKeyMoveColor(item.keyMoveReason);
@@ -251,34 +239,16 @@ export default function GameReviewScreen({ navigation, route: _route }: GameRevi
       >
         {/* Main Content */}
         <View style={[styles.mainContent, isWideScreen && styles.mainContentWide]}>
-          {/* Board with evaluation */}
+          {/* Board with evaluation via ChessWorkspace */}
           <View style={styles.boardSection}>
-            {currentMove.evalBefore && (
-              <View style={styles.evalDisplay}>
-                <Text style={styles.evalText}>
-                  Eval: {formatEval(currentMove.evalBefore.score, currentMove.evalBefore.mate)}
-                </Text>
-                {currentMove.evalDelta !== undefined && (
-                  <Text
-                    style={[
-                      styles.evalDeltaText,
-                      currentMove.evalDelta < 0 ? styles.evalNegative : styles.evalPositive,
-                    ]}
-                  >
-                    {currentMove.evalDelta < 0 ? '' : '+'}
-                    {(currentMove.evalDelta / 100).toFixed(2)}
-                  </Text>
-                )}
-              </View>
-            )}
-            <View style={styles.boardContainer}>
-              <InteractiveChessBoard
-                fen={currentMove.fen}
-                onMove={() => {}}
-                disabled={true}
-                orientation={currentReviewSession.userColor}
-              />
-            </View>
+            <ChessWorkspace
+              fen={currentMove.fen}
+              disabled={true}
+              screenKey="gameReview"
+              showMoveHistory={false}
+              currentEval={currentMove.evalBefore ?? null}
+              orientationOverride={currentReviewSession.userColor}
+            />
           </View>
 
           {/* Move History (wide screen) */}
@@ -571,30 +541,6 @@ const styles = StyleSheet.create({
     maxWidth: '100%',
   },
   boardSection: {
-    alignItems: 'center',
-  },
-  evalDisplay: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingVertical: 4,
-  },
-  evalText: {
-    color: '#fff',
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  evalDeltaText: {
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  evalPositive: {
-    color: '#4caf50',
-  },
-  evalNegative: {
-    color: '#c62828',
-  },
-  boardContainer: {
     alignItems: 'center',
   },
   moveHistoryPanel: {

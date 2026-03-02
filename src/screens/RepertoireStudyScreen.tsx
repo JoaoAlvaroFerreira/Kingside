@@ -4,7 +4,7 @@
  * Narrow: ScrollView with hierarchy, chapter selector, game lists, ChessWorkspace
  */
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { View, StyleSheet, useWindowDimensions, ScrollView, TouchableOpacity, Text, Platform } from 'react-native';
 import { useStore } from '@store';
 import { MoveTree } from '@utils/MoveTree';
@@ -15,6 +15,7 @@ import { ChapterSelectModal } from '@components/ChapterSelectModal';
 import { GameList } from '@components/repertoire/GameList';
 import { computeFensFromMoves, normalizeFen, UserGame, MasterGame, Line } from '@types';
 import { createLineGenerator, LineGeneratorState } from '@services/training/LineGenerator';
+import { DatabaseService } from '@services/database/DatabaseService';
 
 // Height reserved for the game lists section in wide mode.
 // Passed as verticalOffset to ChessWorkspace so board sizing accounts for it.
@@ -96,9 +97,29 @@ export default function RepertoireStudyScreen({ navigation: _navigation, route }
   const currentFen = moveTree?.getCurrentFen() || '';
   const currentNodeId = moveTree?.getCurrentNode()?.id || null;
 
-  // Disabled: loading all games is too slow without FEN indexing
+  const lastSearchedFenRef = useRef<string | null>(null);
+
   useEffect(() => {
-    setGamesAtPosition({ userGames: [], masterGames: [] });
+    if (!currentFen) return;
+    const normalized = normalizeFen(currentFen);
+    if (normalized === lastSearchedFenRef.current) return;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const [userGames, masterGames] = await Promise.all([
+          DatabaseService.searchUserGamesByFEN(normalized),
+          DatabaseService.searchMasterGamesByFEN(normalized),
+        ]);
+        if (!cancelled) {
+          setGamesAtPosition({ userGames, masterGames });
+          lastSearchedFenRef.current = normalized;
+        }
+      } catch {
+        if (!cancelled) setGamesAtPosition({ userGames: [], masterGames: [] });
+      }
+    })();
+    return () => { cancelled = true; };
   }, [currentFen]);
 
   const handleSelectChapter = (newChapterId: string) => {
@@ -114,7 +135,7 @@ export default function RepertoireStudyScreen({ navigation: _navigation, route }
 
     if (posIndex === -1) return;
 
-    const continuation = game.moves.slice(posIndex + 1);
+    const continuation = game.moves.slice(posIndex);
     for (const san of continuation) {
       moveTree.addMove(san);
     }
@@ -157,6 +178,12 @@ export default function RepertoireStudyScreen({ navigation: _navigation, route }
     forceUpdate(n => n + 1);
   };
 
+  const handleDeleteMove = (nodeId: string) => {
+    if (!moveTree) return;
+    moveTree.deleteFromNode(nodeId);
+    forceUpdate(n => n + 1);
+  };
+
   if (!repertoire || !currentChapter || !moveTree) {
     return null;
   }
@@ -173,6 +200,7 @@ export default function RepertoireStudyScreen({ navigation: _navigation, route }
     onGoToEnd: handleGoToEnd,
     onMarkCritical: handleMarkCritical,
     onPromoteToMainLine: handlePromoteToMainLine,
+    onDeleteMove: handleDeleteMove,
     screenKey: 'repertoire' as const,
     orientationOverride: repertoire.color,
     showMoveHistory: true,

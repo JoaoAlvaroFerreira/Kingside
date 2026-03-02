@@ -14,6 +14,8 @@ import { Repertoire } from '@types';
 import { LineExtractor } from './LineExtractor';
 import { SM2Service } from '@services/srs/SM2Service';
 
+const ACTIVE_BATCH_SIZE = 100;
+
 export const TrainingService = {
   /**
    * Start a new training session from config
@@ -54,10 +56,9 @@ export const TrainingService = {
       allLines = allLines.filter(line => dueLineIds.has(line.id));
     }
 
-    // Order lines based on mode
-    const orderedLines = config.mode === 'width-first'
-      ? allLines // Width-first ordering handled during session progression
-      : allLines; // Depth-first is natural order from extraction
+    // Split into active batch and holdback when over the limit
+    const activeLines = allLines.slice(0, ACTIVE_BATCH_SIZE);
+    const holdbackLines = allLines.slice(ACTIVE_BATCH_SIZE);
 
     return {
       id: this.generateSessionId(),
@@ -65,8 +66,11 @@ export const TrainingService = {
       chapterId: config.chapterId ?? null,
       color: repertoire.color,
       mode: config.mode,
+      learnMode: config.learnMode ?? false,
       maxDepth: config.maxDepth ?? null,
-      lines: orderedLines,
+      lines: activeLines,
+      holdbackLines,
+      totalLineCount: allLines.length,
       currentLineIndex: 0,
       currentMoveIndex: 0,
       currentDepth: 0,
@@ -353,6 +357,10 @@ export const TrainingService = {
         session.currentLineIndex++;
         session.currentMoveIndex = 0;
         return { updatedStats, hasMore: true };
+      } else if (session.holdbackLines.length > 0) {
+        // Promote next batch from holdback
+        this.promoteFromHoldback(session);
+        return { updatedStats, hasMore: true };
       } else {
         session.isComplete = true;
         return { updatedStats, hasMore: false };
@@ -366,7 +374,6 @@ export const TrainingService = {
         const progress = session.lineProgress[line.id] || 0;
 
         if (progress < userMoves.length) {
-          // Found an incomplete line
           session.currentLineIndex = i;
           session.currentMoveIndex = progress;
           return { updatedStats, hasMore: true };
@@ -386,7 +393,12 @@ export const TrainingService = {
         }
       }
 
-      // All lines complete
+      // All active lines complete — check holdback
+      if (session.holdbackLines.length > 0) {
+        this.promoteFromHoldback(session);
+        return { updatedStats, hasMore: true };
+      }
+
       session.isComplete = true;
       return { updatedStats, hasMore: false };
     }
@@ -411,6 +423,27 @@ export const TrainingService = {
   },
 
   /**
+   * Replace completed active lines with the next batch from holdback.
+   * Removes all completed lines, appends up to ACTIVE_BATCH_SIZE new ones.
+   */
+  promoteFromHoldback(session: TrainingSession): void {
+    // Remove completed lines from active set
+    const incompleteLines = session.lines.filter(line => {
+      const userMoves = line.moves.filter(m => m.isUserMove);
+      const progress = session.lineProgress[line.id] || 0;
+      return progress < userMoves.length;
+    });
+
+    // How many slots are free
+    const slotsAvailable = ACTIVE_BATCH_SIZE - incompleteLines.length;
+    const promoted = session.holdbackLines.splice(0, slotsAvailable);
+
+    session.lines = [...incompleteLines, ...promoted];
+    session.currentLineIndex = 0;
+    session.currentMoveIndex = 0;
+  },
+
+  /**
    * Get progress info for display
    */
   getProgress(session: TrainingSession): {
@@ -418,15 +451,19 @@ export const TrainingService = {
     totalLines: number;
     moveNumber: number;
     totalMovesInLine: number;
+    linesCompleted: number;
+    holdbackCount: number;
   } {
     const currentLine = session.lines[session.currentLineIndex];
     const userMoves = currentLine?.moves.filter(m => m.isUserMove) ?? [];
 
     return {
-      lineNumber: session.currentLineIndex + 1,
-      totalLines: session.lines.length,
+      lineNumber: session.linesCompleted + 1,
+      totalLines: session.totalLineCount,
       moveNumber: session.currentMoveIndex + 1,
       totalMovesInLine: userMoves.length,
+      linesCompleted: session.linesCompleted,
+      holdbackCount: session.holdbackLines.length,
     };
   },
 
