@@ -72,7 +72,7 @@ export interface UserGame {
   site?: string;
   eco?: string;
   moves: string[];                // SAN moves array
-  // NOTE: FENs computed on-demand, not stored (optimize later with hashing)
+  startFen?: string;              // Custom starting position (omitted = standard)
   importedAt: Date;
 }
 
@@ -80,12 +80,16 @@ export interface UserGame {
 export type MasterGame = UserGame;
 
 // Helper to compute FENs from moves (used for position matching)
-export function computeFensFromMoves(moves: string[]): string[] {
-  const chess = new Chess();
+export function computeFensFromMoves(moves: string[], startFen?: string): string[] {
+  const chess = startFen ? new Chess(startFen) : new Chess();
   const fens: string[] = [normalizeFen(chess.fen())];
   for (const move of moves) {
-    chess.move(move);
-    fens.push(normalizeFen(chess.fen()));
+    try {
+      chess.move(move);
+      fens.push(normalizeFen(chess.fen()));
+    } catch {
+      break;
+    }
   }
   return fens;
 }

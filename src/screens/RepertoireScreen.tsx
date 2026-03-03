@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, TextInput,
 import { useStore } from '@store';
 import { RepertoireColor, OpeningType, Repertoire } from '@types';
 import { CardGenerator } from '@services/srs/CardGenerator';
+import { getChapterStats, formatLastStudied } from '@utils/chapterUtils';
 
 interface RepertoireScreenProps {
   navigation: any;
@@ -441,9 +442,14 @@ export default function RepertoireScreen({ navigation }: RepertoireScreenProps) 
                                 onPress={() => handleOpenChapter(repertoire.id, chapter.id)}
                                 activeOpacity={0.7}
                               >
-                                <Text style={styles.chapterName}>{chapter.name}</Text>
-                                <Text style={styles.chapterDate}>
-                                  {new Date(chapter.createdAt).toLocaleDateString()}
+                                <Text style={styles.chapterName} numberOfLines={2}>{chapter.name}</Text>
+                                <Text style={styles.chapterMeta}>
+                                  {(() => {
+                                    const stats = getChapterStats(chapter.moveTree);
+                                    const parts = [`${stats.lines} line${stats.lines !== 1 ? 's' : ''}`, `depth ${stats.depth}`];
+                                    if (chapter.lastStudiedAt) parts.push(`studied ${formatLastStudied(chapter.lastStudiedAt)}`);
+                                    return parts.join(' · ');
+                                  })()}
                                 </Text>
                               </TouchableOpacity>
                               <TouchableOpacity
@@ -715,13 +721,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   chapterName: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '500',
     color: '#e0e0e0',
     marginBottom: 2,
   },
-  chapterDate: {
-    fontSize: 9,
+  chapterMeta: {
+    fontSize: 10,
     color: '#888',
   },
   chapterEditButton: {

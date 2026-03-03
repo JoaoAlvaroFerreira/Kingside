@@ -9,7 +9,9 @@ import { Chess } from 'chess.js';
 import { WebDatabaseService } from './WebDatabaseService';
 
 const DB_NAME = 'kingside.db';
-const PAGE_SIZE = 50; // Games per page
+const PAGE_SIZE = 25; // Games per page
+const SCHEMA_VERSION = 2; // Bump when schema changes
+const INDEX_BATCH_SIZE = 10; // Games per batch during background indexing
 
 interface PaginatedResult<T> {
   items: T[];
@@ -27,8 +29,11 @@ if (Platform.OS !== 'web') {
 class DatabaseServiceClass {
   private db: any | null = null;
   private isWeb = Platform.OS === 'web';
-  private fenSearchCache = new Map<string, UserGame[]>();
-  private masterFenSearchCache = new Map<string, MasterGame[]>();
+
+  /** True while the background FEN index is being built for existing games */
+  isIndexing: boolean = false;
+  /** Called when background indexing completes */
+  onIndexingComplete?: () => void;
 
   /**
    * Initialize database and create tables
@@ -113,10 +118,146 @@ class DatabaseServiceClass {
         );
       `);
 
+      // Schema migration: FEN index table
+      await this.migrateSchema();
+
       console.log('[DatabaseService] Database initialized successfully');
     } catch (error) {
       console.error('[DatabaseService] Failed to initialize database:', error);
       throw error;
+    }
+  }
+
+  /**
+   * Run schema migrations based on PRAGMA user_version
+   */
+  private async migrateSchema(): Promise<void> {
+    const versionRow = await this.db!.getFirstAsync('PRAGMA user_version') as any;
+    const currentVersion = versionRow?.user_version ?? 0;
+
+    if (currentVersion < 1) {
+      // V1: Add game_positions FEN index table
+      await this.db!.execAsync(`
+        CREATE TABLE IF NOT EXISTS game_positions (
+          game_id TEXT NOT NULL,
+          game_type TEXT NOT NULL,
+          normalized_fen TEXT NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_positions_fen ON game_positions(normalized_fen, game_type);
+        CREATE INDEX IF NOT EXISTS idx_positions_game ON game_positions(game_id, game_type);
+      `);
+      console.log('[DatabaseService] Migrated to schema v1 (game_positions table)');
+
+      // Background-index all existing games
+      this.buildFenIndexAsync();
+    }
+
+    if (currentVersion < 2) {
+      // V2: Add start_fen column for games with custom starting positions
+      await this.db!.execAsync(`
+        ALTER TABLE user_games ADD COLUMN start_fen TEXT;
+        ALTER TABLE master_games ADD COLUMN start_fen TEXT;
+      `);
+      console.log('[DatabaseService] Migrated to schema v2 (start_fen column)');
+    }
+
+    if (currentVersion < SCHEMA_VERSION) {
+      await this.db!.execAsync(`PRAGMA user_version = ${SCHEMA_VERSION}`);
+    }
+  }
+
+  /**
+   * Extract all unique normalized FENs from a PGN string
+   */
+  private extractFensFromPgn(pgn: string): string[] {
+    // Check for custom starting FEN in headers
+    const fenMatch = pgn.match(/^\[FEN\s+"([^"]+)"\s*\]$/m);
+    const startFen = fenMatch ? fenMatch[1] : undefined;
+
+    const chess = startFen ? new Chess(startFen) : new Chess();
+    const fens: string[] = [normalizeFen(chess.fen())];
+
+    // Strip headers, comments, result tokens
+    let movesText = pgn.replace(/^\[.*?\]$/gm, '');
+    movesText = movesText.replace(/\{[^}]*\}/g, '');
+    movesText = movesText.replace(/;.*$/gm, '');
+    movesText = movesText.replace(/\s+(1-0|0-1|1\/2-1\/2|\*)\s*$/g, '');
+
+    const sections = movesText.split(/\d+\.\s*/).filter(s => s.trim());
+    for (const section of sections) {
+      const tokens = section.trim().split(/\s+/).filter(t => t.trim());
+      for (const token of tokens) {
+        const clean = token.replace(/[!?]+$/, '').replace(/[",]/g, '').trim();
+        if (!clean) continue;
+        try {
+          chess.move(clean);
+          fens.push(normalizeFen(chess.fen()));
+        } catch {
+          // Not a valid move token
+        }
+      }
+    }
+
+    return [...new Set(fens)];
+  }
+
+  /**
+   * Insert FEN positions for a batch of games within a transaction
+   */
+  private async indexGamesInTransaction(
+    games: Array<{ id: string; pgn: string }>,
+    gameType: 'user' | 'master'
+  ): Promise<void> {
+    await this.db!.withTransactionAsync(async () => {
+      for (const game of games) {
+        const fens = this.extractFensFromPgn(game.pgn);
+        for (const fen of fens) {
+          await this.db!.runAsync(
+            'INSERT INTO game_positions (game_id, game_type, normalized_fen) VALUES (?, ?, ?)',
+            [game.id, gameType, fen]
+          );
+        }
+      }
+    });
+  }
+
+  /**
+   * Background-index all existing games in batches, yielding between batches
+   */
+  private async buildFenIndexAsync(): Promise<void> {
+    this.isIndexing = true;
+    console.log('[DatabaseService] Starting background FEN index build...');
+
+    try {
+      for (const gameType of ['user', 'master'] as const) {
+        const table = gameType === 'user' ? 'user_games' : 'master_games';
+        const countRow = await this.db!.getFirstAsync(
+          `SELECT COUNT(*) as count FROM ${table}`
+        ) as { count: number } | null;
+        const total = countRow?.count || 0;
+
+        for (let offset = 0; offset < total; offset += INDEX_BATCH_SIZE) {
+          const rows = await this.db!.getAllAsync(
+            `SELECT id, pgn FROM ${table} LIMIT ? OFFSET ?`,
+            [INDEX_BATCH_SIZE, offset]
+          ) as Array<{ id: string; pgn: string }>;
+
+          if (rows.length === 0) break;
+          await this.indexGamesInTransaction(rows, gameType);
+
+          // Yield to the JS event loop between batches
+          if (offset + INDEX_BATCH_SIZE < total) {
+            await new Promise(resolve => setTimeout(resolve, 0));
+          }
+        }
+      }
+
+      console.log('[DatabaseService] Background FEN index build complete');
+    } catch (error) {
+      console.error('[DatabaseService] FEN index build failed:', error);
+    } finally {
+      this.isIndexing = false;
+      this.onIndexingComplete?.();
     }
   }
 
@@ -135,6 +276,7 @@ class DatabaseServiceClass {
       eco: row.eco,
       pgn: row.pgn,
       moves: JSON.parse(row.moves),
+      startFen: row.start_fen || undefined,
       importedAt: new Date(row.imported_at),
     };
   }
@@ -154,6 +296,7 @@ class DatabaseServiceClass {
       eco: row.eco,
       pgn: row.pgn,
       moves: JSON.parse(row.moves),
+      startFen: row.start_fen || undefined,
       importedAt: new Date(row.imported_at),
     };
   }
@@ -170,13 +313,12 @@ class DatabaseServiceClass {
     console.log(`[DatabaseService] Adding ${games.length} user games...`);
 
     try {
-      // Use transaction for bulk insert
       await this.db.withTransactionAsync(async () => {
         for (const game of games) {
           await this.db!.runAsync(
             `INSERT OR REPLACE INTO user_games
-             (id, white, black, result, date, event, site, eco, pgn, moves, imported_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+             (id, white, black, result, date, event, site, eco, pgn, moves, start_fen, imported_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
               game.id,
               game.white,
@@ -188,13 +330,27 @@ class DatabaseServiceClass {
               game.eco || '',
               game.pgn,
               JSON.stringify(game.moves),
+              game.startFen || null,
               game.importedAt.getTime(),
             ]
           );
+
+          // Index FEN positions for this game
+          const fens = this.extractFensFromPgn(game.pgn);
+          // Clear old positions first (handles re-import)
+          await this.db!.runAsync(
+            'DELETE FROM game_positions WHERE game_id = ? AND game_type = ?',
+            [game.id, 'user']
+          );
+          for (const fen of fens) {
+            await this.db!.runAsync(
+              'INSERT INTO game_positions (game_id, game_type, normalized_fen) VALUES (?, ?, ?)',
+              [game.id, 'user', fen]
+            );
+          }
         }
       });
 
-      this.fenSearchCache.clear();
       console.log(`[DatabaseService] Added ${games.length} user games successfully`);
     } catch (error) {
       console.error('[DatabaseService] Failed to add user games:', error);
@@ -259,7 +415,7 @@ class DatabaseServiceClass {
     if (!this.db) throw new Error('Database not initialized');
 
     await this.db.runAsync('DELETE FROM user_games WHERE id = ?', [id]);
-    this.fenSearchCache.clear();
+    await this.db.runAsync('DELETE FROM game_positions WHERE game_id = ? AND game_type = ?', [id, 'user']);
     console.log(`[DatabaseService] Deleted user game: ${id}`);
   }
 
@@ -271,7 +427,7 @@ class DatabaseServiceClass {
     if (!this.db) throw new Error('Database not initialized');
 
     await this.db.runAsync('DELETE FROM user_games');
-    this.fenSearchCache.clear();
+    await this.db.runAsync("DELETE FROM game_positions WHERE game_type = 'user'");
     console.log('[DatabaseService] Deleted all user games');
   }
 
@@ -300,13 +456,12 @@ class DatabaseServiceClass {
     console.log(`[DatabaseService] Adding ${games.length} master games...`);
 
     try {
-      // Use transaction for bulk insert
       await this.db.withTransactionAsync(async () => {
         for (const game of games) {
           await this.db!.runAsync(
             `INSERT OR REPLACE INTO master_games
-             (id, white, black, result, date, event, site, eco, pgn, moves, imported_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+             (id, white, black, result, date, event, site, eco, pgn, moves, start_fen, imported_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
               game.id,
               game.white,
@@ -318,13 +473,26 @@ class DatabaseServiceClass {
               game.eco || '',
               game.pgn,
               JSON.stringify(game.moves),
+              game.startFen || null,
               game.importedAt.getTime(),
             ]
           );
+
+          // Index FEN positions for this game
+          const fens = this.extractFensFromPgn(game.pgn);
+          await this.db!.runAsync(
+            'DELETE FROM game_positions WHERE game_id = ? AND game_type = ?',
+            [game.id, 'master']
+          );
+          for (const fen of fens) {
+            await this.db!.runAsync(
+              'INSERT INTO game_positions (game_id, game_type, normalized_fen) VALUES (?, ?, ?)',
+              [game.id, 'master', fen]
+            );
+          }
         }
       });
 
-      this.masterFenSearchCache.clear();
       console.log(`[DatabaseService] Added ${games.length} master games successfully`);
     } catch (error) {
       console.error('[DatabaseService] Failed to add master games:', error);
@@ -389,7 +557,7 @@ class DatabaseServiceClass {
     if (!this.db) throw new Error('Database not initialized');
 
     await this.db.runAsync('DELETE FROM master_games WHERE id = ?', [id]);
-    this.masterFenSearchCache.clear();
+    await this.db.runAsync('DELETE FROM game_positions WHERE game_id = ? AND game_type = ?', [id, 'master']);
     console.log(`[DatabaseService] Deleted master game: ${id}`);
   }
 
@@ -401,7 +569,7 @@ class DatabaseServiceClass {
     if (!this.db) throw new Error('Database not initialized');
 
     await this.db.runAsync('DELETE FROM master_games');
-    this.masterFenSearchCache.clear();
+    await this.db.runAsync("DELETE FROM game_positions WHERE game_type = 'master'");
     console.log('[DatabaseService] Deleted all master games');
   }
 
@@ -611,39 +779,50 @@ class DatabaseServiceClass {
   }
 
   /**
-   * Search user games that contain a specific FEN position
+   * Search user games that contain a specific FEN position (SQL index lookup)
    */
   async searchUserGamesByFEN(fen: string): Promise<UserGame[]> {
     if (this.isWeb) return WebDatabaseService.searchUserGamesByFEN(fen);
+    if (!this.db) throw new Error('Database not initialized');
 
-    const cached = this.fenSearchCache.get(fen);
-    if (cached) return cached;
+    const normalized = normalizeFen(fen);
 
-    const allGames = await this.getAllUserGames();
-    const normalizedTarget = normalizeFen(fen);
+    // If still indexing, fall back to brute-force
+    if (this.isIndexing) {
+      const allGames = await this.getAllUserGames();
+      return allGames.filter(game => this.gameContainsFen(game.pgn, normalized));
+    }
 
-    const matches = allGames.filter(game => this.gameContainsFen(game.pgn, normalizedTarget));
-
-    this.fenSearchCache.set(fen, matches);
-    return matches;
+    const rows = await this.db.getAllAsync(
+      `SELECT DISTINCT ug.* FROM user_games ug
+       INNER JOIN game_positions gp ON ug.id = gp.game_id AND gp.game_type = 'user'
+       WHERE gp.normalized_fen = ?`,
+      [normalized]
+    );
+    return (rows as any[]).map((row: any) => this.rowToUserGame(row));
   }
 
   /**
-   * Search master games that contain a specific FEN position
+   * Search master games that contain a specific FEN position (SQL index lookup)
    */
   async searchMasterGamesByFEN(fen: string): Promise<MasterGame[]> {
     if (this.isWeb) return WebDatabaseService.searchMasterGamesByFEN(fen);
+    if (!this.db) throw new Error('Database not initialized');
 
-    const cached = this.masterFenSearchCache.get(fen);
-    if (cached) return cached;
+    const normalized = normalizeFen(fen);
 
-    const allGames = await this.getAllMasterGames();
-    const normalizedTarget = normalizeFen(fen);
+    if (this.isIndexing) {
+      const allGames = await this.getAllMasterGames();
+      return allGames.filter(game => this.gameContainsFen(game.pgn, normalized));
+    }
 
-    const matches = allGames.filter(game => this.gameContainsFen(game.pgn, normalizedTarget));
-
-    this.masterFenSearchCache.set(fen, matches);
-    return matches;
+    const rows = await this.db.getAllAsync(
+      `SELECT DISTINCT mg.* FROM master_games mg
+       INNER JOIN game_positions gp ON mg.id = gp.game_id AND gp.game_type = 'master'
+       WHERE gp.normalized_fen = ?`,
+      [normalized]
+    );
+    return (rows as any[]).map((row: any) => this.rowToMasterGame(row));
   }
 }
 

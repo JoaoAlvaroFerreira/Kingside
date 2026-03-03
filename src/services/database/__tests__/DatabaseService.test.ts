@@ -112,7 +112,8 @@ beforeEach(() => {
   mockDb.execAsync.mockResolvedValue(undefined);
   mockDb.runAsync.mockResolvedValue({ changes: 1 });
   mockDb.getAllAsync.mockResolvedValue([]);
-  mockDb.getFirstAsync.mockResolvedValue(null);
+  // Default: return schema version 1 for PRAGMA user_version (no migration needed)
+  mockDb.getFirstAsync.mockResolvedValue({ user_version: 1 });
   mockDb.withTransactionAsync.mockImplementation(async (fn: () => Promise<void>) => fn());
   mockOpenDatabaseAsync.mockResolvedValue(mockDb);
 });
@@ -148,7 +149,11 @@ describe('DatabaseService', () => {
     it('addUserGames inserts all games with runAsync', async () => {
       const games = [makeGame(), makeGame()];
       await DatabaseService.addUserGames(games);
-      expect(mockDb.runAsync).toHaveBeenCalledTimes(games.length);
+      // Each game: 1 INSERT user_games + 1 DELETE game_positions + N INSERT game_positions
+      const insertCalls = mockDb.runAsync.mock.calls.filter(
+        ([sql]: [string]) => sql.includes('INSERT OR REPLACE INTO user_games')
+      );
+      expect(insertCalls).toHaveLength(games.length);
     });
 
     it('addUserGames stores moves as JSON string', async () => {
@@ -180,6 +185,11 @@ describe('DatabaseService', () => {
       expect(mockDb.runAsync).toHaveBeenCalledWith(
         'DELETE FROM user_games WHERE id = ?',
         ['game-123']
+      );
+      // Also cleans up FEN index
+      expect(mockDb.runAsync).toHaveBeenCalledWith(
+        'DELETE FROM game_positions WHERE game_id = ? AND game_type = ?',
+        ['game-123', 'user']
       );
     });
 
@@ -226,8 +236,12 @@ describe('DatabaseService', () => {
       mockDb.getFirstAsync.mockResolvedValueOnce({ count: 0 });
       mockDb.getAllAsync.mockResolvedValueOnce([]);
       await DatabaseService.searchUserGames('Alice');
-      const countCall = mockDb.getFirstAsync.mock.calls[0];
-      expect(countCall[1]).toContain('%Alice%');
+      // Find the call that uses LIKE (not the PRAGMA call from init)
+      const likeCall = mockDb.getFirstAsync.mock.calls.find(
+        ([sql]: [string]) => sql.includes('LIKE')
+      );
+      expect(likeCall).toBeDefined();
+      expect(likeCall![1]).toContain('%Alice%');
     });
   });
 

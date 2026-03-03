@@ -13,7 +13,7 @@ import { HierarchyBrowser } from '@components/repertoire/HierarchyBrowser';
 import { ChapterList } from '@components/repertoire/ChapterList';
 import { ChapterSelectModal } from '@components/ChapterSelectModal';
 import { GameList } from '@components/repertoire/GameList';
-import { computeFensFromMoves, normalizeFen, UserGame, MasterGame, Line } from '@types';
+import { normalizeFen, UserGame, MasterGame, Line } from '@types';
 import { createLineGenerator, LineGeneratorState } from '@services/training/LineGenerator';
 import { DatabaseService } from '@services/database/DatabaseService';
 
@@ -31,7 +31,7 @@ interface RepertoireStudyScreenProps {
   };
 }
 
-export default function RepertoireStudyScreen({ navigation: _navigation, route }: RepertoireStudyScreenProps) {
+export default function RepertoireStudyScreen({ navigation, route }: RepertoireStudyScreenProps) {
   const { repertoireId, chapterId } = route.params;
   const { repertoires } = useStore();
   const { width } = useWindowDimensions();
@@ -51,6 +51,7 @@ export default function RepertoireStudyScreen({ navigation: _navigation, route }
     userGames: [],
     masterGames: [],
   });
+  const [loadingGames, setLoadingGames] = useState(false);
 
   const currentChapter = useMemo(
     () => repertoire?.chapters.find(c => c.id === selectedChapterId),
@@ -105,6 +106,7 @@ export default function RepertoireStudyScreen({ navigation: _navigation, route }
     if (normalized === lastSearchedFenRef.current) return;
 
     let cancelled = false;
+    setLoadingGames(true);
     (async () => {
       try {
         const [userGames, masterGames] = await Promise.all([
@@ -117,6 +119,8 @@ export default function RepertoireStudyScreen({ navigation: _navigation, route }
         }
       } catch {
         if (!cancelled) setGamesAtPosition({ userGames: [], masterGames: [] });
+      } finally {
+        if (!cancelled) setLoadingGames(false);
       }
     })();
     return () => { cancelled = true; };
@@ -127,19 +131,7 @@ export default function RepertoireStudyScreen({ navigation: _navigation, route }
   };
 
   const handleSelectGame = (game: UserGame | MasterGame) => {
-    if (!moveTree || !currentFen) return;
-
-    const gameFens = computeFensFromMoves(game.moves);
-    const normalizedFen = normalizeFen(currentFen);
-    const posIndex = gameFens.indexOf(normalizedFen);
-
-    if (posIndex === -1) return;
-
-    const continuation = game.moves.slice(posIndex);
-    for (const san of continuation) {
-      moveTree.addMove(san);
-    }
-    forceUpdate(n => n + 1);
+    navigation.navigate('Analysis', { game });
   };
 
   const handleMoveClick = (from: string, to: string) => {
@@ -207,14 +199,15 @@ export default function RepertoireStudyScreen({ navigation: _navigation, route }
     showSettingsGear: true,
   };
 
-  const gameLists = (collapsed: boolean) => (
-    <View style={styles.bottomSection}>
+  const gameLists = (isWideMode: boolean) => (
+    <View style={isWideMode ? styles.bottomSection : styles.gameListsNarrow}>
       <View style={styles.gameListHalf}>
         <GameList
           title="Your Games"
           games={gamesAtPosition.userGames}
           onSelect={handleSelectGame}
-          defaultCollapsed={collapsed}
+          defaultCollapsed={!isWideMode}
+          loading={loadingGames}
         />
       </View>
       <View style={styles.gameListHalf}>
@@ -222,7 +215,8 @@ export default function RepertoireStudyScreen({ navigation: _navigation, route }
           title="Master Games"
           games={gamesAtPosition.masterGames}
           onSelect={handleSelectGame}
-          defaultCollapsed={collapsed}
+          defaultCollapsed={!isWideMode}
+          loading={loadingGames}
         />
       </View>
     </View>
@@ -262,7 +256,7 @@ export default function RepertoireStudyScreen({ navigation: _navigation, route }
           {/* Main area: ChessWorkspace (flex:1) + game lists (fixed height) */}
           <View style={styles.wideMain}>
             <ChessWorkspace {...chessWorkspaceProps} verticalOffset={GAME_LIST_HEIGHT} />
-            {gameLists(false)}
+            {gameLists(true)}
           </View>
         </View>
       ) : (
@@ -282,9 +276,8 @@ export default function RepertoireStudyScreen({ navigation: _navigation, route }
             </Text>
             <Text style={styles.chapterButtonArrow}>&#9662;</Text>
           </TouchableOpacity>
-          {gameLists(true)}
-          {/* ChessWorkspace in narrow mode has no flex:1 — sizes to content for ScrollView */}
           <ChessWorkspace {...chessWorkspaceProps} />
+          {gameLists(false)}
         </ScrollView>
       )}
 
@@ -335,6 +328,11 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#3a3a3a',
     height: GAME_LIST_HEIGHT,
+    gap: 8,
+    padding: 4,
+  },
+  gameListsNarrow: {
+    flexDirection: 'row',
     gap: 8,
     padding: 4,
   },

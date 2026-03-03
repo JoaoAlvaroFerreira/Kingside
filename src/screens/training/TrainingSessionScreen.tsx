@@ -10,7 +10,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { useStore } from '@store';
-import { TrainingSession, TrainingConfig } from '@types';
+import { TrainingSession, TrainingConfig, TrainingTimingSettings } from '@types';
 import { TrainingService } from '@services/training/TrainingService';
 import { ChessWorkspace } from '@components/chess/ChessWorkspace/ChessWorkspace';
 import { VariationSelector } from '@components/training/VariationSelector';
@@ -24,7 +24,8 @@ interface TrainingSessionScreenProps {
 }
 
 export default function TrainingSessionScreen({ navigation, route }: TrainingSessionScreenProps) {
-  const { repertoires, lineStats, setTrainingSession, updateLineStats } = useStore();
+  const { repertoires, lineStats, setTrainingSession, updateLineStats, reviewSettings } = useStore();
+  const timing: TrainingTimingSettings = reviewSettings.training;
   const { width } = useWindowDimensions();
 
   const [session, setSession] = useState<TrainingSession | null>(null);
@@ -127,7 +128,7 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
       setTimeout(() => {
         setFeedback(null);
         setHintArrowUci(undefined);
-      }, 2500);
+      }, timing.incorrectDelayMs);
       return;
     }
 
@@ -143,18 +144,18 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
         setTimeout(() => {
           setFeedback(null);
           completeLineAndAdvance();
-        }, 1500);
+        }, timing.lineCompleteDelayMs);
       } else {
         setSession({ ...session, awaitingRating: true });
       }
       return;
     }
 
-    // Check if there's an opponent move to animate
+    // Check if there's an opponent move to play
     if (result.opponentMove && result.opponentFen) {
       setIsAnimating(true);
 
-      // Show opponent's comment during animation if in learn mode
+      // Show opponent's comment if in learn mode
       if (isLearnMode) {
         const currentLine = session.lines[session.currentLineIndex];
         const userMoves = currentLine.moves.filter(m => m.isUserMove);
@@ -168,38 +169,41 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
         }
       }
 
-      // Brief pause to show correct feedback
+      const advanceAfterOpponent = () => {
+        setIsAnimating(false);
+        setFeedback(null);
+
+        if (result.nextPosition) {
+          setCurrentFen(result.nextPosition.fen);
+          TrainingService.advanceToNextPosition(session);
+          setSession({ ...session });
+
+          const position = TrainingService.getCurrentPosition(session);
+          if (position) {
+            setExpectedMove(position.expectedMove);
+          }
+          updateComment(session);
+        } else {
+          if (isLearnMode) {
+            setCurrentComment(undefined);
+            setTimeout(() => completeLineAndAdvance(), timing.lineCompleteDelayMs);
+          } else {
+            setSession({ ...session, awaitingRating: true });
+          }
+        }
+      };
+
+      // Brief pause to show correct feedback, then play opponent move
       setTimeout(() => {
         setCurrentFen(result.opponentFen!);
 
-        // Animate opponent move
-        setTimeout(() => {
-          setIsAnimating(false);
-          setFeedback(null);
-
-          // Move to next user position
-          if (result.nextPosition) {
-            setCurrentFen(result.nextPosition.fen);
-            TrainingService.advanceToNextPosition(session);
-            setSession({ ...session });
-
-            // Update expected move
-            const position = TrainingService.getCurrentPosition(session);
-            if (position) {
-              setExpectedMove(position.expectedMove);
-            }
-            updateComment(session);
-          } else {
-            // Line complete
-            if (isLearnMode) {
-              setCurrentComment(undefined);
-              setTimeout(() => completeLineAndAdvance(), 1500);
-            } else {
-              setSession({ ...session, awaitingRating: true });
-            }
-          }
-        }, 200);
-      }, 500);
+        if (timing.opponentAnimation) {
+          // Animate: show opponent position, then advance after 200ms
+          setTimeout(advanceAfterOpponent, 200);
+        } else {
+          advanceAfterOpponent();
+        }
+      }, timing.correctDelayMs);
     } else if (result.nextPosition) {
       // Next move is also user's turn
       setTimeout(() => {
@@ -213,7 +217,7 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
           setExpectedMove(position.expectedMove);
         }
         updateComment(session);
-      }, 500);
+      }, timing.correctDelayMs);
     }
   };
 

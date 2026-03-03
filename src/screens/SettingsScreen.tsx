@@ -40,6 +40,12 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
   const [lichessUsername, setLichessUsername] = useState(reviewSettings.lichess.username);
   const [lichessImportDaysBack, setLichessImportDaysBack] = useState(reviewSettings.lichess.importDaysBack.toString());
 
+  // Training timing settings
+  const [correctDelay, setCorrectDelay] = useState(reviewSettings.training.correctDelayMs.toString());
+  const [incorrectDelay, setIncorrectDelay] = useState(reviewSettings.training.incorrectDelayMs.toString());
+  const [lineCompleteDelay, setLineCompleteDelay] = useState(reviewSettings.training.lineCompleteDelayMs.toString());
+  const [opponentAnimation, setOpponentAnimation] = useState(reviewSettings.training.opponentAnimation);
+
   // Update local state when store changes
   useEffect(() => {
     setMoveTime(reviewSettings.engine.moveTime.toString());
@@ -51,6 +57,10 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
     setAutoAdvanceDelay(reviewSettings.autoAdvanceDelay.toString());
     setLichessUsername(reviewSettings.lichess.username);
     setLichessImportDaysBack(reviewSettings.lichess.importDaysBack.toString());
+    setCorrectDelay(reviewSettings.training.correctDelayMs.toString());
+    setIncorrectDelay(reviewSettings.training.incorrectDelayMs.toString());
+    setLineCompleteDelay(reviewSettings.training.lineCompleteDelayMs.toString());
+    setOpponentAnimation(reviewSettings.training.opponentAnimation);
   }, [reviewSettings]);
 
   const validateSettings = (): string | null => {
@@ -84,6 +94,17 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
       return 'Import days back must be between 1 and 365';
     }
 
+    for (const [val, label] of [
+      [correctDelay, 'Correct delay'],
+      [incorrectDelay, 'Incorrect delay'],
+      [lineCompleteDelay, 'Line complete delay'],
+    ] as const) {
+      const num = parseInt(val, 10);
+      if (isNaN(num) || num < 0 || num > 5000) {
+        return `${label} must be between 0ms and 5000ms`;
+      }
+    }
+
     return null;
   };
 
@@ -114,6 +135,12 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
         lichess: {
           username: lichessUsername.trim(),
           importDaysBack: parseInt(lichessImportDaysBack, 10),
+        },
+        training: {
+          correctDelayMs: parseInt(correctDelay, 10),
+          incorrectDelayMs: parseInt(incorrectDelay, 10),
+          lineCompleteDelayMs: parseInt(lineCompleteDelay, 10),
+          opponentAnimation,
         },
       });
 
@@ -147,6 +174,10 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
         autoAdvanceDelay: '0',
         lichessUsername: '',
         lichessImportDaysBack: '1',
+        correctDelay: '150',
+        incorrectDelay: '500',
+        lineCompleteDelay: '150',
+        opponentAnimation: false,
       };
 
       setMoveTime(defaults.moveTime);
@@ -158,6 +189,10 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
       setAutoAdvanceDelay(defaults.autoAdvanceDelay);
       setLichessUsername(defaults.lichessUsername);
       setLichessImportDaysBack(defaults.lichessImportDaysBack);
+      setCorrectDelay(defaults.correctDelay);
+      setIncorrectDelay(defaults.incorrectDelay);
+      setLineCompleteDelay(defaults.lineCompleteDelay);
+      setOpponentAnimation(defaults.opponentAnimation);
 
       await saveReviewSettings({
         engine: {
@@ -172,6 +207,12 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
         lichess: {
           username: '',
           importDaysBack: 1,
+        },
+        training: {
+          correctDelayMs: 150,
+          incorrectDelayMs: 500,
+          lineCompleteDelayMs: 150,
+          opponentAnimation: false,
         },
       });
     };
@@ -348,6 +389,68 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
               placeholderTextColor="#666"
             />
             <Text style={styles.hint}>How many days of games to import (1-365, default: 1)</Text>
+          </View>
+        </View>
+
+        {/* Training Timing */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Training Timing</Text>
+          <Text style={styles.sectionDescription}>
+            Control feedback delays during variation training
+          </Text>
+
+          <View style={styles.row}>
+            <View style={[styles.field, styles.fieldHalf]}>
+              <Text style={styles.label}>Correct Delay (ms)</Text>
+              <TextInput
+                style={styles.input}
+                value={correctDelay}
+                onChangeText={setCorrectDelay}
+                placeholder="150"
+                keyboardType="numeric"
+                placeholderTextColor="#666"
+              />
+              <Text style={styles.hint}>0-5000 (default: 150)</Text>
+            </View>
+
+            <View style={[styles.field, styles.fieldHalf]}>
+              <Text style={styles.label}>Incorrect Delay (ms)</Text>
+              <TextInput
+                style={styles.input}
+                value={incorrectDelay}
+                onChangeText={setIncorrectDelay}
+                placeholder="500"
+                keyboardType="numeric"
+                placeholderTextColor="#666"
+              />
+              <Text style={styles.hint}>0-5000 (default: 500)</Text>
+            </View>
+          </View>
+
+          <View style={styles.field}>
+            <Text style={styles.label}>Line Complete Delay (ms)</Text>
+            <TextInput
+              style={styles.input}
+              value={lineCompleteDelay}
+              onChangeText={setLineCompleteDelay}
+              placeholder="150"
+              keyboardType="numeric"
+              placeholderTextColor="#666"
+            />
+            <Text style={styles.hint}>Pause before advancing to next line in learn mode (default: 150)</Text>
+          </View>
+
+          <View style={styles.switchRow}>
+            <View style={styles.switchLabel}>
+              <Text style={styles.label}>Opponent Animation</Text>
+              <Text style={styles.hint}>Brief pause to animate opponent moves (adds ~200ms)</Text>
+            </View>
+            <Switch
+              value={opponentAnimation}
+              onValueChange={setOpponentAnimation}
+              trackColor={{ false: '#444', true: '#4a9eff' }}
+              thumbColor={opponentAnimation ? '#fff' : '#bbb'}
+            />
           </View>
         </View>
 

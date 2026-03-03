@@ -133,9 +133,12 @@ export const ChessWorkspace: React.FC<ChessWorkspaceProps> = ({
   // Narrow mode: move history sits below the board and can be a bit smaller
   const narrowHistoryHeight = Math.max(80, Math.floor(actualBoardSize * 0.45));
 
+  // Only recompute flat moves when the tree structure changes (add/delete/promote),
+  // NOT on every navigation. This avoids O(n) work on each arrow-key press.
+  const structureVersion = moveTree?.structureVersion ?? 0;
   const flatMoves = useMemo(
     () => (moveTree ? moveTree.getFlatMoves() : []),
-    [moveTree, currentNodeId]
+    [moveTree, structureVersion] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   const canGoBack = moveTree ? !moveTree.isAtStart() : false;
@@ -207,7 +210,7 @@ export const ChessWorkspace: React.FC<ChessWorkspaceProps> = ({
                   onPromoteToMainLine={onPromoteToMainLine}
                   onMarkCritical={onMarkCritical}
                   onDeleteMove={onDeleteMove}
-                  onSettingsPress={showSettingsGear ? () => setSettingsVisible(true) : undefined}
+                      onSettingsPress={showSettingsGear ? () => setSettingsVisible(true) : undefined}
                   canGoBack={canGoBack}
                   canGoForward={canGoForward}
                 />
@@ -234,6 +237,7 @@ export const ChessWorkspace: React.FC<ChessWorkspaceProps> = ({
               onGoToEnd={handleGoToEnd}
               onPromoteToMainLine={onPromoteToMainLine}
               onMarkCritical={onMarkCritical}
+              onDeleteMove={onDeleteMove}
               onSettingsPress={showSettingsGear ? () => setSettingsVisible(true) : undefined}
               canGoBack={canGoBack}
               canGoForward={canGoForward}

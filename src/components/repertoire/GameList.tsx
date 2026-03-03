@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import { CollapsiblePanel } from './CollapsiblePanel';
 import { UserGame, MasterGame } from '@types';
 
@@ -13,12 +13,17 @@ interface GameListProps {
   games: (UserGame | MasterGame)[];
   onSelect: (game: UserGame | MasterGame) => void;
   defaultCollapsed?: boolean;
+  loading?: boolean;
 }
 
-export function GameList({ title, games, onSelect, defaultCollapsed }: GameListProps) {
+export function GameList({ title, games, onSelect, defaultCollapsed, loading }: GameListProps) {
+  const titleText = loading ? title : `${title} (${games.length})`;
+
   return (
-    <CollapsiblePanel title={`${title} (${games.length})`} defaultCollapsed={defaultCollapsed}>
-      {games.length === 0 ? (
+    <CollapsiblePanel title={titleText} defaultCollapsed={defaultCollapsed}>
+      {loading ? (
+        <ActivityIndicator size="small" color="#4a9eff" style={styles.spinner} />
+      ) : games.length === 0 ? (
         <Text style={styles.empty}>No games at this position</Text>
       ) : (
         <ScrollView style={styles.list} nestedScrollEnabled>
@@ -59,6 +64,9 @@ export function GameList({ title, games, onSelect, defaultCollapsed }: GameListP
 const styles = StyleSheet.create({
   list: {
     maxHeight: 200,
+  },
+  spinner: {
+    paddingVertical: 10,
   },
   empty: {
     color: '#888',

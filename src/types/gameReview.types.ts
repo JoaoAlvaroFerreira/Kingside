@@ -92,12 +92,20 @@ export interface LichessSettings {
   importDaysBack: number;  // Number of days to look back (default 1 for last 24h)
 }
 
+export interface TrainingTimingSettings {
+  correctDelayMs: number;       // Pause after correct move (default: 150)
+  incorrectDelayMs: number;     // Pause after incorrect move (default: 500)
+  lineCompleteDelayMs: number;  // Pause after completing a line in learn mode (default: 150)
+  opponentAnimation: boolean;   // Animate opponent moves with a brief pause (default: false)
+}
+
 export interface ReviewSettings {
   engine: EngineSettings;
   showEvalBar: boolean;
   showBestMove: boolean;
   autoAdvanceDelay: number; // ms, 0 = manual
   lichess: LichessSettings;
+  training: TrainingTimingSettings;
 }
 
 export interface AnalysisProgress {

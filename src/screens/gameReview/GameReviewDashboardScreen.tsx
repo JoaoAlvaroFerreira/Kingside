@@ -30,7 +30,9 @@ export default function GameReviewDashboardScreen({ navigation }: GameReviewDash
   const [filterTab, setFilterTab] = useState<FilterTab>('all');
   const [startingReview, setStartingReview] = useState(false);
   const [colorPromptGameId, setColorPromptGameId] = useState<string | null>(null);
-  const [games, setGames] = useState<UserGame[]>([]);
+  const [allLoadedGames, setAllLoadedGames] = useState<UserGame[]>([]);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
   const [isLoadingGames, setIsLoadingGames] = useState(false);
   const pendingGameId = useRef<string | null>(null);
 
@@ -44,36 +46,14 @@ export default function GameReviewDashboardScreen({ navigation }: GameReviewDash
     }
   }, [isAnalyzing, navigation]);
 
-  // Load games when tab changes or screen focuses
-  useEffect(() => {
-    loadGames();
-  }, [filterTab]);
-
-  useFocusEffect(
-    useCallback(() => {
-      loadGames();
-    }, [filterTab])
-  );
-
-  const loadGames = async () => {
+  const loadGames = async (page: number, replace: boolean) => {
+    if (isLoadingGames) return;
     setIsLoadingGames(true);
     try {
-      const allGames = await DatabaseService.getAllUserGames();
-      const reviewedIds = new Set(gameReviewStatuses.filter(s => s.reviewed).map(s => s.gameId));
-
-      let filtered: UserGame[];
-      switch (filterTab) {
-        case 'reviewed':
-          filtered = allGames.filter(g => reviewedIds.has(g.id));
-          break;
-        case 'unreviewed':
-          filtered = allGames.filter(g => !reviewedIds.has(g.id));
-          break;
-        default:
-          filtered = allGames;
-      }
-
-      setGames(filtered);
+      const result = await DatabaseService.getUserGames(page);
+      setAllLoadedGames(prev => replace ? result.items : [...prev, ...result.items]);
+      setHasMore(result.hasMore);
+      setCurrentPage(page);
     } catch (error) {
       console.error('Failed to load games:', error);
     } finally {
@@ -81,15 +61,45 @@ export default function GameReviewDashboardScreen({ navigation }: GameReviewDash
     }
   };
 
-  // Count stats
-  const stats = useMemo(() => {
-    const reviewedIds = new Set(gameReviewStatuses.filter(s => s.reviewed).map(s => s.gameId));
-    return {
-      total: userGamesCount,
-      reviewed: games.filter(g => reviewedIds.has(g.id)).length,
-      unreviewed: games.filter(g => !reviewedIds.has(g.id)).length,
-    };
-  }, [games, gameReviewStatuses, userGamesCount]);
+  const loadMoreGames = () => {
+    if (hasMore && !isLoadingGames) {
+      loadGames(currentPage + 1, false);
+    }
+  };
+
+  // Initial load + refresh on focus
+  useEffect(() => {
+    loadGames(0, true);
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadGames(0, true);
+    }, [])
+  );
+
+  // Filter loaded games by review status
+  const reviewedIds = useMemo(
+    () => new Set(gameReviewStatuses.filter(s => s.reviewed).map(s => s.gameId)),
+    [gameReviewStatuses]
+  );
+
+  const games = useMemo(() => {
+    switch (filterTab) {
+      case 'reviewed':
+        return allLoadedGames.filter(g => reviewedIds.has(g.id));
+      case 'unreviewed':
+        return allLoadedGames.filter(g => !reviewedIds.has(g.id));
+      default:
+        return allLoadedGames;
+    }
+  }, [allLoadedGames, filterTab, reviewedIds]);
+
+  const stats = useMemo(() => ({
+    total: userGamesCount,
+    reviewed: allLoadedGames.filter(g => reviewedIds.has(g.id)).length,
+    unreviewed: allLoadedGames.filter(g => !reviewedIds.has(g.id)).length,
+  }), [allLoadedGames, reviewedIds, userGamesCount]);
 
   const handleColorSelected = async (gameId: string, color: 'white' | 'black') => {
     setColorPromptGameId(null);
@@ -233,10 +243,20 @@ export default function GameReviewDashboardScreen({ navigation }: GameReviewDash
               contentContainerStyle={styles.listContent}
               data={games}
               keyExtractor={(item) => item.id}
+              onEndReached={loadMoreGames}
+              onEndReachedThreshold={0.5}
               ListEmptyComponent={
                 <View style={styles.emptyContainer}>
                   <Text style={styles.emptyText}>No games found</Text>
                 </View>
+              }
+              ListFooterComponent={
+                isLoadingGames && currentPage > 0 ? (
+                  <View style={styles.loadingFooter}>
+                    <ActivityIndicator size="small" color="#4a9eff" />
+                    <Text style={styles.loadingFooterText}>Loading more games...</Text>
+                  </View>
+                ) : null
               }
               renderItem={({ item: game }) => {
                 const status = getStatus(game.id);
@@ -602,5 +622,16 @@ const styles = StyleSheet.create({
   modalCancelText: {
     fontSize: 12,
     color: '#888',
+  },
+  loadingFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    gap: 8,
+  },
+  loadingFooterText: {
+    color: '#bbb',
+    fontSize: 11,
   },
 });

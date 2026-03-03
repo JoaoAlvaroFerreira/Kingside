@@ -32,7 +32,7 @@ interface MoveHistoryProps {
   canGoForward: boolean;
 }
 
-export const MoveHistory: React.FC<MoveHistoryProps> = ({
+const MoveHistoryInner: React.FC<MoveHistoryProps> = ({
   moves,
   currentNodeId,
   onNavigate,
@@ -88,6 +88,7 @@ export const MoveHistory: React.FC<MoveHistoryProps> = ({
     }
     setContextMenu(null);
   };
+
 
   const renderMoves = () => {
     if (moves.length === 0) {
@@ -310,6 +311,13 @@ export const MoveHistory: React.FC<MoveHistoryProps> = ({
     </View>
   );
 };
+
+export const MoveHistory = React.memo(MoveHistoryInner, (prev, next) => {
+  return prev.moves === next.moves
+    && prev.currentNodeId === next.currentNodeId
+    && prev.canGoBack === next.canGoBack
+    && prev.canGoForward === next.canGoForward;
+});
 
 const styles = StyleSheet.create({
   container: {

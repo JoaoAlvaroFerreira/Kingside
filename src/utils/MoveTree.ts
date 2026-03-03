@@ -24,6 +24,7 @@ export class MoveTree {
   private currentNode: MoveNode | null = null;
   private startFen: string;
   private nodeIdCounter = 0;
+  private _structureVersion = 0; // Incremented on add/delete/promote, NOT on navigation
 
   constructor(startFen?: string) {
     this.startFen = startFen || new Chess().fen();
@@ -31,6 +32,10 @@ export class MoveTree {
 
   private generateId(): string {
     return `node_${++this.nodeIdCounter}`;
+  }
+
+  get structureVersion(): number {
+    return this._structureVersion;
   }
 
   getStartFen(): string {
@@ -103,6 +108,7 @@ export class MoveTree {
 
     children.push(newNode);
     this.currentNode = newNode;
+    this._structureVersion++;
     return true;
   }
 
@@ -365,6 +371,7 @@ export class MoveTree {
 
     // Swap with first child (main line)
     [parent.children[0], parent.children[childIndex]] = [parent.children[childIndex], parent.children[0]];
+    this._structureVersion++;
     return true;
   }
 
@@ -394,6 +401,7 @@ export class MoveTree {
     const node = this.findNode(nodeId);
     if (!node) return false;
     node.isCritical = isCritical;
+    this._structureVersion++;
     return true;
   }
 
@@ -404,6 +412,7 @@ export class MoveTree {
     const node = this.findNode(nodeId);
     if (!node) return false;
     node.comment = comment || undefined;
+    this._structureVersion++;
     return true;
   }
 
@@ -421,9 +430,24 @@ export class MoveTree {
     if (index === -1) return false;
 
     siblings.splice(index, 1);
+    this._structureVersion++;
 
     // Navigate to parent (or root if no parent)
     this.currentNode = parent;
+    return true;
+  }
+
+  /**
+   * Delete all children (continuations) after a node, keeping the node itself.
+   * Navigates to the node.
+   */
+  deleteAfterNode(nodeId: string): boolean {
+    const node = this.findNode(nodeId);
+    if (!node) return false;
+
+    node.children = [];
+    this.currentNode = node;
+    this._structureVersion++;
     return true;
   }
 
@@ -434,6 +458,7 @@ export class MoveTree {
     this.rootMoves = [];
     this.currentNode = null;
     this.nodeIdCounter = 0;
+    this._structureVersion++;
   }
 
   /**

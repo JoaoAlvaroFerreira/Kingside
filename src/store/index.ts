@@ -133,6 +133,7 @@ export const useStore = create<AppState>((set, get) => ({
             ...storedReviewSettings,
             engine: { ...defaults.engine, ...storedReviewSettings.engine },
             lichess: { ...defaults.lichess, ...storedReviewSettings.lichess },
+            training: { ...defaults.training, ...storedReviewSettings.training },
           }
         : defaults;
 
@@ -347,6 +348,7 @@ export const useStore = create<AppState>((set, get) => ({
       ...updates,
       engine: updates.engine ? { ...current.engine, ...updates.engine } : current.engine,
       lichess: updates.lichess ? { ...current.lichess, ...updates.lichess } : current.lichess,
+      training: updates.training ? { ...current.training, ...updates.training } : current.training,
     };
     await DatabaseService.saveSetting('reviewSettings', updated);
     set({ reviewSettings: updated });

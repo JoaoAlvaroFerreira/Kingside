@@ -26,6 +26,12 @@ export const SettingsService = {
         username: '',
         importDaysBack: 1,
       },
+      training: {
+        correctDelayMs: 150,
+        incorrectDelayMs: 500,
+        lineCompleteDelayMs: 150,
+        opponentAnimation: false,
+      },
     };
   },
 
@@ -41,6 +47,7 @@ export const SettingsService = {
           ...stored,
           engine: { ...this.getDefaults().engine, ...stored.engine },
           lichess: { ...this.getDefaults().lichess, ...stored.lichess },
+          training: { ...this.getDefaults().training, ...stored.training },
         };
       }
     } catch (error) {
@@ -71,6 +78,7 @@ export const SettingsService = {
       ...updates,
       engine: updates.engine ? { ...current.engine, ...updates.engine } : current.engine,
       lichess: updates.lichess ? { ...current.lichess, ...updates.lichess } : current.lichess,
+      training: updates.training ? { ...current.training, ...updates.training } : current.training,
     };
     await this.saveSettings(updated);
     return updated;

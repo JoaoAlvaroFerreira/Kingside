@@ -321,6 +321,258 @@ describe('PGNService', () => {
     });
   });
 
+  describe('sanitizeChessablePgn', () => {
+    it('strips @@...@@ markers', () => {
+      const input = '1. e4 @@some chessable text@@ e5';
+      const result = PGNService.sanitizeChessablePgn(input);
+      expect(result).toBe('1. e4  e5');
+      expect(result).not.toContain('@@');
+    });
+
+    it('strips multiple @@...@@ markers', () => {
+      const input = '1. e4 @@bold@@ e5 @@another@@';
+      const result = PGNService.sanitizeChessablePgn(input);
+      expect(result).not.toContain('@@');
+    });
+
+    it('converts [text] in move section to {text} comments', () => {
+      const input = '[Event "Test"]\n\n1. e4 [Idea: control center] e5';
+      const result = PGNService.sanitizeChessablePgn(input);
+      expect(result).toContain('{Idea: control center}');
+      // Header preserved
+      expect(result).toContain('[Event "Test"]');
+    });
+
+    it('preserves header lines unchanged', () => {
+      const input = '[Event "Test"]\n[White "Alice"]\n\n1. e4 e5';
+      const result = PGNService.sanitizeChessablePgn(input);
+      expect(result).toContain('[Event "Test"]');
+      expect(result).toContain('[White "Alice"]');
+    });
+
+    it('flattens nested {} in move text', () => {
+      const input = '1. e4 {This is important {key idea} back to normal} e5';
+      const result = PGNService.sanitizeChessablePgn(input);
+      expect(result).toContain('{This is important key idea back to normal}');
+    });
+
+    it('handles [text] adjacent to existing {comment}', () => {
+      const input = '1. e4 {A good move} [Important idea] e5';
+      const result = PGNService.sanitizeChessablePgn(input);
+      expect(result).toContain('{A good move}');
+      expect(result).toContain('{Important idea}');
+    });
+
+    it('handles combined @@, [], and nested {}', () => {
+      const input = '1. e4 @@marker@@ {Outer {inner}} [bold text] e5';
+      const result = PGNService.sanitizeChessablePgn(input);
+      expect(result).not.toContain('@@');
+      expect(result).toContain('{Outer inner}');
+      expect(result).toContain('{bold text}');
+    });
+
+    it('returns plain PGN unchanged', () => {
+      const input = '[Event "Test"]\n\n1. e4 e5 2. Nf3 Nc6 *';
+      const result = PGNService.sanitizeChessablePgn(input);
+      expect(result).toBe(input);
+    });
+
+    it('converts [text] on its own line in the move section', () => {
+      const input = '[Event "Test"]\n\n1. e4 e5\n[Important idea]\n2. Nf3';
+      const result = PGNService.sanitizeChessablePgn(input);
+      expect(result).toContain('{Important idea}');
+      expect(result).toContain('[Event "Test"]');
+    });
+
+    it('handles new game headers after moves (multi-game)', () => {
+      const input = '[Event "G1"]\n\n1. e4 e5 1-0\n\n[Event "G2"]\n\n1. d4 d5 0-1';
+      const result = PGNService.sanitizeChessablePgn(input);
+      expect(result).toContain('[Event "G1"]');
+      expect(result).toContain('[Event "G2"]');
+    });
+  });
+
+  describe('error recovery', () => {
+    it('skips unparseable game and returns the valid ones', () => {
+      const pgn = [
+        '[Event "Good"]', '[White "A"]', '[Black "B"]', '[Result "1-0"]', '',
+        '1. e4 e5 1-0', '',
+        '[Event "Bad"]', '[White "C"]', '[Black "D"]', '[Result "*"]', '',
+        '1. e4 [totally broken PGN ??? [[[', '',
+        '[Event "Also Good"]', '[White "E"]', '[Black "F"]', '[Result "0-1"]', '',
+        '1. d4 d5 0-1',
+      ].join('\n');
+      const games = PGNService.parseMultipleGames(pgn);
+      expect(games.length).toBeGreaterThanOrEqual(2);
+      expect(games.some(g => g.headers.Event === 'Good')).toBe(true);
+      expect(games.some(g => g.headers.Event === 'Also Good')).toBe(true);
+    });
+
+    it('throws when ALL games are unparseable', () => {
+      const pgn = '[Event "Bad"]  \n\n[totally broken ???';
+      expect(() => PGNService.parseMultipleGames(pgn)).toThrow('No valid games');
+    });
+  });
+
+  describe('Chessable PGN integration', () => {
+    const wrapPgn = (moves: string) =>
+      `[Event "?"]\n[White "A"]\n[Black "B"]\n[Result "*"]\n\n${moves} *`;
+
+    it('parses PGN with @@markers@@ without error', () => {
+      const pgn = wrapPgn('1. e4 @@key move@@ e5 2. Nf3');
+      const games = PGNService.parseMultipleGames(pgn);
+      const tree = PGNService.toMoveTree(games[0]);
+      tree.goToEnd();
+      expect(tree.getCurrentNode()?.san).toBe('Nf3');
+    });
+
+    it('parses PGN with [bracket text] and preserves as comment', () => {
+      const pgn = wrapPgn('1. e4 [Idea: control the center] e5');
+      const games = PGNService.parseMultipleGames(pgn);
+      const tree = PGNService.toMoveTree(games[0]);
+      tree.goForward(); // e4
+      expect(tree.getCurrentNode()?.comment).toContain('Idea: control the center');
+    });
+
+    it('parses PGN with nested braces', () => {
+      const pgn = wrapPgn('1. e4 {Main comment {nested idea}} e5');
+      const games = PGNService.parseMultipleGames(pgn);
+      const tree = PGNService.toMoveTree(games[0]);
+      tree.goForward(); // e4
+      expect(tree.getCurrentNode()?.comment).toContain('Main comment');
+      expect(tree.getCurrentNode()?.comment).toContain('nested idea');
+    });
+  });
+
+  describe('processChessableRepertoire', () => {
+    const makeGame = (white: string, event: string, moves: string) => {
+      const pgn = `[Event "${event}"]\n[White "${white}"]\n[Black "?"]\n[Result "*"]\n\n${moves} *`;
+      return PGNService.parseMultipleGames(pgn)[0];
+    };
+
+    it('groups games by White header', () => {
+      const games = [
+        makeGame('Chapter 1: Sicilian', 'Test', '1. e4 c5'),
+        makeGame('Chapter 1: Sicilian', 'Test', '1. e4 c5 2. Nf3 d6'),
+        makeGame('Chapter 2: French', 'Test', '1. e4 e6'),
+      ];
+      const { chapters, modelGames } = PGNService.processChessableRepertoire(games);
+      expect(chapters.size).toBe(2);
+      expect(chapters.get('Chapter 1: Sicilian')?.length).toBe(2);
+      expect(chapters.get('Chapter 2: French')?.length).toBe(1);
+      expect(modelGames).toHaveLength(0);
+    });
+
+    it('includes quickstarter games as normal chapters', () => {
+      const games = [
+        makeGame('Quickstarter: Intro', 'Quickstarter Guide', '1. e4 e5'),
+        makeGame('Chapter 1', 'Main Course', '1. e4 c5'),
+      ];
+      const { chapters } = PGNService.processChessableRepertoire(games);
+      expect(chapters.size).toBe(2);
+      expect(chapters.has('Quickstarter: Intro')).toBe(true);
+    });
+
+    it('collects model games separately by Event header', () => {
+      const games = [
+        makeGame('Chapter 1', 'Main Course', '1. e4 c5'),
+        makeGame('Game: Fischer', 'Model Game 1', '1. e4 e5 2. Nf3'),
+        makeGame('Game: Kasparov', 'Model Game 2', '1. d4 Nf6'),
+      ];
+      const { chapters, modelGames } = PGNService.processChessableRepertoire(games);
+      expect(chapters.size).toBe(1);
+      expect(modelGames).toHaveLength(2);
+    });
+
+    it('collects model games separately by White header', () => {
+      const games = [
+        makeGame('Chapter 1', 'Course', '1. e4 c5'),
+        makeGame('Model Game: Example', 'Course', '1. e4 e5'),
+      ];
+      const { chapters, modelGames } = PGNService.processChessableRepertoire(games);
+      expect(chapters.size).toBe(1);
+      expect(modelGames).toHaveLength(1);
+    });
+
+    it('case-insensitive model game filtering', () => {
+      const games = [
+        makeGame('Chapter 1', 'MODEL GAME', '1. d4 d5'),
+        makeGame('Chapter 2', 'Course', '1. e4 c5'),
+      ];
+      const { chapters, modelGames } = PGNService.processChessableRepertoire(games);
+      expect(chapters.size).toBe(1);
+      expect(modelGames).toHaveLength(1);
+    });
+
+    it('returns empty chapters when only model games present', () => {
+      const games = [
+        makeGame('Game 1', 'Model Game', '1. e4 e5'),
+        makeGame('Game 2', 'Model Game', '1. d4 d5'),
+      ];
+      const { chapters, modelGames } = PGNService.processChessableRepertoire(games);
+      expect(chapters.size).toBe(0);
+      expect(modelGames).toHaveLength(2);
+    });
+  });
+
+  describe('mergeGameIntoTree', () => {
+    const { MoveTree } = require('@utils/MoveTree');
+
+    const makeGame = (moves: string) => {
+      const pgn = `[Event "?"]\n[White "?"]\n[Black "?"]\n[Result "*"]\n\n${moves} *`;
+      return PGNService.parseMultipleGames(pgn)[0];
+    };
+
+    it('merges multiple games preserving comments', () => {
+      const tree = new MoveTree();
+      PGNService.mergeGameIntoTree(makeGame('1. e4 {Best move!} e5'), tree);
+      PGNService.mergeGameIntoTree(makeGame('1. e4 c5 {The Sicilian}'), tree);
+
+      // Tree should be at start after merge
+      expect(tree.isAtStart()).toBe(true);
+
+      // e4 has comment from first game
+      tree.goForward();
+      expect(tree.getCurrentNode()?.san).toBe('e4');
+      expect(tree.getCurrentNode()?.comment).toBe('Best move!');
+
+      // e5 branch exists
+      tree.goForward();
+      expect(tree.getCurrentNode()?.san).toBe('e5');
+
+      // c5 branch also exists as variation
+      tree.goBack();
+      const e4Children = tree.getCurrentNode()?.children;
+      expect(e4Children?.length).toBe(2);
+      const c5Node = e4Children?.find((n: any) => n.san === 'c5');
+      expect(c5Node?.comment).toBe('The Sicilian');
+    });
+
+    it('merges games preserving eval and clock annotations', () => {
+      const tree = new MoveTree();
+      PGNService.mergeGameIntoTree(
+        makeGame('1. e4 { [%eval 0.17] [%clk 0:10:00] } e5'),
+        tree
+      );
+
+      tree.goForward();
+      expect(tree.getCurrentNode()?.eval).toBe(17);
+      expect(tree.getCurrentNode()?.clock).toBe(600);
+    });
+
+    it('deduplicates shared prefixes across games', () => {
+      const tree = new MoveTree();
+      PGNService.mergeGameIntoTree(makeGame('1. e4 e5 2. Nf3'), tree);
+      PGNService.mergeGameIntoTree(makeGame('1. e4 e5 2. Bc4'), tree);
+
+      tree.goForward(); // e4
+      tree.goForward(); // e5
+      const children = tree.getCurrentNode()?.children;
+      expect(children?.length).toBe(2);
+      expect(children?.map((n: any) => n.san).sort()).toEqual(['Bc4', 'Nf3']);
+    });
+  });
+
   describe('toPGNString', () => {
     it('produces a string containing moves', () => {
       const games = PGNService.parseMultipleGames(SIMPLE_PGN);

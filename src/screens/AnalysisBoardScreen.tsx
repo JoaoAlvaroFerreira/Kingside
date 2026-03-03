@@ -22,6 +22,7 @@ export default function AnalysisBoardScreen({ route }: AnalysisBoardScreenProps)
   const [_updateCounter, forceUpdate] = useState(0);
   const [userGames, setUserGames] = useState<UserGame[]>([]);
   const [masterGames, setMasterGames] = useState<MasterGame[]>([]);
+  const [loadingGames, setLoadingGames] = useState(false);
   const lastSearchedFenRef = useRef<string | null>(null);
   const { width } = useWindowDimensions();
   const isWide = width > 700;
@@ -33,7 +34,7 @@ export default function AnalysisBoardScreen({ route }: AnalysisBoardScreenProps)
   useEffect(() => {
     const game = route?.params?.game;
     if (game && game.moves) {
-      const newTree = new MoveTree();
+      const newTree = new MoveTree(game.startFen);
       for (const move of game.moves) {
         newTree.addMove(move);
       }
@@ -49,6 +50,7 @@ export default function AnalysisBoardScreen({ route }: AnalysisBoardScreenProps)
     if (normalized === lastSearchedFenRef.current) return;
 
     let cancelled = false;
+    setLoadingGames(true);
     (async () => {
       try {
         const [uGames, mGames] = await Promise.all([
@@ -65,6 +67,8 @@ export default function AnalysisBoardScreen({ route }: AnalysisBoardScreenProps)
           setUserGames([]);
           setMasterGames([]);
         }
+      } finally {
+        if (!cancelled) setLoadingGames(false);
       }
     })();
     return () => { cancelled = true; };
@@ -72,7 +76,7 @@ export default function AnalysisBoardScreen({ route }: AnalysisBoardScreenProps)
 
   const handleSelectGame = useCallback((game: UserGame | MasterGame) => {
     if (!currentFen) return;
-    const gameFens = computeFensFromMoves(game.moves);
+    const gameFens = computeFensFromMoves(game.moves, game.startFen);
     const normalized = normalizeFen(currentFen);
     const posIndex = gameFens.indexOf(normalized);
     if (posIndex === -1) return;
@@ -193,6 +197,7 @@ export default function AnalysisBoardScreen({ route }: AnalysisBoardScreenProps)
             games={userGames}
             onSelect={handleSelectGame}
             defaultCollapsed={!isWide}
+            loading={loadingGames}
           />
         </View>
         <View style={styles.gameListHalf}>
@@ -201,6 +206,7 @@ export default function AnalysisBoardScreen({ route }: AnalysisBoardScreenProps)
             games={masterGames}
             onSelect={handleSelectGame}
             defaultCollapsed={!isWide}
+            loading={loadingGames}
           />
         </View>
       </View>

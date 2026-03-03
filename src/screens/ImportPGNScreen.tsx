@@ -7,6 +7,7 @@ import { OpeningClassifier } from '@services/openings/OpeningClassifier';
 import { LichessService } from '@services/lichess/LichessService';
 import { useStore } from '@store';
 import { RepertoireColor } from '@types';
+import { MoveTree } from '@utils/MoveTree';
 
 // Three import types: repertoire, user games, master games
 type ImportType = 'repertoire' | 'my-games' | 'master-games';
@@ -37,6 +38,7 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
   const [masterDaysBack, setMasterDaysBack] = useState('0');
   const [isImportingLichess, setIsImportingLichess] = useState(false);
   const [lichessStudyUrl, setLichessStudyUrl] = useState('');
+  const [chessableMode, setChessableMode] = useState(false);
   const { addRepertoire, addUserGames, addMasterGames, reviewSettings } = useStore();
 
   const readFileWithTimeout = async (uri: string, timeoutMs: number = 15000): Promise<string> => {
@@ -128,8 +130,8 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
         phase
       });
 
-      // Allow UI to update more frequently for large imports
-      await new Promise(resolve => setTimeout(resolve, 10));
+      // Yield to UI between batches
+      await new Promise(resolve => requestAnimationFrame(resolve));
     }
 
     return results;
@@ -255,55 +257,159 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
           return;
         }
 
-        // Process chapters in batches
-        const chapters = await processBatch(games, 50, (parsed, index) => {
-          const moveTree = PGNService.toMoveTree(parsed);
+        if (chessableMode) {
+          // Chessable import: merge variations into chapters
+          setProgress({ current: 0, total: 0, phase: 'Grouping chapters...' });
+          const { chapters: grouped, modelGames } = PGNService.processChessableRepertoire(games);
+
+          // Save model games as master games
+          if (modelGames.length > 0) {
+            const masterGames = modelGames.map(g => ({
+              id: generateId(),
+              ...PGNService.toUserGame(g),
+              pgn: PGNService.toPGNString(g),
+              importedAt: new Date(),
+            }));
+            await addMasterGames(masterGames);
+          }
+
+          // Merge each group into chapters, splitting by starting FEN.
+          // Games with standard starting position merge together;
+          // games with a custom FEN become separate chapters.
+          const groupEntries = Array.from(grouped.entries());
+          const chapters = [];
+          let chapterOrder = 0;
+          for (let gi = 0; gi < groupEntries.length; gi++) {
+            const [groupName, groupGames] = groupEntries[gi];
+            setProgress({
+              current: gi + 1,
+              total: groupEntries.length,
+              phase: `Merging chapter ${gi + 1} of ${groupEntries.length}...`,
+            });
+
+            // Split into standard-start games and custom-FEN games
+            const standardGames = groupGames.filter(g => !g.headers.FEN);
+            const customFenGames = groupGames.filter(g => g.headers.FEN);
+
+            // Merge standard-start games into one chapter
+            if (standardGames.length > 0) {
+              const tree = new MoveTree();
+              for (const game of standardGames) {
+                PGNService.mergeGameIntoTree(game, tree);
+              }
+              chapters.push({
+                id: generateId(),
+                name: groupName,
+                pgn: '',
+                moveTree: tree.toJSON(),
+                order: chapterOrder++,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+              });
+            }
+
+            // Group custom-FEN games by their FEN, merge games sharing the same start position
+            const fenGroups = new Map<string, typeof customFenGames>();
+            for (const game of customFenGames) {
+              const fen = game.headers.FEN!;
+              const group = fenGroups.get(fen);
+              if (group) { group.push(game); } else { fenGroups.set(fen, [game]); }
+            }
+            for (const [fen, fenGames] of fenGroups) {
+              const tree = new MoveTree(fen);
+              for (const game of fenGames) {
+                PGNService.mergeGameIntoTree(game, tree);
+              }
+              chapters.push({
+                id: generateId(),
+                name: groupName,
+                pgn: '',
+                moveTree: tree.toJSON(),
+                order: chapterOrder++,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+              });
+            }
+
+            // Yield to UI between groups
+            await new Promise(resolve => requestAnimationFrame(resolve));
+          }
+
+          // Classify from first game
+          const firstGame = games[0];
           const classification = OpeningClassifier.classify(
-            PGNService.toUserGame(parsed).moves,
-            PGNService.getECO(parsed)
+            PGNService.toUserGame(firstGame).moves,
+            PGNService.getECO(firstGame)
           );
 
-          return {
+          const repertoire = {
             id: generateId(),
-            name: PGNService.getOpeningName(parsed) || classification.name || `Chapter ${index + 1}`,
-            pgn: PGNService.toPGNString(parsed),
-            moveTree: moveTree.toJSON(),
-            order: index,
+            name,
+            color,
+            openingType: classification.openingType,
+            eco: classification.eco,
+            chapters,
             createdAt: new Date(),
             updatedAt: new Date(),
           };
-        }, 'Processing chapters');
 
-        const firstGame = games[0];
-        const classification = OpeningClassifier.classify(
-          PGNService.toUserGame(firstGame).moves,
-          PGNService.getECO(firstGame)
-        );
+          setProgress({ current: chapters.length, total: chapters.length, phase: 'Saving repertoire...' });
+          await addRepertoire(repertoire);
 
-        const repertoire = {
-          id: generateId(),
-          name,
-          color,
-          openingType: classification.openingType,
-          eco: classification.eco,
-          chapters,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        };
+          clearTimeout(importTimeout);
+          setIsImporting(false);
+          setFileSelected(false);
+          navigation.goBack();
 
-        setProgress({ current: chapters.length, total: chapters.length, phase: 'Saving repertoire...' });
-        await addRepertoire(repertoire);
+        } else {
+          // Standard import: 1 game = 1 chapter
+          const chapters = await processBatch(games, 50, (parsed, index) => {
+            const moveTree = PGNService.toMoveTree(parsed);
+            const classification = OpeningClassifier.classify(
+              PGNService.toUserGame(parsed).moves,
+              PGNService.getECO(parsed)
+            );
 
-        clearTimeout(importTimeout);
-        setIsImporting(false);
-        setFileSelected(false);
+            return {
+              id: generateId(),
+              name: PGNService.getOpeningName(parsed) || classification.name || `Chapter ${index + 1}`,
+              pgn: PGNService.toPGNString(parsed),
+              moveTree: moveTree.toJSON(),
+              order: index,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            };
+          }, 'Processing chapters');
 
-        // Auto-navigate back
-        navigation.goBack();
+          const firstGame = games[0];
+          const classification = OpeningClassifier.classify(
+            PGNService.toUserGame(firstGame).moves,
+            PGNService.getECO(firstGame)
+          );
+
+          const repertoire = {
+            id: generateId(),
+            name,
+            color,
+            openingType: classification.openingType,
+            eco: classification.eco,
+            chapters,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          };
+
+          setProgress({ current: chapters.length, total: chapters.length, phase: 'Saving repertoire...' });
+          await addRepertoire(repertoire);
+
+          clearTimeout(importTimeout);
+          setIsImporting(false);
+          setFileSelected(false);
+          navigation.goBack();
+        }
 
       } else if (target === 'my-games') {
         // Process user games in batches
-        const userGames = await processBatch(games, 100, (g) => ({
+        const userGames = await processBatch(games, 50, (g) => ({
           id: generateId(),
           ...PGNService.toUserGame(g),
           pgn: PGNService.toPGNString(g),
@@ -322,7 +428,7 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
 
       } else if (target === 'master-games') {
         // Process master games in batches
-        const masterGames = await processBatch(games, 100, (g) => ({
+        const masterGames = await processBatch(games, 50, (g) => ({
           id: generateId(),
           ...PGNService.toUserGame(g),
           pgn: PGNService.toPGNString(g),
@@ -500,6 +606,18 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
                   </TouchableOpacity>
                 </View>
               </View>
+
+              {/* Chessable mode toggle */}
+              <TouchableOpacity
+                style={styles.chessableToggle}
+                onPress={() => setChessableMode(!chessableMode)}
+                activeOpacity={0.7}
+              >
+                <View style={[styles.checkbox, chessableMode && styles.checkboxActive]}>
+                  {chessableMode && <Text style={styles.checkmark}>✓</Text>}
+                </View>
+                <Text style={styles.chessableLabel}>Chessable import (merge variations)</Text>
+              </TouchableOpacity>
             </>
           )}
 
@@ -714,5 +832,34 @@ const styles = StyleSheet.create({
   },
   inlineField: {
     flex: 1,
+  },
+  chessableToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+    paddingVertical: 8,
+  },
+  checkbox: {
+    width: 22,
+    height: 22,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: '#666',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
+  checkboxActive: {
+    backgroundColor: '#007AFF',
+    borderColor: '#007AFF',
+  },
+  checkmark: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  chessableLabel: {
+    color: '#e0e0e0',
+    fontSize: 14,
   },
 });
