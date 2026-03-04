@@ -9,6 +9,7 @@ import { MoveTree, MoveNode } from '@utils/MoveTree';
 interface ParsedGame {
   headers: Record<string, string>;
   moves: any[];
+  gameComment?: string;
 }
 
 /**
@@ -214,9 +215,12 @@ export class PGNService {
       }
     }
 
+    const gameComment = game.gameComment?.comment?.trim() || undefined;
+
     return {
       headers: normalizedHeaders,
       moves: game.moves || [],
+      gameComment,
     };
   }
 
@@ -244,6 +248,10 @@ export class PGNService {
   static toMoveTree(parsed: ParsedGame): MoveTree {
     const startFen = parsed.headers.FEN || undefined;
     const moveTree = new MoveTree(startFen);
+
+    if (parsed.gameComment) {
+      moveTree.setRootComment(parsed.gameComment);
+    }
 
     // Process the moves with variations
     this.buildMoveTree(parsed.moves, moveTree);
@@ -287,6 +295,11 @@ export class PGNService {
             }
             if (move.commentDiag) {
               this.parseCommentDiag(currentNode, move.commentDiag);
+            }
+            if (move.nag) {
+              currentNode.nags = Array.isArray(move.nag)
+                ? move.nag.map((n: string) => parseInt(String(n).replace('$', ''), 10))
+                : [parseInt(String(move.nag).replace('$', ''), 10)];
             }
           }
         }

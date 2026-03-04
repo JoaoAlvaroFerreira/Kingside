@@ -15,6 +15,11 @@ import {
 } from 'react-native';
 import { FlatMove } from '../../../utils/MoveTree';
 
+const NAG_SYMBOLS: Record<number, string> = {
+  1: '!', 2: '?', 3: '!!', 4: '??', 5: '!?', 6: '?!',
+  10: '=', 14: '+=', 15: '=+', 16: '\u00B1', 17: '\u2213', 18: '+-', 19: '-+',
+};
+
 interface MoveHistoryProps {
   moves: FlatMove[];
   currentNodeId: string | null;
@@ -189,6 +194,11 @@ const MoveHistoryInner: React.FC<MoveHistoryProps> = ({
         ]}>
           {move.san}
         </Text>
+        {move.nags && move.nags.length > 0 && (
+          <Text style={styles.nagSymbol}>
+            {move.nags.map(n => NAG_SYMBOLS[n] || `$${n}`).join('')}
+          </Text>
+        )}
         {hasComment && (
           <Text style={styles.commentIndicator}>💬</Text>
         )}
@@ -445,6 +455,12 @@ const styles = StyleSheet.create({
     color: '#FFD700',
     fontSize: 8,
     marginRight: 1,
+  },
+  nagSymbol: {
+    color: '#FFA726',
+    fontSize: 8,
+    marginLeft: 1,
+    fontWeight: '700',
   },
   commentIndicator: {
     color: '#87CEEB',

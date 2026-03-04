@@ -10,6 +10,11 @@ interface Classification {
   name: string;
 }
 
+interface ClassifiableGame {
+  headers: Record<string, string>;
+  moves: any[];
+}
+
 export class OpeningClassifier {
   /**
    * Classify an opening based on moves
@@ -36,6 +41,52 @@ export class OpeningClassifier {
   }
 
   /**
+   * Classify a repertoire by majority vote across all games.
+   * Skips custom-FEN games first; falls back to FEN-based detection if all are custom.
+   */
+  static classifyRepertoire(
+    games: ClassifiableGame[],
+    extractMoves: (game: ClassifiableGame) => string[],
+    getEco: (game: ClassifiableGame) => string | undefined,
+  ): Classification {
+    const standardGames = games.filter(g => !g.headers.FEN);
+    const gamesToClassify = standardGames.length > 0 ? standardGames : games;
+
+    const votes: Record<OpeningType, number> = { e4: 0, d4: 0, irregular: 0 };
+    let bestClassification: Classification | null = null;
+
+    for (const game of gamesToClassify) {
+      const moves = extractMoves(game);
+      const eco = getEco(game);
+      let openingType: OpeningType;
+
+      if (game.headers.FEN && moves.length > 0) {
+        openingType = this.detectOpeningTypeFromFen(game.headers.FEN);
+      } else if (moves.length > 0) {
+        openingType = this.detectOpeningType(moves[0]);
+      } else {
+        continue;
+      }
+
+      votes[openingType]++;
+      if (!bestClassification || votes[openingType] > votes[bestClassification.openingType]) {
+        const name = eco ? this.getNameFromECO(eco) : this.detectName(moves);
+        bestClassification = {
+          openingType,
+          eco: eco || this.guessECO(moves, openingType),
+          name,
+        };
+      }
+    }
+
+    return bestClassification || {
+      openingType: 'irregular',
+      eco: 'A00',
+      name: 'Starting Position',
+    };
+  }
+
+  /**
    * Detect opening type from first move
    */
   private static detectOpeningType(firstMove: string): OpeningType {
@@ -50,6 +101,49 @@ export class OpeningClassifier {
     }
 
     // Everything else is irregular
+    return 'irregular';
+  }
+
+  /**
+   * Detect opening type from a custom starting FEN by inspecting pawn structure.
+   * If the e-pawn has advanced from e2 (white) and d-pawn hasn't, it's an e4 game, etc.
+   */
+  private static detectOpeningTypeFromFen(fen: string): OpeningType {
+    const board = fen.split(' ')[0];
+    const ranks = board.split('/');
+    // ranks[0] = rank 8, ranks[6] = rank 2, ranks[7] = rank 1
+
+    const pieceAt = (file: number, rank: number): string => {
+      const rankStr = ranks[8 - rank];
+      let col = 0;
+      for (const ch of rankStr) {
+        if (col > file) break;
+        const skip = parseInt(ch, 10);
+        if (!isNaN(skip)) {
+          if (file < col + skip) return '';
+          col += skip;
+        } else {
+          if (col === file) return ch;
+          col++;
+        }
+      }
+      return '';
+    };
+
+    // file indices: e=4, d=3
+    const e2 = pieceAt(4, 2); // White e-pawn home square
+    const e4 = pieceAt(4, 4); // e4 square
+    const d2 = pieceAt(3, 2); // White d-pawn home square
+    const d4 = pieceAt(3, 4); // d4 square
+
+    // e-pawn moved to e4 (or beyond) and d-pawn still home → e4 opening
+    if (e2 !== 'P' && e4 === 'P') return 'e4';
+    // d-pawn moved to d4 (or beyond) and e-pawn still home → d4 opening
+    if (d2 !== 'P' && d4 === 'P') return 'd4';
+    // Both pawns advanced — use e4 if e-pawn is on e4
+    if (e4 === 'P') return 'e4';
+    if (d4 === 'P') return 'd4';
+
     return 'irregular';
   }
 

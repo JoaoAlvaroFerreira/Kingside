@@ -18,28 +18,28 @@ export const ScreenSettingsService = {
         engineEnabled: false,
         coordinatesVisible: true,
         moveHistoryVisible: true,
-        boardSize: 'small',
+        boardSize: 'xlarge',
       },
       repertoire: {
         orientation: 'white', // Will be overridden by repertoire.color
         engineEnabled: false,
         coordinatesVisible: true,
         moveHistoryVisible: true,
-        boardSize: 'small',
+        boardSize: 'xlarge',
       },
       gameReview: {
         orientation: 'white', // Will be overridden by session.userColor
         engineEnabled: false,
         coordinatesVisible: true,
         moveHistoryVisible: false,
-        boardSize: 'small',
+        boardSize: 'xlarge',
       },
       training: {
         orientation: 'white', // Will be overridden by card.color
         engineEnabled: false,
         coordinatesVisible: true,
         moveHistoryVisible: false,
-        boardSize: 'small',
+        boardSize: 'xlarge',
       },
     };
   },

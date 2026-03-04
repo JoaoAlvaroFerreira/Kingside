@@ -196,7 +196,7 @@ export default function RepertoireStudyScreen({ navigation, route }: RepertoireS
     screenKey: 'repertoire' as const,
     orientationOverride: repertoire.color,
     showMoveHistory: true,
-    showSettingsGear: true,
+    showSettingsGear: false,
   };
 
   const gameLists = (isWideMode: boolean) => (

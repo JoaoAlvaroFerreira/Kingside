@@ -14,6 +14,7 @@ export interface MoveNode {
   parent: MoveNode | null;
   isCritical?: boolean;
   comment?: string;
+  nags?: number[];     // Numeric Annotation Glyphs (e.g., 1=!, 2=?, 3=!!, etc.)
   eval?: number;       // Centipawns (e.g., 17 for 0.17 pawns)
   evalMate?: number;   // Mate in N (positive = white mates, negative = black mates)
   clock?: number;      // Clock time in seconds
@@ -25,6 +26,7 @@ export class MoveTree {
   private startFen: string;
   private nodeIdCounter = 0;
   private _structureVersion = 0; // Incremented on add/delete/promote, NOT on navigation
+  private rootComment?: string;
 
   constructor(startFen?: string) {
     this.startFen = startFen || new Chess().fen();
@@ -52,6 +54,14 @@ export class MoveTree {
 
   getRootMoves(): MoveNode[] {
     return this.rootMoves;
+  }
+
+  getRootComment(): string | undefined {
+    return this.rootComment;
+  }
+
+  setRootComment(comment: string | undefined): void {
+    this.rootComment = comment;
   }
 
   isAtStart(): boolean {
@@ -284,6 +294,7 @@ export class MoveTree {
         needsMoveNumber,
         isCritical: current.isCritical,
         comment: current.comment,
+        nags: current.nags,
       });
 
       // Add variations (siblings) right after this node, before continuing the main line.
@@ -312,6 +323,7 @@ export class MoveTree {
       needsMoveNumber: true,
       isCritical: node.isCritical,
       comment: node.comment,
+      nags: node.nags,
     });
 
     // Continue the variation
@@ -335,6 +347,7 @@ export class MoveTree {
         needsMoveNumber,
         isCritical: nextNode.isCritical,
         comment: nextNode.comment,
+        nags: nextNode.nags,
       });
 
       // Handle nested variations
@@ -469,6 +482,7 @@ export class MoveTree {
       rootMoves: this.serializeNodes(this.rootMoves),
       startFen: this.startFen,
       nodeIdCounter: this.nodeIdCounter,
+      rootComment: this.rootComment,
     };
   }
 
@@ -479,6 +493,7 @@ export class MoveTree {
     const tree = new MoveTree(data.startFen);
     tree.nodeIdCounter = data.nodeIdCounter || 0;
     tree.rootMoves = tree.deserializeNodes(data.rootMoves, null);
+    tree.rootComment = data.rootComment;
     return tree;
   }
 
@@ -492,6 +507,7 @@ export class MoveTree {
       children: this.serializeNodes(node.children),
       isCritical: node.isCritical,
       comment: node.comment,
+      nags: node.nags,
       eval: node.eval,
       evalMate: node.evalMate,
       clock: node.clock,
@@ -510,6 +526,7 @@ export class MoveTree {
         parent,
         isCritical: serialized.isCritical,
         comment: serialized.comment,
+        nags: serialized.nags,
         eval: serialized.eval,
         evalMate: serialized.evalMate,
         clock: serialized.clock,
@@ -529,6 +546,7 @@ export interface SerializedMoveNode {
   children: SerializedMoveNode[];
   isCritical?: boolean;
   comment?: string;
+  nags?: number[];
   eval?: number;
   evalMate?: number;
   clock?: number;
@@ -538,6 +556,7 @@ export interface SerializedMoveTree {
   rootMoves: SerializedMoveNode[];
   startFen: string;
   nodeIdCounter: number;
+  rootComment?: string;
 }
 
 export interface FlatMove {
@@ -551,4 +570,5 @@ export interface FlatMove {
   needsMoveNumber: boolean;
   isCritical?: boolean;
   comment?: string;
+  nags?: number[];
 }

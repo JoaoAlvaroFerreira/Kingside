@@ -573,6 +573,76 @@ describe('PGNService', () => {
     });
   });
 
+  describe('NAG support', () => {
+    const wrapPgn = (moves: string) =>
+      `[Event "?"]\n[White "A"]\n[Black "B"]\n[Result "*"]\n\n${moves} *`;
+
+    it('parses NAG annotations into nags array', () => {
+      const pgn = wrapPgn('1. e4 $1 e5 $2');
+      const games = PGNService.parseMultipleGames(pgn);
+      const tree = PGNService.toMoveTree(games[0]);
+
+      tree.goForward(); // e4
+      expect(tree.getCurrentNode()?.nags).toEqual([1]);
+
+      tree.goForward(); // e5
+      expect(tree.getCurrentNode()?.nags).toEqual([2]);
+    });
+
+    it('preserves nags through serialization roundtrip', () => {
+      const pgn = wrapPgn('1. e4 $3 e5 $6');
+      const games = PGNService.parseMultipleGames(pgn);
+      const tree = PGNService.toMoveTree(games[0]);
+
+      const { MoveTree } = require('@utils/MoveTree');
+      const restored = MoveTree.fromJSON(tree.toJSON());
+
+      restored.goForward();
+      expect(restored.getCurrentNode()?.nags).toEqual([3]);
+
+      restored.goForward();
+      expect(restored.getCurrentNode()?.nags).toEqual([6]);
+    });
+
+    it('includes nags in flat moves', () => {
+      const pgn = wrapPgn('1. e4 $1 e5');
+      const games = PGNService.parseMultipleGames(pgn);
+      const tree = PGNService.toMoveTree(games[0]);
+      const flatMoves = tree.getFlatMoves();
+      expect(flatMoves[0].nags).toEqual([1]);
+      expect(flatMoves[1].nags).toBeUndefined();
+    });
+  });
+
+  describe('root comment (game comment)', () => {
+    const wrapPgn = (content: string) =>
+      `[Event "?"]\n[White "A"]\n[Black "B"]\n[Result "*"]\n\n${content} *`;
+
+    it('extracts game comment as root comment', () => {
+      const pgn = wrapPgn('{This is intro text} 1. e4 e5');
+      const games = PGNService.parseMultipleGames(pgn);
+      const tree = PGNService.toMoveTree(games[0]);
+      expect(tree.getRootComment()).toBe('This is intro text');
+    });
+
+    it('preserves root comment through serialization roundtrip', () => {
+      const pgn = wrapPgn('{Intro annotation} 1. e4 e5');
+      const games = PGNService.parseMultipleGames(pgn);
+      const tree = PGNService.toMoveTree(games[0]);
+
+      const { MoveTree } = require('@utils/MoveTree');
+      const restored = MoveTree.fromJSON(tree.toJSON());
+      expect(restored.getRootComment()).toBe('Intro annotation');
+    });
+
+    it('returns undefined when no game comment present', () => {
+      const pgn = wrapPgn('1. e4 e5');
+      const games = PGNService.parseMultipleGames(pgn);
+      const tree = PGNService.toMoveTree(games[0]);
+      expect(tree.getRootComment()).toBeUndefined();
+    });
+  });
+
   describe('toPGNString', () => {
     it('produces a string containing moves', () => {
       const games = PGNService.parseMultipleGames(SIMPLE_PGN);

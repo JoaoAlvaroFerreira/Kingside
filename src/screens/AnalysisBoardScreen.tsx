@@ -1,11 +1,13 @@
-import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
-import { View, StyleSheet, Text, useWindowDimensions } from 'react-native';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { View, StyleSheet, useWindowDimensions } from 'react-native';
 import { Chess } from 'chess.js';
+import { useFocusEffect } from '@react-navigation/native';
 import { ChessWorkspace } from '@components/chess/ChessWorkspace/ChessWorkspace';
 import { GameList } from '@components/repertoire/GameList';
 import { MoveTree } from '@utils/MoveTree';
 import { UserGame, MasterGame, computeFensFromMoves, normalizeFen } from '@types';
 import { DatabaseService } from '@services/database/DatabaseService';
+import { PGNService } from '@services/pgn/PGNService';
 
 const GAME_LIST_HEIGHT = 180;
 
@@ -15,9 +17,10 @@ interface AnalysisBoardScreenProps {
       game?: UserGame | MasterGame;
     };
   };
+  navigation?: any;
 }
 
-export default function AnalysisBoardScreen({ route }: AnalysisBoardScreenProps) {
+export default function AnalysisBoardScreen({ route, navigation }: AnalysisBoardScreenProps) {
   const [moveTree, setMoveTree] = useState(() => new MoveTree());
   const [_updateCounter, forceUpdate] = useState(0);
   const [userGames, setUserGames] = useState<UserGame[]>([]);
@@ -30,18 +33,53 @@ export default function AnalysisBoardScreen({ route }: AnalysisBoardScreenProps)
   const currentFen = moveTree.getCurrentFen();
   const currentNodeId = moveTree.getCurrentNode()?.id || null;
 
-  // Load game if provided via navigation
+  // Load game if provided via navigation — parse PGN to preserve annotations.
+  // Track the game ID so we don't re-load the same game or interfere with focus reset.
+  const justLoadedRef = useRef(false);
+
   useEffect(() => {
     const game = route?.params?.game;
-    if (game && game.moves) {
-      const newTree = new MoveTree(game.startFen);
-      for (const move of game.moves) {
-        newTree.addMove(move);
+    if (game) {
+      let newTree: MoveTree;
+      if (game.pgn) {
+        try {
+          const parsed = PGNService.parseMultipleGames(game.pgn);
+          newTree = PGNService.toMoveTree(parsed[0]);
+        } catch {
+          newTree = new MoveTree(game.startFen);
+          if (game.moves) {
+            for (const move of game.moves) newTree.addMove(move);
+          }
+        }
+      } else if (game.moves) {
+        newTree = new MoveTree(game.startFen);
+        for (const move of game.moves) newTree.addMove(move);
+      } else {
+        newTree = new MoveTree();
       }
+      newTree.goToStart();
       setMoveTree(newTree);
       forceUpdate(n => n + 1);
+      justLoadedRef.current = true;
+      // Clear the nav param so it doesn't persist across tab switches
+      navigation?.setParams?.({ game: undefined });
     }
-  }, [route?.params?.game]);
+  }, [route?.params?.game, navigation]);
+
+  // Reset board when returning to Analysis tab (unless we just loaded a game)
+  useFocusEffect(
+    useCallback(() => {
+      if (justLoadedRef.current) {
+        justLoadedRef.current = false;
+        return;
+      }
+      setMoveTree(new MoveTree());
+      forceUpdate(n => n + 1);
+      lastSearchedFenRef.current = null;
+      setUserGames([]);
+      setMasterGames([]);
+    }, [])
+  );
 
   // Search games by FEN when position changes
   useEffect(() => {
@@ -144,35 +182,8 @@ export default function AnalysisBoardScreen({ route }: AnalysisBoardScreenProps)
     triggerUpdate();
   }, [moveTree, triggerUpdate]);
 
-  const displayGame = useMemo(() => {
-    try {
-      return new Chess(currentFen);
-    } catch {
-      return new Chess();
-    }
-  }, [currentFen]);
-
-  const gameStatus = useMemo(() => {
-    if (displayGame.isCheckmate()) {
-      const winner = displayGame.turn() === 'w' ? 'Black' : 'White';
-      return `Checkmate! ${winner} wins`;
-    }
-    if (displayGame.isStalemate()) return 'Stalemate - Draw';
-    if (displayGame.isDraw()) return 'Draw';
-    if (displayGame.isCheck()) return 'Check!';
-    return null;
-  }, [displayGame]);
-
   return (
     <View style={styles.container}>
-      {gameStatus && (
-        <View style={styles.statusWrapper}>
-          <View style={styles.statusContainer}>
-            <Text style={styles.gameStatus}>{gameStatus}</Text>
-          </View>
-        </View>
-      )}
-
       <ChessWorkspace
         fen={currentFen}
         onMove={handleMove}
@@ -218,25 +229,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#2c2c2c',
-  },
-  statusWrapper: {
-    paddingVertical: 4,
-    justifyContent: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: '#3a3a3a',
-  },
-  statusContainer: {
-    alignItems: 'center',
-  },
-  gameStatus: {
-    color: '#ffc107',
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  analyzingText: {
-    color: '#4a9eff',
-    fontSize: 9,
-    marginTop: 2,
   },
   bottomSection: {
     flexDirection: 'row',

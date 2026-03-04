@@ -117,15 +117,15 @@ export const ChessWorkspace: React.FC<ChessWorkspaceProps> = ({
   const evalBarReserved = evalBarVisible ? EVAL_BAR_WIDTH : 0;
 
   const availableForBoard = isWideScreen
-    ? Math.min(width * 0.5 - 24 - evalBarReserved, height - 80 - verticalOffset)
-    : Math.min(width - 24 - evalBarReserved, height - 80 - verticalOffset);
+    ? Math.min(width * 0.5 - 12 - evalBarReserved, height - 80 - verticalOffset)
+    : Math.min(width - 8 - evalBarReserved, height - 80 - verticalOffset);
 
   const sizePercentages: Record<string, number> = {
     tiny: 0.30,
     small: 0.42,
     medium: 0.55,
     large: 0.68,
-    xlarge: 0.82,
+    xlarge: 0.92,
   };
   const sizePct = sizePercentages[boardSizeSetting] ?? 0.42;
   const actualBoardSize = Math.max(140, Math.min(600, Math.floor(availableForBoard * sizePct)));
@@ -149,7 +149,9 @@ export const ChessWorkspace: React.FC<ChessWorkspaceProps> = ({
   const handleGoToStart = () => { if (onGoToStart) onGoToStart(); else moveTree?.goToStart(); };
   const handleGoToEnd = () => { if (onGoToEnd) onGoToEnd(); else moveTree?.goToEnd(); };
 
-  const currentComment = moveTree?.getCurrentNode()?.comment;
+  const currentComment = moveTree?.isAtStart()
+    ? moveTree.getRootComment()
+    : moveTree?.getCurrentNode()?.comment;
   // Total width of board area including eval bar (9 px bar + 4 px gap)
   const contentWidth = evalBarVisible ? actualBoardSize + 13 : actualBoardSize;
 
@@ -264,6 +266,7 @@ export const ChessWorkspace: React.FC<ChessWorkspaceProps> = ({
         ]}>
           <ScrollView
             style={styles.commentScroll}
+            contentContainerStyle={{ paddingBottom: 8 }}
             nestedScrollEnabled
             showsVerticalScrollIndicator={true}
           >
@@ -302,7 +305,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     alignSelf: 'stretch',
-    paddingHorizontal: 8,
+    paddingHorizontal: 4,
     gap: 8,
   },
   boardSection: {

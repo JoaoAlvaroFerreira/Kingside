@@ -335,11 +335,10 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
             await new Promise(resolve => requestAnimationFrame(resolve));
           }
 
-          // Classify from first game
-          const firstGame = games[0];
-          const classification = OpeningClassifier.classify(
-            PGNService.toUserGame(firstGame).moves,
-            PGNService.getECO(firstGame)
+          const classification = OpeningClassifier.classifyRepertoire(
+            games,
+            g => PGNService.toUserGame(g).moves,
+            g => PGNService.getECO(g),
           );
 
           const repertoire = {
@@ -381,10 +380,10 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
             };
           }, 'Processing chapters');
 
-          const firstGame = games[0];
-          const classification = OpeningClassifier.classify(
-            PGNService.toUserGame(firstGame).moves,
-            PGNService.getECO(firstGame)
+          const classification = OpeningClassifier.classifyRepertoire(
+            games,
+            g => PGNService.toUserGame(g).moves,
+            g => PGNService.getECO(g),
           );
 
           const repertoire = {
