@@ -100,7 +100,6 @@ export const ChessWorkspace: React.FC<ChessWorkspaceProps> = ({
   const engineEnabled = Boolean(settings.engineEnabled);
   const coordinatesVisible = settings.coordinatesVisible;
   const moveHistoryVisible = showMoveHistory && settings.moveHistoryVisible;
-  const boardSizeSetting = settings.boardSize || 'small';
 
   // Run the engine internally when no external eval is provided.
   // This keeps rapid Stockfish state updates isolated to ChessWorkspace's render tree,
@@ -115,27 +114,17 @@ export const ChessWorkspace: React.FC<ChessWorkspaceProps> = ({
 
   const isWideScreen = width > 700;
 
-  // Board size: % of available space, scales naturally across screen sizes.
-  // In wide mode the board is on the left; cap by half-width and available height.
+  // Board fills available width, capped by height so it stays on screen.
   // The eval bar occupies 10px + 3px gap to the left of the board.
-  // Subtract it from available space so board + bar together never overflow the left column.
   const EVAL_BAR_WIDTH = 13;
   const evalBarReserved = evalBarVisible ? EVAL_BAR_WIDTH : 0;
-
   const boardBorder = 4; // 2px border each side
+
   const availableForBoard = isWideScreen
     ? Math.min(width * 0.5 - evalBarReserved - boardBorder, height - 80 - verticalOffset)
     : Math.min(width - evalBarReserved - boardBorder, height - 80 - verticalOffset);
 
-  const sizePercentages: Record<string, number> = {
-    tiny: 0.30,
-    small: 0.42,
-    medium: 0.55,
-    large: 0.68,
-    xlarge: 0.92,
-  };
-  const sizePct = sizePercentages[boardSizeSetting] ?? 0.42;
-  const actualBoardSize = Math.max(140, Math.min(600, Math.floor(availableForBoard * sizePct)));
+  const actualBoardSize = Math.max(140, Math.floor(availableForBoard));
 
   // Narrow mode: move history sits below the board and can be a bit smaller
   const narrowHistoryHeight = Math.max(80, Math.floor(actualBoardSize * 0.45));
@@ -296,6 +285,7 @@ const styles = StyleSheet.create({
   // Narrow: no flex so height = content (works inside ScrollViews)
   container: {
     paddingTop: 4,
+    alignItems: 'center',
   },
   // Wide: fill the parent flex container
   containerWide: {
