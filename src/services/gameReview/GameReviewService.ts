@@ -165,14 +165,52 @@ export const GameReviewService = {
       throw new Error('Failed to parse game moves');
     }
 
-    // Get engine evaluations for all positions
-    console.log(`Analyzing ${positions.length} positions...`);
+    // Build Lichess eval lookup: move index → pre-computed EngineEvaluation
+    // When [%eval] annotations are available, skip Stockfish for those positions.
+    const lichessEvalMap = new Map<number, EngineEvaluation>();
+    for (let i = 0; i < lichessEvalsByCommentIndex.length; i++) {
+      const entry = lichessEvalsByCommentIndex[i];
+      if (!entry) continue;
+      // Lichess eval at move index i describes the position AFTER move i (= positions[i+1])
+      const posIdx = i + 1;
+      if (posIdx >= positions.length) continue;
+      const fen = positions[posIdx];
+      const cp = entry.evalMate !== undefined
+        ? (entry.evalMate > 0 ? 10000 : -10000)
+        : (entry.eval ?? 0);
+      lichessEvalMap.set(posIdx, {
+        fen,
+        depth: 0,
+        score: cp,
+        mate: entry.evalMate,
+        bestMove: '',
+        bestMoveSan: '',
+        pv: [],
+        lines: [],
+        timestamp: new Date(),
+      });
+    }
+
+    // Get engine evaluations — skip positions that have Lichess evals
+    const hasLichessEvals = lichessEvalMap.size > 0;
+    console.log(`Analyzing ${positions.length} positions${hasLichessEvals ? ` (${lichessEvalMap.size} have Lichess evals)` : ''}...`);
     const evaluations: Array<EngineEvaluation | null> = new Array(positions.length).fill(null);
     for (let i = 0; i < positions.length; i++) {
-      try {
-        evaluations[i] = await analyzer.analyze(positions[i], analysisOptions);
-      } catch {
-        evaluations[i] = null;
+      // Skip terminal positions (checkmate/stalemate) — engine has no moves and may hang
+      const posChess = new Chess(positions[i]);
+      if (posChess.isGameOver()) {
+        if (onProgress) onProgress(i + 1, positions.length);
+        continue;
+      }
+      const lichessEval = lichessEvalMap.get(i);
+      if (lichessEval) {
+        evaluations[i] = lichessEval;
+      } else {
+        try {
+          evaluations[i] = await analyzer.analyze(positions[i], analysisOptions);
+        } catch {
+          evaluations[i] = null;
+        }
       }
       if (onProgress) {
         onProgress(i + 1, positions.length);

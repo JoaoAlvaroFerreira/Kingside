@@ -56,6 +56,9 @@ interface ChessWorkspaceProps {
   hintArrow?: string;
   hintArrowColor?: string;
 
+  // Override move index for eval bar (e.g. game review without MoveTree)
+  currentMoveIndexOverride?: number;
+
   // Extra vertical px already consumed by siblings (e.g. game lists below).
   // Subtracted from available height when computing board size.
   verticalOffset?: number;
@@ -84,6 +87,7 @@ export const ChessWorkspace: React.FC<ChessWorkspaceProps> = ({
   orientationOverride,
   hintArrow,
   hintArrowColor,
+  currentMoveIndexOverride,
   verticalOffset = 0,
 }) => {
   const { width, height } = useWindowDimensions();
@@ -105,7 +109,9 @@ export const ChessWorkspace: React.FC<ChessWorkspaceProps> = ({
   const { evaluation: internalEval } = useEngine(fen, internalEngineEnabled);
   const activeEval = currentEval !== undefined ? currentEval : internalEval;
 
-  const evalBarVisible = engineEnabled; // show bar whenever engine is on in settings
+  // Show eval bar when engine is on OR when pre-computed evals are provided (e.g. game review)
+  const hasPrecomputedEval = currentEval !== undefined;
+  const evalBarVisible = engineEnabled || hasPrecomputedEval;
 
   const isWideScreen = width > 700;
 
@@ -116,9 +122,10 @@ export const ChessWorkspace: React.FC<ChessWorkspaceProps> = ({
   const EVAL_BAR_WIDTH = 13;
   const evalBarReserved = evalBarVisible ? EVAL_BAR_WIDTH : 0;
 
+  const boardBorder = 4; // 2px border each side
   const availableForBoard = isWideScreen
-    ? Math.min(width * 0.5 - 12 - evalBarReserved, height - 80 - verticalOffset)
-    : Math.min(width - 8 - evalBarReserved, height - 80 - verticalOffset);
+    ? Math.min(width * 0.5 - evalBarReserved - boardBorder, height - 80 - verticalOffset)
+    : Math.min(width - evalBarReserved - boardBorder, height - 80 - verticalOffset);
 
   const sizePercentages: Record<string, number> = {
     tiny: 0.30,
@@ -172,7 +179,7 @@ export const ChessWorkspace: React.FC<ChessWorkspaceProps> = ({
                 currentEval={activeEval}
                 orientation={orientation}
                 moveHistory={moveEvals}
-                currentMoveIndex={flatMoves.findIndex(m => m.id === currentNodeId)}
+                currentMoveIndex={currentMoveIndexOverride ?? flatMoves.findIndex(m => m.id === currentNodeId)}
                 keyMoves={keyMoves}
                 height={actualBoardSize}
                 visible={evalBarVisible}
@@ -289,7 +296,6 @@ const styles = StyleSheet.create({
   // Narrow: no flex so height = content (works inside ScrollViews)
   container: {
     paddingTop: 4,
-    alignItems: 'center',
   },
   // Wide: fill the parent flex container
   containerWide: {
@@ -297,7 +303,6 @@ const styles = StyleSheet.create({
     alignItems: 'stretch',
   },
   mainContent: {
-    alignItems: 'center',
     gap: 4,
   },
   mainContentWide: {
@@ -305,11 +310,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     alignSelf: 'stretch',
-    paddingHorizontal: 4,
     gap: 8,
   },
   boardSection: {
-    alignItems: 'center',
   },
   boardRow: {
     flexDirection: 'row',

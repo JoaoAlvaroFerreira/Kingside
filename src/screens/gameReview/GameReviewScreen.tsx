@@ -18,6 +18,7 @@ import { ChessWorkspace } from '@components/chess/ChessWorkspace/ChessWorkspace'
 import { EvalGraph } from '@components/chess/EvalGraph';
 import { DatabaseService } from '@services/database/DatabaseService';
 import { UserGame, MasterGame, MoveAnalysis } from '@types';
+import { KeyMoveMarker } from '@components/chess/EvalBar/EvalBar';
 
 type ReviewTab = 'keyMoves' | 'graph' | 'yourGames' | 'masterGames';
 
@@ -247,6 +248,15 @@ export default function GameReviewScreen({ navigation, route: _route }: GameRevi
               screenKey="gameReview"
               showMoveHistory={false}
               currentEval={currentMove.evalBefore ?? null}
+              moveEvals={currentReviewSession.moves.map(m => ({ evaluation: m.evalAfter }))}
+              keyMoves={currentReviewSession.moves
+                .filter(m => m.isKeyMove && m.keyMoveReason)
+                .map(m => ({
+                  index: m.moveIndex,
+                  reason: m.keyMoveReason!,
+                  evaluation: m.evalAfter?.score,
+                } as KeyMoveMarker))}
+              currentMoveIndexOverride={currentReviewSession.currentMoveIndex}
               orientationOverride={currentReviewSession.userColor}
             />
           </View>

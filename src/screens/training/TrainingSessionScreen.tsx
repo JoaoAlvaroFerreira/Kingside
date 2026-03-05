@@ -375,6 +375,7 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
               disabled={isAnimating || session.awaitingRating}
               screenKey="training"
               showMoveHistory={false}
+              showSettingsGear={false}
               orientationOverride={session.color}
               hintArrow={isLearnMode ? learnArrowUci : hintArrowUci}
               hintArrowColor={isLearnMode ? 'rgba(74, 158, 255, 0.7)' : undefined}

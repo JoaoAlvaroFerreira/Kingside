@@ -14,7 +14,6 @@ import {
   View,
   StyleSheet,
   useWindowDimensions,
-  Text,
   PanResponder,
   Animated,
   GestureResponderEvent,
@@ -171,7 +170,7 @@ export const InteractiveChessBoard: React.FC<InteractiveChessBoardProps> = ({
   fen,
   onMove,
   orientation = 'white',
-  showCoordinates = true,
+  showCoordinates: _showCoordinates = true,
   disabled = false,
   boardSizePixels,
   bestMove,
@@ -181,7 +180,6 @@ export const InteractiveChessBoard: React.FC<InteractiveChessBoardProps> = ({
 
   const boardSize = boardSizePixels || Math.min(Math.min(width, height) - 40, 480);
   const squareSize = boardSize / 8;
-  const coordinateSize = 20;
 
   const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
   const [validMoves, setValidMoves] = useState<string[]>([]);
@@ -460,9 +458,6 @@ export const InteractiveChessBoard: React.FC<InteractiveChessBoardProps> = ({
     },
   }), [getSquareFromPosition, getValidMoves, executeMove, handleTap]);
 
-  const displayFiles = orientation === 'white' ? FILES : [...FILES].reverse();
-  const displayRanks = orientation === 'white' ? RANKS : [...RANKS].reverse();
-
   // Compute animation pixel positions
   const animOverlay = useMemo(() => {
     if (!moveAnim) return null;
@@ -499,15 +494,6 @@ export const InteractiveChessBoard: React.FC<InteractiveChessBoardProps> = ({
   return (
     <View style={styles.boardContainer}>
       <View style={styles.boardWrapper}>
-        {showCoordinates && (
-          <View style={[styles.rankLabels, { height: boardSize }]}>
-            {displayRanks.map((rankLabel) => (
-              <View key={`rank-label-${rankLabel}`} style={[styles.coordinateCell, { height: squareSize, width: coordinateSize }]}>
-                <Text style={styles.coordinateText}>{rankLabel}</Text>
-              </View>
-            ))}
-          </View>
-        )}
         <View style={{ position: 'relative' }}>
           <View
             ref={boardRef}
@@ -613,15 +599,6 @@ export const InteractiveChessBoard: React.FC<InteractiveChessBoardProps> = ({
               </View>
             ) : null;
           })()}
-          {showCoordinates && (
-            <View style={[styles.fileLabels, { width: boardSize }]}>
-              {displayFiles.map((fileLabel) => (
-                <View key={`file-label-${fileLabel}`} style={[styles.coordinateCell, { width: squareSize, height: coordinateSize }]}>
-                  <Text style={styles.coordinateText}>{fileLabel}</Text>
-                </View>
-              ))}
-            </View>
-          )}
         </View>
       </View>
     </View>
@@ -630,8 +607,6 @@ export const InteractiveChessBoard: React.FC<InteractiveChessBoardProps> = ({
 
 const styles = StyleSheet.create({
   boardContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   boardWrapper: {
     flexDirection: 'row',
@@ -645,24 +620,6 @@ const styles = StyleSheet.create({
   },
   row: {
     flexDirection: 'row',
-  },
-  rankLabels: {
-    justifyContent: 'space-around',
-    marginRight: 4,
-  },
-  fileLabels: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginTop: 4,
-  },
-  coordinateCell: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  coordinateText: {
-    color: '#d4d4d4',
-    fontSize: 12,
-    fontWeight: '600',
   },
   square: {
     justifyContent: 'center',
