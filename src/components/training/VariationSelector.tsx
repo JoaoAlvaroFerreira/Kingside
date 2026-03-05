@@ -58,7 +58,7 @@ export const VariationSelector: React.FC<VariationSelectorProps> = ({
       {holdbackCount > 0 && (
         <Text style={styles.holdbackText}>+{holdbackCount} on hold</Text>
       )}
-      <ScrollView style={styles.list} showsVerticalScrollIndicator={true}>
+      <ScrollView style={styles.list} showsVerticalScrollIndicator={true} nestedScrollEnabled>
         {lines.map((line, index) => {
           const isCurrent = index === currentLineIndex;
           const status = getLineStatus(line);
@@ -110,14 +110,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#2a2a2a',
     borderRadius: 6,
     padding: 8,
-    width: '100%',
+    flex: 1,
   },
   holdbackText: {
     color: '#999',
     fontSize: 11,
   },
   list: {
-    maxHeight: 400,
+    flex: 1,
   },
   lineItem: {
     backgroundColor: '#1e1e1e',

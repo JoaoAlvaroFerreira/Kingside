@@ -2,7 +2,6 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, TextInput, Platform } from 'react-native';
 import { useStore } from '@store';
 import { RepertoireColor, OpeningType, Repertoire } from '@types';
-import { CardGenerator } from '@services/srs/CardGenerator';
 import { getChapterStats, formatLastStudied } from '@utils/chapterUtils';
 
 interface RepertoireScreenProps {
@@ -10,7 +9,7 @@ interface RepertoireScreenProps {
 }
 
 export default function RepertoireScreen({ navigation }: RepertoireScreenProps) {
-  const { repertoires, addCards, reviewCards, updateRepertoire, deleteRepertoire } = useStore();
+  const { repertoires, updateRepertoire, deleteRepertoire } = useStore();
   const [selectedColor, setSelectedColor] = useState<RepertoireColor>('white');
   const [selectedType, setSelectedType] = useState<OpeningType | null>(null);
   const [expandedRepertoire, setExpandedRepertoire] = useState<string | null>(null);
@@ -165,74 +164,6 @@ export default function RepertoireScreen({ navigation }: RepertoireScreenProps) 
   const handleCancelEditChapter = () => {
     setEditingChapter(null);
     setEditedChapterName('');
-  };
-
-  const handleGenerateCards = async (repertoire: Repertoire) => {
-    try {
-      // Check if cards already exist for this repertoire
-      const existingCards = reviewCards.filter(
-        card => card.chapterId && repertoire.chapters.some(ch => ch.id === card.chapterId)
-      );
-
-      if (existingCards.length > 0) {
-        if (Platform.OS === 'web') {
-          const confirmed = window.confirm(
-            `This repertoire already has ${existingCards.length} review cards. Do you want to regenerate them?`
-          );
-          if (confirmed) {
-            generateCardsForRepertoire(repertoire);
-          }
-        } else {
-          Alert.alert(
-            'Cards Already Generated',
-            `This repertoire already has ${existingCards.length} review cards. Do you want to regenerate them?`,
-            [
-              { text: 'Cancel', style: 'cancel' },
-              {
-                text: 'Regenerate',
-                style: 'destructive',
-                onPress: () => generateCardsForRepertoire(repertoire),
-              },
-            ]
-          );
-        }
-      } else {
-        generateCardsForRepertoire(repertoire);
-      }
-    } catch (error) {
-      console.error('Error generating cards:', error);
-      if (Platform.OS === 'web') {
-        window.alert('Failed to generate review cards');
-      } else {
-        Alert.alert('Error', 'Failed to generate review cards');
-      }
-    }
-  };
-
-  const generateCardsForRepertoire = async (repertoire: Repertoire) => {
-    const allCards = [];
-
-    for (const chapter of repertoire.chapters) {
-      const cards = CardGenerator.generateFromChapter(
-        chapter,
-        repertoire.color,
-        repertoire.id, // Using repertoire ID as opening ID
-        repertoire.id, // Using repertoire ID as sub-variation ID
-      );
-      allCards.push(...cards);
-    }
-
-    await addCards(allCards);
-
-    if (Platform.OS === 'web') {
-      window.alert(`Generated ${allCards.length} review cards for ${repertoire.name}`);
-    } else {
-      Alert.alert(
-        'Success',
-        `Generated ${allCards.length} review cards for ${repertoire.name}`,
-        [{ text: 'OK' }]
-      );
-    }
   };
 
   const filteredRepertoires = useMemo(() => {
@@ -464,15 +395,6 @@ export default function RepertoireScreen({ navigation }: RepertoireScreenProps) 
                         </View>
                       ))}
 
-                      <TouchableOpacity
-                        style={styles.generateCardsButton}
-                        onPress={() => handleGenerateCards(repertoire)}
-                        activeOpacity={0.7}
-                      >
-                        <Text style={styles.generateCardsButtonText}>
-                          Generate Review Cards
-                        </Text>
-                      </TouchableOpacity>
                     </View>
                   )}
                 </View>
@@ -785,20 +707,6 @@ const styles = StyleSheet.create({
   chapterCancelButtonText: {
     color: '#e0e0e0',
     fontSize: 10,
-    fontWeight: '600',
-  },
-  generateCardsButton: {
-    backgroundColor: '#34C759',
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-    borderRadius: 6,
-    alignItems: 'center',
-    marginTop: 6,
-    marginBottom: 6,
-  },
-  generateCardsButtonText: {
-    color: '#fff',
-    fontSize: 12,
     fontWeight: '600',
   },
 });

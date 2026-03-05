@@ -1,25 +1,20 @@
 /**
  * Repertoire Study Screen
- * Wide: [left panel toggle] + [ChessWorkspace] + [Game Lists at bottom]
- * Narrow: ScrollView with hierarchy, chapter selector, game lists, ChessWorkspace
+ * Uses ChessAnalysisLayout with chapter-loaded MoveTree.
+ * Wide: left panel (hierarchy + chapters) + board + game lists
+ * Narrow: chapter selector + board + tabbed (Moves | Your Games | Master)
  */
 
-import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { View, StyleSheet, useWindowDimensions, ScrollView, TouchableOpacity, Text, Platform } from 'react-native';
+import React, { useState, useMemo, useEffect } from 'react';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Text, Platform, useWindowDimensions } from 'react-native';
 import { useStore } from '@store';
 import { MoveTree } from '@utils/MoveTree';
-import { ChessWorkspace } from '@components/chess/ChessWorkspace/ChessWorkspace';
+import { ChessAnalysisLayout } from '@components/chess/ChessAnalysisLayout/ChessAnalysisLayout';
 import { HierarchyBrowser } from '@components/repertoire/HierarchyBrowser';
 import { ChapterList } from '@components/repertoire/ChapterList';
 import { ChapterSelectModal } from '@components/ChapterSelectModal';
-import { GameList } from '@components/repertoire/GameList';
-import { normalizeFen, UserGame, MasterGame, Line } from '@types';
-import { createLineGenerator, LineGeneratorState } from '@services/training/LineGenerator';
-import { DatabaseService } from '@services/database/DatabaseService';
-
-// Height reserved for the game lists section in wide mode.
-// Passed as verticalOffset to ChessWorkspace so board sizing accounts for it.
-const GAME_LIST_HEIGHT = 180;
+import { UserGame, MasterGame } from '@types';
+import { useGameSearch } from '@hooks/useGameSearch';
 
 interface RepertoireStudyScreenProps {
   navigation: any;
@@ -34,8 +29,8 @@ interface RepertoireStudyScreenProps {
 export default function RepertoireStudyScreen({ navigation, route }: RepertoireStudyScreenProps) {
   const { repertoireId, chapterId } = route.params;
   const { repertoires } = useStore();
-  const { width } = useWindowDimensions();
-  const isWide = width > 700;
+  const { width, height } = useWindowDimensions();
+  const isWide = width > 700 && width > height;
 
   const repertoire = useMemo(
     () => repertoires.find(r => r.id === repertoireId),
@@ -47,36 +42,46 @@ export default function RepertoireStudyScreen({ navigation, route }: RepertoireS
   const [, forceUpdate] = useState(0);
   const [leftPanelVisible, setLeftPanelVisible] = useState(false);
   const [chapterModalVisible, setChapterModalVisible] = useState(false);
-  const [gamesAtPosition, setGamesAtPosition] = useState<{ userGames: UserGame[]; masterGames: MasterGame[] }>({
-    userGames: [],
-    masterGames: [],
-  });
-  const [loadingGames, setLoadingGames] = useState(false);
 
   const currentChapter = useMemo(
     () => repertoire?.chapters.find(c => c.id === selectedChapterId),
     [repertoire, selectedChapterId]
   );
 
-  const [_lineGenerator, setLineGenerator] = useState<LineGeneratorState | null>(null);
-  const [_currentLines, setCurrentLines] = useState<Line[]>([]);
-
   useEffect(() => {
-    if (currentChapter && repertoire) {
+    if (currentChapter) {
       const tree = MoveTree.fromJSON(currentChapter.moveTree);
       setMoveTree(tree);
-
-      const generator = createLineGenerator(
-        currentChapter.moveTree,
-        repertoire.id,
-        currentChapter.id,
-        repertoire.color
-      );
-      setLineGenerator(generator);
-      const initialBatch = generator.loadNextBatch();
-      setCurrentLines(initialBatch);
     }
-  }, [currentChapter, repertoire]);
+  }, [currentChapter]);
+
+  const currentFen = moveTree?.getCurrentFen() || '';
+  const currentNodeId = moveTree?.getCurrentNode()?.id || null;
+
+  const { userGames, masterGames, loading: loadingGames } = useGameSearch(currentFen);
+
+  const handleSelectGame = (game: UserGame | MasterGame) => {
+    navigation.navigate('Analysis', { game });
+  };
+
+  const handleMove = (from: string, to: string) => {
+    if (!moveTree) return;
+    const { Chess } = require('chess.js'); // eslint-disable-line @typescript-eslint/no-var-requires
+    const chess = new Chess(moveTree.getCurrentFen());
+    const move = chess.move({ from, to, promotion: 'q' });
+    if (move) {
+      moveTree.addMove(move.san);
+      forceUpdate(n => n + 1);
+    }
+  };
+
+  const handleNavigate = (nodeId: string | null) => { if (!moveTree) return; moveTree.navigateToNode(nodeId); forceUpdate(n => n + 1); };
+  const handleGoBack = () => { if (!moveTree) return; moveTree.goBack(); forceUpdate(n => n + 1); };
+  const handleGoForward = () => { if (!moveTree) return; moveTree.goForward(); forceUpdate(n => n + 1); };
+  const handleGoToStart = () => { if (!moveTree) return; moveTree.goToStart(); forceUpdate(n => n + 1); };
+  const handleGoToEnd = () => { if (!moveTree) return; moveTree.goToEnd(); forceUpdate(n => n + 1); };
+  const handlePromoteToMainLine = (nodeId: string) => { if (!moveTree) return; moveTree.promoteToMainLine(nodeId); forceUpdate(n => n + 1); };
+  const handleDeleteMove = (nodeId: string) => { if (!moveTree) return; moveTree.deleteFromNode(nodeId); forceUpdate(n => n + 1); };
 
   // Keyboard navigation (web only)
   useEffect(() => {
@@ -93,212 +98,100 @@ export default function RepertoireStudyScreen({ navigation, route }: RepertoireS
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [moveTree]);
-
-  const currentFen = moveTree?.getCurrentFen() || '';
-  const currentNodeId = moveTree?.getCurrentNode()?.id || null;
-
-  const lastSearchedFenRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    if (!currentFen) return;
-    const normalized = normalizeFen(currentFen);
-    if (normalized === lastSearchedFenRef.current) return;
-
-    let cancelled = false;
-    setLoadingGames(true);
-    (async () => {
-      try {
-        const [userGames, masterGames] = await Promise.all([
-          DatabaseService.searchUserGamesByFEN(normalized),
-          DatabaseService.searchMasterGamesByFEN(normalized),
-        ]);
-        if (!cancelled) {
-          setGamesAtPosition({ userGames, masterGames });
-          lastSearchedFenRef.current = normalized;
-        }
-      } catch {
-        if (!cancelled) setGamesAtPosition({ userGames: [], masterGames: [] });
-      } finally {
-        if (!cancelled) setLoadingGames(false);
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [currentFen]);
-
-  const handleSelectChapter = (newChapterId: string) => {
-    setSelectedChapterId(newChapterId);
-  };
-
-  const handleSelectGame = (game: UserGame | MasterGame) => {
-    navigation.navigate('Analysis', { game });
-  };
-
-  const handleMoveClick = (from: string, to: string) => {
-    if (!moveTree) return;
-
-    const { Chess } = require('chess.js'); // eslint-disable-line @typescript-eslint/no-var-requires
-    const chess = new Chess(moveTree.getCurrentFen());
-    const move = chess.move({ from, to, promotion: 'q' });
-
-    if (move) {
-      moveTree.addMove(move.san);
-      forceUpdate(n => n + 1);
-    }
-  };
-
-  const handleNavigate = (nodeId: string | null) => {
-    if (!moveTree) return;
-    moveTree.navigateToNode(nodeId);
-    forceUpdate(n => n + 1);
-  };
-
-  const handleMarkCritical = (nodeId: string, isCritical: boolean) => {
-    if (!moveTree) return;
-    moveTree.markAsCritical(nodeId, isCritical);
-    forceUpdate(n => n + 1);
-  };
-
-  const handleGoBack = () => { if (!moveTree) return; moveTree.goBack(); forceUpdate(n => n + 1); };
-  const handleGoForward = () => { if (!moveTree) return; moveTree.goForward(); forceUpdate(n => n + 1); };
-  const handleGoToStart = () => { if (!moveTree) return; moveTree.goToStart(); forceUpdate(n => n + 1); };
-  const handleGoToEnd = () => { if (!moveTree) return; moveTree.goToEnd(); forceUpdate(n => n + 1); };
-
-  const handlePromoteToMainLine = (nodeId: string) => {
-    if (!moveTree) return;
-    moveTree.promoteToMainLine(nodeId);
-    forceUpdate(n => n + 1);
-  };
-
-  const handleDeleteMove = (nodeId: string) => {
-    if (!moveTree) return;
-    moveTree.deleteFromNode(nodeId);
-    forceUpdate(n => n + 1);
-  };
+  }, [moveTree, handleGoBack, handleGoForward, handleGoToStart, handleGoToEnd]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!repertoire || !currentChapter || !moveTree) {
     return null;
   }
 
-  const chessWorkspaceProps = {
-    fen: currentFen,
-    onMove: handleMoveClick,
-    moveTree,
-    currentNodeId,
-    onNavigate: handleNavigate,
-    onGoBack: handleGoBack,
-    onGoForward: handleGoForward,
-    onGoToStart: handleGoToStart,
-    onGoToEnd: handleGoToEnd,
-    onMarkCritical: handleMarkCritical,
-    onPromoteToMainLine: handlePromoteToMainLine,
-    onDeleteMove: handleDeleteMove,
-    screenKey: 'repertoire' as const,
-    orientationOverride: repertoire.color,
-    showMoveHistory: true,
-    showSettingsGear: false,
-  };
-
-  const gameLists = (isWideMode: boolean) => (
-    <View style={isWideMode ? styles.bottomSection : styles.gameListsNarrow}>
-      <View style={styles.gameListHalf}>
-        <GameList
-          title="Your Games"
-          games={gamesAtPosition.userGames}
-          onSelect={handleSelectGame}
-          defaultCollapsed={!isWideMode}
-          loading={loadingGames}
-        />
-      </View>
-      <View style={styles.gameListHalf}>
-        <GameList
-          title="Master Games"
-          games={gamesAtPosition.masterGames}
-          onSelect={handleSelectGame}
-          defaultCollapsed={!isWideMode}
-          loading={loadingGames}
-        />
-      </View>
-    </View>
-  );
-
-  return (
-    <View style={styles.container}>
-      {isWide ? (
-        <View style={styles.wideLayout}>
-          {/* Collapsible Left Panel */}
-          {leftPanelVisible && (
-            <ScrollView style={styles.leftPanel}>
-              <HierarchyBrowser
-                color={repertoire.color}
-                openingType={repertoire.openingType}
-                openingName={repertoire.name}
-                defaultCollapsed={false}
-              />
-              <ChapterList
-                chapters={repertoire.chapters}
-                selectedId={selectedChapterId}
-                onSelect={handleSelectChapter}
-                defaultCollapsed={false}
-              />
-            </ScrollView>
-          )}
-
-          <TouchableOpacity
-            style={styles.toggleButton}
-            onPress={() => setLeftPanelVisible(!leftPanelVisible)}
-          >
-            <Text style={styles.toggleButtonText}>
-              {leftPanelVisible ? '◀' : '▶'}
-            </Text>
-          </TouchableOpacity>
-
-          {/* Main area: ChessWorkspace (flex:1) + game lists (fixed height) */}
-          <View style={styles.wideMain}>
-            <ChessWorkspace {...chessWorkspaceProps} verticalOffset={GAME_LIST_HEIGHT} />
-            {gameLists(true)}
-          </View>
-        </View>
-      ) : (
-        <ScrollView style={styles.container}>
+  // Wide mode: left panel with hierarchy + chapters
+  const wideLeftPanel = isWide ? (
+    <View style={styles.wideLeftPanelContainer}>
+      {leftPanelVisible && (
+        <ScrollView style={styles.leftPanel}>
           <HierarchyBrowser
             color={repertoire.color}
             openingType={repertoire.openingType}
             openingName={repertoire.name}
-            defaultCollapsed={true}
+            defaultCollapsed={false}
           />
-          <TouchableOpacity
-            style={styles.chapterButton}
-            onPress={() => setChapterModalVisible(true)}
-          >
-            <Text style={styles.chapterButtonText} numberOfLines={1}>
-              {currentChapter.name}
-            </Text>
-            <Text style={styles.chapterButtonArrow}>&#9662;</Text>
-          </TouchableOpacity>
-          <ChessWorkspace {...chessWorkspaceProps} />
-          {gameLists(false)}
+          <ChapterList
+            chapters={repertoire.chapters}
+            selectedId={selectedChapterId}
+            onSelect={setSelectedChapterId}
+            defaultCollapsed={false}
+          />
         </ScrollView>
       )}
+      <TouchableOpacity
+        style={styles.toggleButton}
+        onPress={() => setLeftPanelVisible(!leftPanelVisible)}
+      >
+        <Text style={styles.toggleButtonText}>
+          {leftPanelVisible ? '\u25C0' : '\u25B6'}
+        </Text>
+      </TouchableOpacity>
+    </View>
+  ) : undefined;
+
+  // Narrow mode: chapter selector above the board
+  const narrowHeader = !isWide ? (
+    <>
+      <HierarchyBrowser
+        color={repertoire.color}
+        openingType={repertoire.openingType}
+        openingName={repertoire.name}
+        defaultCollapsed={true}
+      />
+      <TouchableOpacity
+        style={styles.chapterButton}
+        onPress={() => setChapterModalVisible(true)}
+      >
+        <Text style={styles.chapterButtonText} numberOfLines={1}>
+          {currentChapter.name}
+        </Text>
+        <Text style={styles.chapterButtonArrow}>&#9662;</Text>
+      </TouchableOpacity>
+    </>
+  ) : undefined;
+
+  return (
+    <>
+      <ChessAnalysisLayout
+        moveTree={moveTree}
+        currentFen={currentFen}
+        currentNodeId={currentNodeId}
+        onMove={handleMove}
+        onNavigate={handleNavigate}
+        onGoBack={handleGoBack}
+        onGoForward={handleGoForward}
+        onGoToStart={handleGoToStart}
+        onGoToEnd={handleGoToEnd}
+        onPromoteToMainLine={handlePromoteToMainLine}
+        onDeleteMove={handleDeleteMove}
+        screenKey="repertoire"
+        orientationOverride={repertoire.color}
+        userGames={userGames}
+        masterGames={masterGames}
+        loadingGames={loadingGames}
+        onSelectGame={handleSelectGame}
+        wideLeftPanel={wideLeftPanel}
+        narrowHeader={narrowHeader}
+      />
 
       <ChapterSelectModal
         visible={chapterModalVisible}
         chapters={repertoire.chapters}
         selectedChapterId={selectedChapterId}
-        onSelect={handleSelectChapter}
+        onSelect={setSelectedChapterId}
         onClose={() => setChapterModalVisible(false)}
       />
-    </View>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#2c2c2c',
-  },
-  wideLayout: {
-    flex: 1,
+  wideLeftPanelContainer: {
     flexDirection: 'row',
   },
   leftPanel: {
@@ -318,27 +211,6 @@ const styles = StyleSheet.create({
   toggleButtonText: {
     color: '#888',
     fontSize: 16,
-  },
-  wideMain: {
-    flex: 1,
-    flexDirection: 'column',
-  },
-  bottomSection: {
-    flexDirection: 'row',
-    borderTopWidth: 1,
-    borderTopColor: '#3a3a3a',
-    height: GAME_LIST_HEIGHT,
-    gap: 8,
-    padding: 4,
-  },
-  gameListsNarrow: {
-    flexDirection: 'row',
-    gap: 8,
-    padding: 4,
-  },
-  gameListHalf: {
-    flex: 1,
-    minWidth: 0,
   },
   chapterButton: {
     flexDirection: 'row',

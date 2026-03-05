@@ -235,34 +235,36 @@ const MoveHistoryInner: React.FC<MoveHistoryProps> = ({
       </ScrollView>
 
       <View style={styles.navigation}>
-        <TouchableOpacity
-          style={[styles.navButton, !canGoBack && styles.navButtonDisabled]}
-          onPress={onGoToStart}
-          disabled={!canGoBack}
-        >
-          <Text style={styles.navButtonText}>⏮</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.navButton, !canGoBack && styles.navButtonDisabled]}
-          onPress={onGoBack}
-          disabled={!canGoBack}
-        >
-          <Text style={styles.navButtonText}>◀</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.navButton, !canGoForward && styles.navButtonDisabled]}
-          onPress={onGoForward}
-          disabled={!canGoForward}
-        >
-          <Text style={styles.navButtonText}>▶</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.navButton, !canGoForward && styles.navButtonDisabled]}
-          onPress={onGoToEnd}
-          disabled={!canGoForward}
-        >
-          <Text style={styles.navButtonText}>⏭</Text>
-        </TouchableOpacity>
+        <View style={styles.navButtons}>
+          <TouchableOpacity
+            style={[styles.navButton, !canGoBack && styles.navButtonDisabled]}
+            onPress={onGoToStart}
+            disabled={!canGoBack}
+          >
+            <Text style={styles.navButtonText}>⏮</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.navButton, !canGoBack && styles.navButtonDisabled]}
+            onPress={onGoBack}
+            disabled={!canGoBack}
+          >
+            <Text style={styles.navButtonText}>◀</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.navButton, !canGoForward && styles.navButtonDisabled]}
+            onPress={onGoForward}
+            disabled={!canGoForward}
+          >
+            <Text style={styles.navButtonText}>▶</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.navButton, !canGoForward && styles.navButtonDisabled]}
+            onPress={onGoToEnd}
+            disabled={!canGoForward}
+          >
+            <Text style={styles.navButtonText}>⏭</Text>
+          </TouchableOpacity>
+        </View>
         {onSettingsPress && (
           <TouchableOpacity
             style={styles.settingsButton}
@@ -400,6 +402,10 @@ const styles = StyleSheet.create({
   navigation: {
     flexDirection: 'row',
     justifyContent: 'center',
+    alignItems: 'center',
+  },
+  navButtons: {
+    flexDirection: 'row',
     gap: 4,
   },
   navButton: {
@@ -416,11 +422,12 @@ const styles = StyleSheet.create({
     fontSize: 11,
   },
   settingsButton: {
+    position: 'absolute',
+    right: 0,
     backgroundColor: '#4a4a4a',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 3,
-    marginLeft: 4,
   },
   modalOverlay: {
     flex: 1,

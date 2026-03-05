@@ -26,7 +26,7 @@ interface TrainingSessionScreenProps {
 export default function TrainingSessionScreen({ navigation, route }: TrainingSessionScreenProps) {
   const { repertoires, lineStats, setTrainingSession, updateLineStats, reviewSettings } = useStore();
   const timing: TrainingTimingSettings = reviewSettings.training;
-  const { width } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
 
   const [session, setSession] = useState<TrainingSession | null>(null);
   const [currentFen, setCurrentFen] = useState<string>(new Chess().fen());
@@ -337,6 +337,14 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
 
   const isWideScreen = width > 900;
 
+  // In wide landscape mode, the board shares a row with the variation selector.
+  // Cap the board so it fits in the available height (minus header + padding)
+  // and doesn't exceed ~45% of the screen width.
+  const HEADER_HEIGHT = 54;
+  const maxBoardSize = isWideScreen
+    ? Math.min(width * 0.45, height - HEADER_HEIGHT - 16)
+    : undefined;
+
   return (
     <View style={styles.container}>
       {/* Progress Header */}
@@ -368,7 +376,7 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
         {/* Main Content Area */}
         <View style={[styles.mainContent, isWideScreen && styles.mainContentWide]}>
           {/* Chess Board */}
-          <View style={styles.boardContainer}>
+          <View style={[styles.boardContainer, isWideScreen && { maxWidth: (maxBoardSize || width * 0.45) + 20 }]}>
             <ChessWorkspace
               fen={currentFen}
               onMove={handleMove}
@@ -379,24 +387,32 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
               orientationOverride={session.color}
               hintArrow={isLearnMode ? learnArrowUci : hintArrowUci}
               hintArrowColor={isLearnMode ? 'rgba(74, 158, 255, 0.7)' : undefined}
+              verticalOffset={HEADER_HEIGHT}
+              maxBoardSize={maxBoardSize}
             />
           </View>
 
           {/* Variation Selector */}
           {isWideScreen && (
-            <VariationSelector
-              lines={session.lines}
-              currentLineIndex={session.currentLineIndex}
-              onSelectLine={handleSelectLine}
-              lineProgress={session.lineProgress}
-              holdbackCount={session.holdbackLines.length}
-            />
+            <View style={{ flex: 1, maxHeight: maxBoardSize || undefined }}>
+              <VariationSelector
+                lines={session.lines}
+                currentLineIndex={session.currentLineIndex}
+                onSelectLine={handleSelectLine}
+                lineProgress={session.lineProgress}
+                holdbackCount={session.holdbackLines.length}
+              />
+            </View>
           )}
         </View>
 
         {/* Comment Box (learn mode) */}
         {isLearnMode && currentComment && (
-          <ScrollView style={styles.commentBox} nestedScrollEnabled>
+          <ScrollView
+            style={styles.commentBox}
+            contentContainerStyle={{ paddingBottom: 10 }}
+            nestedScrollEnabled
+          >
             <Text style={styles.commentText}>{currentComment}</Text>
           </ScrollView>
         )}
@@ -553,6 +569,7 @@ const styles = StyleSheet.create({
   variationSelectorNarrow: {
     marginHorizontal: 12,
     marginTop: 8,
+    height: 300,
   },
   commentBox: {
     marginHorizontal: 12,
@@ -563,7 +580,7 @@ const styles = StyleSheet.create({
     borderLeftWidth: 3,
     borderLeftColor: '#87CEEB',
     borderRadius: 4,
-    maxHeight: 80,
+    maxHeight: 120,
   },
   commentText: {
     color: '#e0e0e0',

@@ -62,6 +62,10 @@ interface ChessWorkspaceProps {
   // Extra vertical px already consumed by siblings (e.g. game lists below).
   // Subtracted from available height when computing board size.
   verticalOffset?: number;
+
+  // Hard cap on board size (px). Used when ChessWorkspace is placed inside a
+  // constrained container whose width is smaller than what useWindowDimensions reports.
+  maxBoardSize?: number;
 }
 
 export const ChessWorkspace: React.FC<ChessWorkspaceProps> = ({
@@ -89,6 +93,7 @@ export const ChessWorkspace: React.FC<ChessWorkspaceProps> = ({
   hintArrowColor,
   currentMoveIndexOverride,
   verticalOffset = 0,
+  maxBoardSize,
 }) => {
   const { width, height } = useWindowDimensions();
   const { screenSettings } = useStore();
@@ -112,7 +117,7 @@ export const ChessWorkspace: React.FC<ChessWorkspaceProps> = ({
   const hasPrecomputedEval = currentEval !== undefined;
   const evalBarVisible = engineEnabled || hasPrecomputedEval;
 
-  const isWideScreen = width > 700;
+  const isWideScreen = width > 700 && width > height;
 
   // Board fills available width, capped by height so it stays on screen.
   // The eval bar occupies 10px + 3px gap to the left of the board.
@@ -124,7 +129,15 @@ export const ChessWorkspace: React.FC<ChessWorkspaceProps> = ({
     ? Math.min(width * 0.5 - evalBarReserved - boardBorder, height - 80 - verticalOffset)
     : Math.min(width - evalBarReserved - boardBorder, height - 80 - verticalOffset);
 
-  const actualBoardSize = Math.max(140, Math.floor(availableForBoard));
+  // Board size setting scales the board down from max available.
+  // XL = 100% (current behavior), smaller sizes free up space for move history / tabs.
+  const BOARD_SIZE_SCALE: Record<string, number> = {
+    tiny: 0.55, small: 0.65, medium: 0.78, large: 0.9, xlarge: 1.0,
+  };
+  const sizeScale = BOARD_SIZE_SCALE[settings.boardSize] ?? 1.0;
+
+  const cappedForBoard = maxBoardSize ? Math.min(availableForBoard, maxBoardSize) : availableForBoard;
+  const actualBoardSize = Math.max(140, Math.floor(cappedForBoard * sizeScale));
 
   // Narrow mode: move history sits below the board and can be a bit smaller
   const narrowHistoryHeight = Math.max(80, Math.floor(actualBoardSize * 0.45));
@@ -148,9 +161,6 @@ export const ChessWorkspace: React.FC<ChessWorkspaceProps> = ({
   const currentComment = moveTree?.isAtStart()
     ? moveTree.getRootComment()
     : moveTree?.getCurrentNode()?.comment;
-  // Total width of board area including eval bar (9 px bar + 4 px gap)
-  const contentWidth = evalBarVisible ? actualBoardSize + 13 : actualBoardSize;
-
   // MoveHistory renders only when visible AND has required props
   const isMoveHistoryRendered = Boolean(moveHistoryVisible && moveTree && onNavigate);
 
@@ -219,12 +229,12 @@ export const ChessWorkspace: React.FC<ChessWorkspaceProps> = ({
 
         {/* ── Narrow: engine lines + move history below board ── */}
         {!isWideScreen && evalBarVisible && activeEval && (
-          <View style={[styles.engineLinesNarrow, { width: contentWidth }]}>
+          <View style={styles.engineLinesNarrow}>
             <EngineLines evaluation={activeEval} />
           </View>
         )}
         {!isWideScreen && moveHistoryVisible && moveTree && onNavigate && (
-          <View style={{ width: contentWidth, height: narrowHistoryHeight }}>
+          <View style={{ alignSelf: 'stretch', marginHorizontal: 8, height: narrowHistoryHeight }}>
             <MoveHistory
               moves={flatMoves}
               currentNodeId={currentNodeId || null}
@@ -254,11 +264,11 @@ export const ChessWorkspace: React.FC<ChessWorkspaceProps> = ({
         </TouchableOpacity>
       )}
 
-      {/* Comment — spans the full workspace width, scrollable for long texts */}
+      {/* Comment — spans full width in both modes */}
       {currentComment && (
         <View style={[
           styles.commentBox,
-          isWideScreen ? styles.commentBoxWide : { width: contentWidth },
+          isWideScreen ? styles.commentBoxWide : styles.commentBoxNarrow,
         ]}>
           <ScrollView
             style={styles.commentScroll}
@@ -316,7 +326,10 @@ const styles = StyleSheet.create({
     borderLeftWidth: 3,
     borderLeftColor: '#87CEEB',
   },
-  // Wide: stretch to the full workspace width (within paddingHorizontal)
+  commentBoxNarrow: {
+    alignSelf: 'stretch',
+    marginHorizontal: 8,
+  },
   commentBoxWide: {
     alignSelf: 'stretch',
     marginHorizontal: 8,
@@ -345,7 +358,8 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   engineLinesNarrow: {
-    paddingHorizontal: 4,
+    alignSelf: 'stretch',
+    marginHorizontal: 8,
   },
   floatingGear: {
     alignSelf: 'center',

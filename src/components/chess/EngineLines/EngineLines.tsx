@@ -89,12 +89,12 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: '#1e1e1e',
     borderRadius: 3,
-    paddingVertical: 2,
-    paddingHorizontal: 4,
-    gap: 1,
+    paddingVertical: 3,
+    paddingHorizontal: 6,
+    gap: 2,
   },
   lineText: {
-    fontSize: 9,
+    fontSize: 11,
     fontFamily: 'monospace',
   },
   scoreSpan: {
