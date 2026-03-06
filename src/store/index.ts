@@ -389,7 +389,6 @@ export const useStore = create<AppState>((set, get) => ({
         const session = await GameReviewService.startReview(
           game,
           userColor,
-          state.repertoires,
           masterGames,
           analyzer,
           analysisOptions,

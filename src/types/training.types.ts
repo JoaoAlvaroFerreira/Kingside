@@ -73,7 +73,7 @@ export type TrainingMode = 'depth-first' | 'width-first';
  */
 export interface TrainingConfig {
   repertoireId: string;
-  chapterId?: string;             // Optional: drill specific chapter only
+  chapterIds?: string[];          // Optional: drill specific chapters only (empty = all)
   mode: TrainingMode;
   maxDepth?: number;              // Optional: limit drilling depth
   includeOnlyDueLines?: boolean;  // Filter to lines due for review
@@ -86,7 +86,7 @@ export interface TrainingConfig {
 export interface TrainingSession {
   id: string;
   repertoireId: string;
-  chapterId: string | null;       // null = all chapters
+  chapterIds: string[];           // empty = all chapters
   color: RepertoireColor;         // Which side user plays
   mode: TrainingMode;
   learnMode: boolean;             // Guided study with arrows + comments
@@ -120,6 +120,7 @@ export interface TrainingSession {
 export type DrillFeedback =
   | 'correct'
   | 'incorrect'
+  | 'alternative'    // Valid repertoire move, but not the expected one in this line
   | 'line-complete'
   | 'session-complete';
 

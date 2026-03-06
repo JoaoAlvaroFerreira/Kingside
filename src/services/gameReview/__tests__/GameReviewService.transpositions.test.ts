@@ -2,6 +2,11 @@
  * Tests for FEN-based repertoire matching with transposition detection
  */
 
+// GameReviewService now imports DatabaseService; mock it so native SQLite is not loaded
+jest.mock('@services/database/DatabaseService', () => ({
+  DatabaseService: { getRepertoirePositionMap: jest.fn().mockResolvedValue(new Map()) },
+}));
+
 import { Chess } from 'chess.js';
 import { GameReviewService } from '../GameReviewService';
 import { normalizeFen } from '@types';

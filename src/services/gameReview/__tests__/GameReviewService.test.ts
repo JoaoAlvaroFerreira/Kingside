@@ -1,3 +1,8 @@
+// GameReviewService now imports DatabaseService; mock it so native SQLite is not loaded
+jest.mock('@services/database/DatabaseService', () => ({
+  DatabaseService: { getRepertoirePositionMap: jest.fn().mockResolvedValue(new Map()) },
+}));
+
 import { GameReviewService, centipawnsToWinProbability } from '../GameReviewService';
 import { EngineEvaluation, RepertoireMatchResult } from '@types';
 import { createTestRepertoire } from './testHelpers';

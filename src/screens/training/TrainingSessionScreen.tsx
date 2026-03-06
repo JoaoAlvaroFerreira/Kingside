@@ -30,7 +30,7 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
 
   const [session, setSession] = useState<TrainingSession | null>(null);
   const [currentFen, setCurrentFen] = useState<string>(new Chess().fen());
-  const [feedback, setFeedback] = useState<'correct' | 'incorrect' | null>(null);
+  const [feedback, setFeedback] = useState<'correct' | 'incorrect' | 'alternative' | null>(null);
   const [isAnimating, setIsAnimating] = useState(false);
   const [expectedMove, setExpectedMove] = useState<string>('');
   const [hintArrowUci, setHintArrowUci] = useState<string | undefined>(undefined);
@@ -118,8 +118,8 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
     const result = TrainingService.processUserMove(session, from, to);
 
     if (!result.isCorrect) {
-      // Wrong move - show feedback and hint arrow
-      setFeedback('incorrect');
+      // Wrong move (or alternative) — show feedback and hint arrow for expected move
+      setFeedback(result.feedback === 'alternative' ? 'alternative' : 'incorrect');
       try {
         const hint = new Chess(currentFen);
         const move = hint.move(result.expectedMove);
@@ -419,13 +419,17 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
 
         {/* Feedback — directly below board so it's always visible */}
         {feedback && (
-          <View style={[styles.feedbackContainer, feedback === 'incorrect' && styles.feedbackIncorrect]}>
+          <View style={[
+            styles.feedbackContainer,
+            feedback === 'incorrect' && styles.feedbackIncorrect,
+            feedback === 'alternative' && styles.feedbackAlternative,
+          ]}>
             <Text style={styles.feedbackText}>
-              {feedback === 'correct' ? 'Correct!' : 'Try Again'}
+              {feedback === 'correct' ? 'Correct!' : feedback === 'alternative' ? 'Alternative!' : 'Try Again'}
             </Text>
-            {feedback === 'incorrect' && expectedMove && (
+            {(feedback === 'incorrect' || feedback === 'alternative') && expectedMove && (
               <Text style={styles.suggestionText}>
-                Correct move: {expectedMove}
+                {feedback === 'alternative' ? 'This line expects:' : 'Correct move:'} {expectedMove}
               </Text>
             )}
           </View>
@@ -598,6 +602,9 @@ const styles = StyleSheet.create({
   },
   feedbackIncorrect: {
     backgroundColor: '#c62828',
+  },
+  feedbackAlternative: {
+    backgroundColor: '#e65100',
   },
   feedbackText: {
     color: '#fff',

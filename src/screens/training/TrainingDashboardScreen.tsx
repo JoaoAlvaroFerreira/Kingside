@@ -21,12 +21,11 @@ export default function TrainingDashboardScreen({ navigation }: TrainingDashboar
   const { repertoires, lineStats } = useStore();
 
   const [selectedRepertoireId, setSelectedRepertoireId] = useState<string | null>(null);
-  const [selectedChapterId, setSelectedChapterId] = useState<string | null>(null);
+  const [selectedChapterIds, setSelectedChapterIds] = useState<string[]>([]);
   const [mode, setMode] = useState<TrainingMode>('depth-first');
   const [maxDepth, setMaxDepth] = useState<string>('');
   const [includeOnlyDue, setIncludeOnlyDue] = useState(false);
   const [learnMode, setLearnMode] = useState(false);
-  const [chaptersExpanded, setChaptersExpanded] = useState(false);
 
   // Get selected repertoire
   const selectedRepertoire = useMemo(
@@ -41,8 +40,8 @@ export default function TrainingDashboardScreen({ navigation }: TrainingDashboar
     }
 
     // Extract all lines from selected chapters
-    const chapters = selectedChapterId
-      ? selectedRepertoire.chapters.filter(ch => ch.id === selectedChapterId)
+    const chapters = selectedChapterIds.length > 0
+      ? selectedRepertoire.chapters.filter(ch => selectedChapterIds.includes(ch.id))
       : selectedRepertoire.chapters;
 
     let allLines = 0;
@@ -60,7 +59,7 @@ export default function TrainingDashboardScreen({ navigation }: TrainingDashboar
     // Count due and learned lines
     const relevantStats = lineStats.filter(stat => {
       const isRepertoireMatch = stat.repertoireId === selectedRepertoire.id;
-      const isChapterMatch = !selectedChapterId || stat.chapterId === selectedChapterId;
+      const isChapterMatch = selectedChapterIds.length === 0 || selectedChapterIds.includes(stat.chapterId);
       return isRepertoireMatch && isChapterMatch;
     });
 
@@ -70,7 +69,7 @@ export default function TrainingDashboardScreen({ navigation }: TrainingDashboar
     const completionPercent = allLines > 0 ? Math.round((linesLearned / allLines) * 100) : 0;
 
     return { totalLines: allLines, linesDue, linesLearned, completionPercent };
-  }, [selectedRepertoire, selectedChapterId, maxDepth, lineStats]);
+  }, [selectedRepertoire, selectedChapterIds, maxDepth, lineStats]);
 
   const handleStartSession = () => {
     if (!selectedRepertoire) {
@@ -95,7 +94,7 @@ export default function TrainingDashboardScreen({ navigation }: TrainingDashboar
 
     navigation.navigate('TrainingSession', {
       repertoireId: selectedRepertoire.id,
-      chapterId: selectedChapterId,
+      chapterIds: selectedChapterIds.length > 0 ? selectedChapterIds : undefined,
       mode,
       maxDepth: maxDepth ? parseInt(maxDepth, 10) : undefined,
       includeOnlyDueLines: includeOnlyDue,
@@ -120,8 +119,7 @@ export default function TrainingDashboardScreen({ navigation }: TrainingDashboar
               ]}
               onPress={() => {
                 setSelectedRepertoireId(rep.id);
-                setSelectedChapterId(null);
-                setChaptersExpanded(false);
+                setSelectedChapterIds([]);
               }}
             >
               <Text
@@ -140,57 +138,35 @@ export default function TrainingDashboardScreen({ navigation }: TrainingDashboar
       {/* Chapter Selector */}
       {selectedRepertoire && (
         <View style={styles.section}>
-          <TouchableOpacity
-            style={styles.chapterHeader}
-            onPress={() => setChaptersExpanded(!chaptersExpanded)}
-          >
-            <Text style={styles.label}>
-              Select Chapter (Optional)
+          <View style={styles.chapterHeader}>
+            <Text style={styles.label}>Chapters</Text>
+            <Text style={styles.chapterSelection}>
+              {selectedChapterIds.length === 0
+                ? 'All'
+                : `${selectedChapterIds.length} selected`}
             </Text>
-            <View style={styles.chapterHeaderRight}>
-              <Text style={styles.chapterSelection}>
-                {selectedChapterId
-                  ? selectedRepertoire.chapters.find(c => c.id === selectedChapterId)?.name ?? 'All Chapters'
-                  : 'All Chapters'}
-              </Text>
-              <Text style={styles.expandIcon}>{chaptersExpanded ? '▲' : '▼'}</Text>
-            </View>
-          </TouchableOpacity>
-          {chaptersExpanded && (
-            <ScrollView style={styles.chapterList} nestedScrollEnabled>
-              <TouchableOpacity
-                style={[styles.chapterItem, selectedChapterId === null && styles.chapterItemSelected]}
-                onPress={() => {
-                  setSelectedChapterId(null);
-                  setChaptersExpanded(false);
-                }}
-              >
-                <Text
-                  style={[styles.chapterItemText, selectedChapterId === null && styles.chapterItemTextSelected]}
-                  numberOfLines={2}
-                >
-                  All Chapters
-                </Text>
-              </TouchableOpacity>
-              {selectedRepertoire.chapters.map(ch => (
+          </View>
+          <ScrollView style={styles.chapterList} nestedScrollEnabled>
+            {selectedRepertoire.chapters.map(ch => {
+              const isSelected = selectedChapterIds.includes(ch.id);
+              return (
                 <TouchableOpacity
                   key={ch.id}
-                  style={[styles.chapterItem, selectedChapterId === ch.id && styles.chapterItemSelected]}
+                  style={styles.chapterItem}
                   onPress={() => {
-                    setSelectedChapterId(ch.id);
-                    setChaptersExpanded(false);
+                    setSelectedChapterIds(prev =>
+                      isSelected ? prev.filter(id => id !== ch.id) : [...prev, ch.id]
+                    );
                   }}
                 >
-                  <Text
-                    style={[styles.chapterItemText, selectedChapterId === ch.id && styles.chapterItemTextSelected]}
-                    numberOfLines={2}
-                  >
-                    {ch.name}
-                  </Text>
+                  <View style={[styles.checkbox, isSelected && styles.checkboxSelected]}>
+                    {isSelected && <Text style={styles.checkmark}>✓</Text>}
+                  </View>
+                  <Text style={styles.chapterItemText} numberOfLines={2}>{ch.name}</Text>
                 </TouchableOpacity>
-              ))}
-            </ScrollView>
-          )}
+              );
+            })}
+          </ScrollView>
         </View>
       )}
 
@@ -336,23 +312,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-  },
-  chapterHeaderRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-    justifyContent: 'flex-end',
-    marginLeft: 12,
+    marginBottom: 8,
   },
   chapterSelection: {
     color: '#4a9eff',
     fontSize: 13,
-    marginRight: 6,
-    flexShrink: 1,
-  },
-  expandIcon: {
-    color: '#888',
-    fontSize: 12,
   },
   chapterList: {
     backgroundColor: '#2a2a2a',
@@ -360,23 +324,20 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#444',
     maxHeight: 250,
-    overflow: 'hidden',
   },
   chapterItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 14,
-    paddingVertical: 12,
+    paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#333',
-  },
-  chapterItemSelected: {
-    backgroundColor: '#4a9eff',
   },
   chapterItemText: {
     color: '#fff',
     fontSize: 14,
-  },
-  chapterItemTextSelected: {
-    fontWeight: '600',
+    flex: 1,
+    marginLeft: 10,
   },
   radioGroup: {
     flexDirection: 'row',

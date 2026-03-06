@@ -30,7 +30,8 @@ import {
 } from '@types';
 import { EngineAnalyzer, AnalysisOptions } from '@services/engine/EngineAnalyzer';
 import { normalizeFen } from '@types';
-import { MoveTree } from '@utils/MoveTree';
+import { extractChapterPositions, mergePositionMaps, PositionMap } from '@utils/extractRepertoirePositions';
+import { DatabaseService } from '@services/database/DatabaseService';
 
 /**
  * Convert centipawn score to win probability (0-100) from White's perspective.
@@ -58,22 +59,17 @@ export const GameReviewService = {
   async startReview(
     game: UserGame,
     userColor: 'white' | 'black',
-    repertoires: Repertoire[],
     masterGames: MasterGame[],
     analyzer: EngineAnalyzer,
     analysisOptions: AnalysisOptions,
     onProgress?: (current: number, total: number) => void,
   ): Promise<GameReviewSession> {
     console.log('[GameReview] Starting review with userColor:', userColor);
-    console.log('[GameReview] Available repertoires:', repertoires.length);
-    repertoires.forEach(rep => {
-      console.log(`  - Repertoire "${rep.name}" (${rep.color}): ${rep.chapters.length} chapters`);
-    });
 
-    // Build position map from repertoire for efficient FEN-based matching (handles transpositions)
-    console.log('[GameReview] Building position map from repertoire...');
-    const positionMap = this.buildRepertoirePositionMap(repertoires, userColor);
-    console.log(`[GameReview] Position map built with ${positionMap.size} unique positions`);
+    // Load pre-built position index from DB (indexed at repertoire import time)
+    console.log('[GameReview] Loading position map from database...');
+    const positionMap = await DatabaseService.getRepertoirePositionMap(userColor);
+    console.log(`[GameReview] Position map loaded with ${positionMap.size} unique move counts`);
 
     const chess = new Chess();
     const moves: MoveAnalysis[] = [];
@@ -191,30 +187,40 @@ export const GameReviewService = {
       });
     }
 
-    // Get engine evaluations — skip positions that have Lichess evals
-    const hasLichessEvals = lichessEvalMap.size > 0;
-    console.log(`Analyzing ${positions.length} positions${hasLichessEvals ? ` (${lichessEvalMap.size} have Lichess evals)` : ''}...`);
-    const evaluations: Array<EngineEvaluation | null> = new Array(positions.length).fill(null);
-    for (let i = 0; i < positions.length; i++) {
-      // Skip terminal positions (checkmate/stalemate) — engine has no moves and may hang
-      const posChess = new Chess(positions[i]);
-      if (posChess.isGameOver()) {
-        if (onProgress) onProgress(i + 1, positions.length);
-        continue;
-      }
-      const lichessEval = lichessEvalMap.get(i);
-      if (lichessEval) {
-        evaluations[i] = lichessEval;
-      } else {
-        try {
-          evaluations[i] = await analyzer.analyze(positions[i], analysisOptions);
-        } catch {
-          evaluations[i] = null;
+    // Get engine evaluations — use cache when available, otherwise run Stockfish
+    const cachedEvals = await DatabaseService.loadGameAnalysis(game.id, userColor, analysisOptions.depth);
+    let evaluations: Array<EngineEvaluation | null>;
+
+    if (cachedEvals && cachedEvals.length === positions.length) {
+      console.log(`[GameReview] Using ${cachedEvals.length} cached evaluations`);
+      evaluations = cachedEvals;
+      if (onProgress) onProgress(positions.length, positions.length);
+    } else {
+      const hasLichessEvals = lichessEvalMap.size > 0;
+      console.log(`Analyzing ${positions.length} positions${hasLichessEvals ? ` (${lichessEvalMap.size} have Lichess evals)` : ''}...`);
+      evaluations = new Array(positions.length).fill(null);
+      for (let i = 0; i < positions.length; i++) {
+        // Skip terminal positions (checkmate/stalemate) — engine has no moves and may hang
+        const posChess = new Chess(positions[i]);
+        if (posChess.isGameOver()) {
+          if (onProgress) onProgress(i + 1, positions.length);
+          continue;
         }
+        const lichessEval = lichessEvalMap.get(i);
+        if (lichessEval) {
+          evaluations[i] = lichessEval;
+        } else {
+          try {
+            evaluations[i] = await analyzer.analyze(positions[i], analysisOptions);
+          } catch {
+            evaluations[i] = null;
+          }
+        }
+        if (onProgress) onProgress(i + 1, positions.length);
       }
-      if (onProgress) {
-        onProgress(i + 1, positions.length);
-      }
+      // Persist for next review
+      await DatabaseService.saveGameAnalysis(game.id, userColor, analysisOptions.depth, evaluations);
+      console.log(`[GameReview] Saved ${evaluations.length} evaluations to cache`);
     }
     console.log(`Received ${evaluations.length} evaluations`);
 
@@ -338,126 +344,26 @@ export const GameReviewService = {
   /**
    * Extract all positions from a chapter by playing through its PGN linearly
    */
-  extractPositionsFromChapter(chapter: Chapter): Map<number, Map<string, Set<string>>> {
-    const positionsByMoveCount = new Map<number, Map<string, Set<string>>>();
-
-    const addPosition = (moveCount: number, fen: string, nextMove: string) => {
-      if (!positionsByMoveCount.has(moveCount)) {
-        positionsByMoveCount.set(moveCount, new Map());
-      }
-      const positionsAtMoveCount = positionsByMoveCount.get(moveCount)!;
-      const normalizedFen = normalizeFen(fen);
-
-      if (!positionsAtMoveCount.has(normalizedFen)) {
-        positionsAtMoveCount.set(normalizedFen, new Set());
-      }
-      positionsAtMoveCount.get(normalizedFen)!.add(nextMove);
-    };
-
-    const moveTree = MoveTree.fromJSON(chapter.moveTree);
-    const allLines: string[][] = [];
-
-    const extractLines = (node: any, currentLine: string[]) => {
-      if (!node) return;
-
-      const lineWithThisMove = [...currentLine, node.san];
-
-      if (!node.children || node.children.length === 0) {
-        allLines.push(lineWithThisMove);
-      } else {
-        for (const child of node.children) {
-          extractLines(child, lineWithThisMove);
-        }
-      }
-    };
-
-    const rootMoves = moveTree.getRootMoves();
-    for (const rootMove of rootMoves) {
-      extractLines(rootMove, []);
-    }
-
-    console.log(`    [ExtractPositions] Found ${allLines.length} lines in chapter "${chapter.name}"`);
-
-    for (const line of allLines) {
-      const chess = new Chess();
-
-      for (let i = 0; i < line.length; i++) {
-        const preFen = chess.fen();
-        const moveCount = i;
-        const nextMove = line[i];
-
-        addPosition(moveCount, preFen, nextMove);
-
-        try {
-          chess.move(nextMove);
-        } catch (error) {
-          console.warn(`    [ExtractPositions] Invalid move "${nextMove}" at position ${i} in chapter "${chapter.name}"`);
-          break;
-        }
-      }
-
-      const finalFen = chess.fen();
-      const finalMoveCount = line.length;
-      if (!positionsByMoveCount.has(finalMoveCount)) {
-        positionsByMoveCount.set(finalMoveCount, new Map());
-      }
-      const finalPositions = positionsByMoveCount.get(finalMoveCount)!;
-      const normalizedFinalFen = normalizeFen(finalFen);
-      if (!finalPositions.has(normalizedFinalFen)) {
-        finalPositions.set(normalizedFinalFen, new Set());
-      }
-    }
-
-    const totalPositions = Array.from(positionsByMoveCount.values())
-      .reduce((sum, map) => sum + map.size, 0);
-    console.log(`    [ExtractPositions] Extracted ${totalPositions} positions across ${positionsByMoveCount.size} move counts`);
-
-    return positionsByMoveCount;
+  /** Delegates to shared utility. Kept for backward-compat with tests. */
+  extractPositionsFromChapter(chapter: Chapter): PositionMap {
+    return extractChapterPositions(chapter);
   },
 
   /**
-   * Build a comprehensive position map from all repertoire chapters
+   * Build a position map from all repertoire chapters in-memory.
+   * Used by tests and as a fallback when the DB index is unavailable.
    */
   buildRepertoirePositionMap(
     repertoires: Repertoire[],
     userColor: 'white' | 'black'
-  ): Map<number, Map<string, Set<string>>> {
-    const combinedMap = new Map<number, Map<string, Set<string>>>();
-    const relevantRepertoires = repertoires.filter(rep => rep.color === userColor);
-
-    console.log(`  [BuildPositionMap] Building map from ${relevantRepertoires.length} ${userColor} repertoire(s)`);
-
-    for (const repertoire of relevantRepertoires) {
-      console.log(`  [BuildPositionMap] Processing repertoire "${repertoire.name}" with ${repertoire.chapters.length} chapters`);
-
-      for (const chapter of repertoire.chapters) {
-        const chapterMap = this.extractPositionsFromChapter(chapter);
-
-        for (const [moveCount, positionsAtMoveCount] of chapterMap.entries()) {
-          if (!combinedMap.has(moveCount)) {
-            combinedMap.set(moveCount, new Map());
-          }
-          const combinedPositionsAtMoveCount = combinedMap.get(moveCount)!;
-
-          for (const [fen, moves] of positionsAtMoveCount.entries()) {
-            if (!combinedPositionsAtMoveCount.has(fen)) {
-              combinedPositionsAtMoveCount.set(fen, new Set());
-            }
-            const combinedMoves = combinedPositionsAtMoveCount.get(fen)!;
-            for (const move of moves) {
-              combinedMoves.add(move);
-            }
-          }
-        }
+  ): PositionMap {
+    const combined: PositionMap = new Map();
+    for (const rep of repertoires.filter(r => r.color === userColor)) {
+      for (const chapter of rep.chapters) {
+        mergePositionMaps(combined, extractChapterPositions(chapter));
       }
     }
-
-    const totalPositions = Array.from(combinedMap.values())
-      .reduce((sum, map) => sum + map.size, 0);
-    console.log(`  [BuildPositionMap] Total unique positions across all move counts: ${totalPositions}`);
-    console.log(`  [BuildPositionMap] Move counts covered: ${Array.from(combinedMap.keys()).sort((a, b) => a - b).join(', ')}`);
-
-    return combinedMap;
+    return combined;
   },
 
   /**

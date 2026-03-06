@@ -3,7 +3,8 @@
  * Provides same interface as SQLite DatabaseService but uses IndexedDB
  */
 
-import { UserGame, MasterGame, Repertoire } from '@types';
+import { UserGame, MasterGame, Repertoire, EngineEvaluation } from '@types';
+import { PositionMap } from '@utils/extractRepertoirePositions';
 
 const DB_NAME = 'kingside_db';
 const DB_VERSION = 1;
@@ -533,6 +534,13 @@ class WebDatabaseServiceClass {
   async searchMasterGamesByFEN(_fen: string): Promise<MasterGame[]> {
     throw new Error('FEN search not supported on web platform');
   }
+
+  async getRepertoirePositionMap(_color: 'white' | 'black'): Promise<PositionMap> {
+    throw new Error('Repertoire position map not supported on web platform');
+  }
+
+  async saveGameAnalysis(_gameId: string, _userColor: 'white' | 'black', _depth: number, _evals: Array<EngineEvaluation | null>): Promise<void> { /* no-op on web */ }
+  async loadGameAnalysis(_gameId: string, _userColor: 'white' | 'black', _depth: number): Promise<Array<EngineEvaluation | null> | null> { return null; }
 }
 
 export const WebDatabaseService = new WebDatabaseServiceClass();

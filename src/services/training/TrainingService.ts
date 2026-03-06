@@ -25,9 +25,9 @@ export const TrainingService = {
     repertoire: Repertoire,
     allLineStats: LineStats[]
   ): TrainingSession {
-    // Extract lines from all chapters (or specific chapter if specified)
-    const chapters = config.chapterId
-      ? repertoire.chapters.filter(ch => ch.id === config.chapterId)
+    // Extract lines from all chapters (or specific chapters if specified)
+    const chapters = config.chapterIds?.length
+      ? repertoire.chapters.filter(ch => config.chapterIds!.includes(ch.id))
       : repertoire.chapters;
 
     let allLines: Line[] = [];
@@ -63,7 +63,7 @@ export const TrainingService = {
     return {
       id: this.generateSessionId(),
       repertoireId: repertoire.id,
-      chapterId: config.chapterId ?? null,
+      chapterIds: config.chapterIds ?? [],
       color: repertoire.color,
       mode: config.mode,
       learnMode: config.learnMode ?? false,
@@ -137,11 +137,16 @@ export const TrainingService = {
 
     if (!isCorrect) {
       session.totalMistakes++;
+      // Check if the played move is a valid alternative in another line at this position
+      const isAlternative = session.lines.some(line => {
+        if (line.id === currentLine.id) return false;
+        return line.moves.some(m => m.isUserMove && m.preFen === currentUserMove.preFen && m.san === move.san);
+      });
       return {
         isCorrect: false,
         expectedMove: currentUserMove.san,
         userMove: move.san,
-        feedback: 'incorrect',
+        feedback: isAlternative ? 'alternative' : 'incorrect',
       };
     }
 
@@ -254,10 +259,27 @@ export const TrainingService = {
 
     // Mark current position as complete
     const currentLine = session.lines[session.currentLineIndex];
-    session.lineProgress[currentLine.id] = session.currentMoveIndex + 1;
+    const currentDepth = session.currentMoveIndex;
+    session.lineProgress[currentLine.id] = currentDepth + 1;
+
+    // Auto-advance all other lines that share the identical move at this depth
+    // (same pre-position + same SAN). No point re-testing shared prefix moves.
+    const currentLineUserMoves = currentLine.moves.filter(m => m.isUserMove);
+    const completedMove = currentLineUserMoves[currentDepth];
+    if (completedMove) {
+      for (const line of session.lines) {
+        if (line.id === currentLine.id) continue;
+        const progress = session.lineProgress[line.id] || 0;
+        if (progress > currentDepth) continue;
+        const lineUserMoves = line.moves.filter(m => m.isUserMove);
+        const moveAtDepth = lineUserMoves[currentDepth];
+        if (moveAtDepth && moveAtDepth.preFen === completedMove.preFen && moveAtDepth.san === completedMove.san) {
+          session.lineProgress[line.id] = currentDepth + 1;
+        }
+      }
+    }
 
     // Check if current line is now complete (all user moves tested)
-    const currentLineUserMoves = currentLine.moves.filter(m => m.isUserMove);
     if (session.lineProgress[currentLine.id] >= currentLineUserMoves.length) {
       // Line complete - await rating
       session.awaitingRating = true;
@@ -265,7 +287,6 @@ export const TrainingService = {
     }
 
     // Find next line at current depth that hasn't been tested yet
-    const currentDepth = session.currentMoveIndex;
     for (let i = session.currentLineIndex + 1; i < session.lines.length; i++) {
       const line = session.lines[i];
       const userMoves = line.moves.filter(m => m.isUserMove);
