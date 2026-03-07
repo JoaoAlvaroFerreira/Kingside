@@ -173,13 +173,15 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
         setIsAnimating(false);
         setFeedback(null);
 
-        if (result.nextPosition) {
-          setCurrentFen(result.nextPosition.fen);
-          TrainingService.advanceToNextPosition(session);
-          setSession({ ...session });
+        // Advance FIRST (may switch to a different line in WFS mode),
+        // then read the new position so board FEN and expected move are in sync.
+        const hasMore = TrainingService.advanceToNextPosition(session);
+        setSession({ ...session });
 
+        if (hasMore) {
           const position = TrainingService.getCurrentPosition(session);
           if (position) {
+            setCurrentFen(position.fen);
             setExpectedMove(position.expectedMove);
           }
           updateComment(session);
@@ -207,16 +209,25 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
     } else if (result.nextPosition) {
       // Next move is also user's turn
       setTimeout(() => {
-        setCurrentFen(result.nextPosition!.fen);
         setFeedback(null);
-        TrainingService.advanceToNextPosition(session);
+        const hasMore = TrainingService.advanceToNextPosition(session);
         setSession({ ...session });
 
-        const position = TrainingService.getCurrentPosition(session);
-        if (position) {
-          setExpectedMove(position.expectedMove);
+        if (hasMore) {
+          const position = TrainingService.getCurrentPosition(session);
+          if (position) {
+            setCurrentFen(position.fen);
+            setExpectedMove(position.expectedMove);
+          }
+          updateComment(session);
+        } else {
+          if (isLearnMode) {
+            setCurrentComment(undefined);
+            setTimeout(() => completeLineAndAdvance(), timing.lineCompleteDelayMs);
+          } else {
+            setSession({ ...session, awaitingRating: true });
+          }
         }
-        updateComment(session);
       }, timing.correctDelayMs);
     }
   };
