@@ -73,6 +73,7 @@ interface AppState {
   loadLineStats: () => Promise<void>;
   saveLineStats: (stats: LineStats[]) => Promise<void>;
   updateLineStats: (stat: LineStats) => Promise<void>;
+  removeLineStats: (lineId: string) => Promise<void>;
   setTrainingSession: (session: TrainingSession | null) => void;
   getDueLineStats: (repertoireId: string, chapterId?: string) => LineStats[];
 
@@ -295,6 +296,12 @@ export const useStore = create<AppState>((set, get) => ({
   saveLineStats: async (lineStats) => {
     await StorageService.saveLineStats(lineStats);
     set({ lineStats });
+  },
+
+  removeLineStats: async (lineId: string) => {
+    const updated = get().lineStats.filter(s => s.lineId !== lineId);
+    await StorageService.saveLineStats(updated);
+    set({ lineStats: updated });
   },
 
   updateLineStats: async (updatedStat) => {

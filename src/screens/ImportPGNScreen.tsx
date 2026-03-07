@@ -232,7 +232,7 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
       setIsImporting(false);
       setFileSelected(false);
       Alert.alert('Import Timeout', 'Import took too long. Try importing smaller batches.');
-    }, 120000); // 2 minute max for entire import
+    }, 600000); // 10 minute max for entire import
 
     try {
       console.log('Starting PGN import, target:', target);

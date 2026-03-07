@@ -105,6 +105,7 @@ export interface TrainingSession {
 
   // Session stats
   linesCompleted: number;
+  completedLineIds: string[];     // IDs of uniquely completed lines (no duplicates)
   totalMistakes: number;
   startedAt: Date;
 

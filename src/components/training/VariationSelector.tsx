@@ -10,6 +10,7 @@ interface VariationSelectorProps {
   lines: Line[];
   currentLineIndex: number;
   onSelectLine: (index: number) => void;
+  onLongPressLine?: (lineIndex: number) => void;
   lineProgress?: Record<string, number>;
   holdbackCount?: number;
 }
@@ -18,6 +19,7 @@ export const VariationSelector: React.FC<VariationSelectorProps> = ({
   lines,
   currentLineIndex,
   onSelectLine,
+  onLongPressLine,
   lineProgress = {},
   holdbackCount = 0,
 }) => {
@@ -62,8 +64,6 @@ export const VariationSelector: React.FC<VariationSelectorProps> = ({
         {lines.map((line, index) => {
           const isCurrent = index === currentLineIndex;
           const status = getLineStatus(line);
-          const userMoves = line.moves.filter(m => m.isUserMove);
-          const progress = lineProgress[line.id] || 0;
 
           return (
             <TouchableOpacity
@@ -74,6 +74,8 @@ export const VariationSelector: React.FC<VariationSelectorProps> = ({
                 status === 'complete' && styles.lineItemComplete,
               ]}
               onPress={() => onSelectLine(index)}
+              onLongPress={() => onLongPressLine?.(index)}
+              delayLongPress={500}
             >
               <View style={styles.lineHeader}>
                 <View style={styles.lineInfo}>
@@ -87,9 +89,6 @@ export const VariationSelector: React.FC<VariationSelectorProps> = ({
                   )}
                   {status === 'complete' && <Text style={styles.statusIcon}>✓</Text>}
                 </View>
-                <Text style={[styles.progressText, isCurrent && styles.progressTextCurrent]}>
-                  {progress}/{userMoves.length}
-                </Text>
               </View>
               <Text
                 style={[styles.linePreview, isCurrent && styles.linePreviewCurrent]}
@@ -167,14 +166,6 @@ const styles = StyleSheet.create({
   statusIcon: {
     color: '#4caf50',
     fontSize: 13,
-  },
-  progressText: {
-    color: '#bbb',
-    fontSize: 10,
-  },
-  progressTextCurrent: {
-    color: '#4a9eff',
-    fontWeight: '600',
   },
   linePreview: {
     color: '#999',

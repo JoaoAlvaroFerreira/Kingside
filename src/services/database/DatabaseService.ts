@@ -239,18 +239,33 @@ class DatabaseServiceClass {
       }
     }
 
-    await this.db!.withTransactionAsync(async () => {
-      for (const [moveCount, posAtCount] of combined) {
-        for (const [fen, moves] of posAtCount) {
+    // Collect all rows first, then insert in batches to avoid a single
+    // long-running transaction that can time out on large repertoires.
+    const rows: [string, string, number, string, string][] = [];
+    for (const [moveCount, posAtCount] of combined) {
+      for (const [fen, moves] of posAtCount) {
+        rows.push([repertoire.id, repertoire.color, moveCount, fen, JSON.stringify([...moves])]);
+      }
+    }
+
+    const BATCH_SIZE = 300;
+    for (let i = 0; i < rows.length; i += BATCH_SIZE) {
+      const batch = rows.slice(i, i + BATCH_SIZE);
+      await this.db!.withTransactionAsync(async () => {
+        for (const row of batch) {
           await this.db!.runAsync(
             `INSERT INTO repertoire_positions
                (repertoire_id, color, move_count, normalized_fen, next_moves)
              VALUES (?, ?, ?, ?, ?)`,
-            [repertoire.id, repertoire.color, moveCount, fen, JSON.stringify([...moves])]
+            row
           );
         }
+      });
+      // Yield to the JS event loop between batches
+      if (i + BATCH_SIZE < rows.length) {
+        await new Promise(resolve => setTimeout(resolve, 0));
       }
-    });
+    }
   }
 
   /**

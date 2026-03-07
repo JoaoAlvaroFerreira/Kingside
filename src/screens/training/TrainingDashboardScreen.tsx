@@ -51,7 +51,7 @@ export default function TrainingDashboardScreen({ navigation }: TrainingDashboar
         selectedRepertoire.id,
         chapter.id,
         selectedRepertoire.color,
-        maxDepth ? parseInt(maxDepth, 10) : undefined
+        maxDepth ? parseInt(maxDepth, 10) * 2 : undefined
       );
       allLines += LineExtractor.filterLinesWithUserMoves(lines).length;
     }
@@ -96,7 +96,7 @@ export default function TrainingDashboardScreen({ navigation }: TrainingDashboar
       repertoireId: selectedRepertoire.id,
       chapterIds: selectedChapterIds.length > 0 ? selectedChapterIds : undefined,
       mode,
-      maxDepth: maxDepth ? parseInt(maxDepth, 10) : undefined,
+      maxDepth: maxDepth ? parseInt(maxDepth, 10) * 2 : undefined,
       includeOnlyDueLines: includeOnlyDue,
       learnMode,
     });
@@ -191,9 +191,9 @@ export default function TrainingDashboardScreen({ navigation }: TrainingDashboar
         </View>
       </View>
 
-      {/* Max Depth */}
+      {/* Max Moves */}
       <View style={styles.section}>
-        <Text style={styles.label}>Max Depth (Optional)</Text>
+        <Text style={styles.label}>Max Full Moves (Optional)</Text>
         <TextInput
           style={styles.input}
           value={maxDepth}

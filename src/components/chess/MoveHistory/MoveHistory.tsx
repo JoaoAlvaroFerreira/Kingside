@@ -2,7 +2,7 @@
  * Move History Component - Displays game moves with variations and navigation
  */
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -55,6 +55,28 @@ const MoveHistoryInner: React.FC<MoveHistoryProps> = ({
 }) => {
   const [contextMenu, setContextMenu] = useState<{ nodeId: string; isCritical: boolean; isVariation: boolean; x: number; y: number } | null>(null);
   const scrollViewRef = useRef<ScrollView>(null);
+  const movesWrapperRef = useRef<View>(null);
+  const moveViewRefs = useRef<Map<string, View | null>>(new Map());
+
+  useEffect(() => {
+    if (!currentNodeId) return;
+    const viewRef = moveViewRefs.current.get(currentNodeId);
+    if (!viewRef || !movesWrapperRef.current) return;
+    const wrapper = movesWrapperRef.current;
+    // Small delay to ensure layout has settled
+    const timer = setTimeout(() => {
+      try {
+        viewRef.measureLayout(
+          wrapper as any,
+          (_x: number, y: number) => {
+            scrollViewRef.current?.scrollTo({ y: Math.max(0, y - 30), animated: true });
+          },
+          () => {}
+        );
+      } catch { /* ignore */ }
+    }, 50);
+    return () => clearTimeout(timer);
+  }, [currentNodeId]);
 
   const handleContextMenu = (nodeId: string, isVariation: boolean, isCritical: boolean, event: any) => {
     event.preventDefault?.();
@@ -173,36 +195,41 @@ const MoveHistoryInner: React.FC<MoveHistoryProps> = ({
     }
 
     const moveElement = (
-      <TouchableOpacity
-        style={[styles.moveContainer, isCurrent && styles.currentMoveContainer]}
-        onPress={() => onNavigate(move.id)}
-        onLongPress={(e) => handleContextMenu(move.id, isInVariation, move.isCritical || false, e)}
-        delayLongPress={500}
+      <View
+        collapsable={false}
+        ref={(el) => { moveViewRefs.current.set(move.id, el); }}
       >
-        {move.isCritical && (
-          <Text style={styles.criticalStar}>★</Text>
-        )}
-        {moveNumberText !== '' && (
-          <Text style={[styles.moveNumber, !move.isMainLine && styles.variationText]}>
-            {moveNumberText}
+        <TouchableOpacity
+          style={[styles.moveContainer, isCurrent && styles.currentMoveContainer]}
+          onPress={() => onNavigate(move.id)}
+          onLongPress={(e) => handleContextMenu(move.id, isInVariation, move.isCritical || false, e)}
+          delayLongPress={500}
+        >
+          {move.isCritical && (
+            <Text style={styles.criticalStar}>★</Text>
+          )}
+          {moveNumberText !== '' && (
+            <Text style={[styles.moveNumber, !move.isMainLine && styles.variationText]}>
+              {moveNumberText}
+            </Text>
+          )}
+          <Text style={[
+            styles.moveText,
+            isCurrent && styles.currentMoveText,
+            !move.isMainLine && styles.variationText,
+          ]}>
+            {move.san}
           </Text>
-        )}
-        <Text style={[
-          styles.moveText,
-          isCurrent && styles.currentMoveText,
-          !move.isMainLine && styles.variationText,
-        ]}>
-          {move.san}
-        </Text>
-        {move.nags && move.nags.length > 0 && (
-          <Text style={styles.nagSymbol}>
-            {move.nags.map(n => NAG_SYMBOLS[n] || `$${n}`).join('')}
-          </Text>
-        )}
-        {hasComment && (
-          <Text style={styles.commentIndicator}>💬</Text>
-        )}
-      </TouchableOpacity>
+          {move.nags && move.nags.length > 0 && (
+            <Text style={styles.nagSymbol}>
+              {move.nags.map(n => NAG_SYMBOLS[n] || `$${n}`).join('')}
+            </Text>
+          )}
+          {hasComment && (
+            <Text style={styles.commentIndicator}>💬</Text>
+          )}
+        </TouchableOpacity>
+      </View>
     );
 
     // Wrap with context menu handler for web
@@ -210,10 +237,41 @@ const MoveHistoryInner: React.FC<MoveHistoryProps> = ({
       return (
         <View
           key={move.id}
+          collapsable={false}
+          ref={(el) => { moveViewRefs.current.set(move.id, el); }}
           // @ts-expect-error - onContextMenu exists on web
           onContextMenu={(e: any) => handleContextMenu(move.id, isInVariation, move.isCritical || false, e)}
         >
-          {moveElement}
+          <TouchableOpacity
+            style={[styles.moveContainer, isCurrent && styles.currentMoveContainer]}
+            onPress={() => onNavigate(move.id)}
+            onLongPress={(e) => handleContextMenu(move.id, isInVariation, move.isCritical || false, e)}
+            delayLongPress={500}
+          >
+            {move.isCritical && (
+              <Text style={styles.criticalStar}>★</Text>
+            )}
+            {moveNumberText !== '' && (
+              <Text style={[styles.moveNumber, !move.isMainLine && styles.variationText]}>
+                {moveNumberText}
+              </Text>
+            )}
+            <Text style={[
+              styles.moveText,
+              isCurrent && styles.currentMoveText,
+              !move.isMainLine && styles.variationText,
+            ]}>
+              {move.san}
+            </Text>
+            {move.nags && move.nags.length > 0 && (
+              <Text style={styles.nagSymbol}>
+                {move.nags.map(n => NAG_SYMBOLS[n] || `$${n}`).join('')}
+              </Text>
+            )}
+            {hasComment && (
+              <Text style={styles.commentIndicator}>💬</Text>
+            )}
+          </TouchableOpacity>
         </View>
       );
     }
@@ -229,7 +287,7 @@ const MoveHistoryInner: React.FC<MoveHistoryProps> = ({
         contentContainerStyle={styles.moveListContent}
         showsVerticalScrollIndicator={true}
       >
-        <View style={styles.movesWrapper}>
+        <View ref={movesWrapperRef} style={styles.movesWrapper}>
           {renderMoves()}
         </View>
       </ScrollView>
@@ -369,7 +427,8 @@ const styles = StyleSheet.create({
     marginRight: 1,
   },
   currentMoveContainer: {
-    backgroundColor: '#5a5a5a',
+    backgroundColor: '#2a4a7a',
+    borderRadius: 3,
   },
   moveNumber: {
     color: '#888',
@@ -383,6 +442,7 @@ const styles = StyleSheet.create({
   },
   currentMoveText: {
     fontWeight: '700',
+    color: '#ffffff',
   },
   variationText: {
     color: '#aaa',

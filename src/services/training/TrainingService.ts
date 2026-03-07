@@ -76,6 +76,7 @@ export const TrainingService = {
       currentDepth: 0,
       lineProgress: {},
       linesCompleted: 0,
+      completedLineIds: [],
       totalMistakes: 0,
       startedAt: new Date(),
       isComplete: false,
@@ -369,7 +370,10 @@ export const TrainingService = {
 
     // Reset mistake counter for next line
     session.totalMistakes = 0;
-    session.linesCompleted++;
+    if (!session.completedLineIds.includes(currentLine.id)) {
+      session.completedLineIds.push(currentLine.id);
+    }
+    session.linesCompleted = session.completedLineIds.length;
     session.awaitingRating = false;
 
     if (session.mode === 'depth-first') {

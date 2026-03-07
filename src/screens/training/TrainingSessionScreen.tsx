@@ -24,7 +24,7 @@ interface TrainingSessionScreenProps {
 }
 
 export default function TrainingSessionScreen({ navigation, route }: TrainingSessionScreenProps) {
-  const { repertoires, lineStats, setTrainingSession, updateLineStats, reviewSettings } = useStore();
+  const { repertoires, lineStats, setTrainingSession, updateLineStats, removeLineStats, reviewSettings } = useStore();
   const timing: TrainingTimingSettings = reviewSettings.training;
   const { width, height } = useWindowDimensions();
 
@@ -308,6 +308,56 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
     }
   };
 
+  const handleLongPressLine = (lineIndex: number) => {
+    if (!session) return;
+    const lineToDelete = session.lines[lineIndex];
+    const confirmMsg = 'Delete this line\'s training stats? It will be treated as new next session.';
+    if (Platform.OS === 'web') {
+      if (window.confirm(confirmMsg)) {
+        deleteLine(lineIndex, lineToDelete.id);
+      }
+    } else {
+      Alert.alert('Delete Training Line', confirmMsg, [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Delete', style: 'destructive', onPress: () => deleteLine(lineIndex, lineToDelete.id) },
+      ]);
+    }
+  };
+
+  const deleteLine = async (lineIndex: number, lineId: string) => {
+    if (!session) return;
+    await removeLineStats(lineId);
+
+    const newLines = session.lines.filter((_, i) => i !== lineIndex);
+    if (newLines.length === 0) {
+      setTrainingSession(null);
+      navigation.goBack();
+      return;
+    }
+
+    let newIndex = session.currentLineIndex;
+    if (lineIndex < session.currentLineIndex) {
+      newIndex--;
+    } else if (lineIndex === session.currentLineIndex) {
+      newIndex = Math.min(session.currentLineIndex, newLines.length - 1);
+    }
+
+    session.lines = newLines;
+    session.currentLineIndex = newIndex;
+    session.currentMoveIndex = 0;
+    session.totalLineCount = Math.max(0, session.totalLineCount - 1);
+    session.awaitingRating = false;
+
+    setSession({ ...session });
+    setFeedback(null);
+    const position = TrainingService.getCurrentPosition(session);
+    if (position) {
+      setCurrentFen(position.fen);
+      setExpectedMove(position.expectedMove);
+    }
+    updateComment(session);
+  };
+
   const handleSelectLine = (lineIndex: number) => {
     if (!session || session.awaitingRating || isAnimating) return;
 
@@ -399,6 +449,7 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
                 lines={session.lines}
                 currentLineIndex={session.currentLineIndex}
                 onSelectLine={handleSelectLine}
+                onLongPressLine={handleLongPressLine}
                 lineProgress={session.lineProgress}
                 holdbackCount={session.holdbackLines.length}
               />
@@ -479,6 +530,7 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
               lines={session.lines}
               currentLineIndex={session.currentLineIndex}
               onSelectLine={handleSelectLine}
+              onLongPressLine={handleLongPressLine}
               lineProgress={session.lineProgress}
               holdbackCount={session.holdbackLines.length}
             />

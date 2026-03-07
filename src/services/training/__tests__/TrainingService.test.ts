@@ -56,6 +56,7 @@ function makeSession(
     currentDepth: 0,
     lineProgress: {},
     linesCompleted: 0,
+    completedLineIds: [],
     totalMistakes: 0,
     startedAt: new Date(),
     isComplete: false,
