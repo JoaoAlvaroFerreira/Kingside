@@ -14,11 +14,7 @@ import {
   Platform,
 } from 'react-native';
 import { FlatMove } from '../../../utils/MoveTree';
-
-const NAG_SYMBOLS: Record<number, string> = {
-  1: '!', 2: '?', 3: '!!', 4: '??', 5: '!?', 6: '?!',
-  10: '=', 14: '+=', 15: '=+', 16: '\u00B1', 17: '\u2213', 18: '+-', 19: '-+',
-};
+import { NAG_SYMBOLS } from '@utils/nagSymbols';
 
 interface MoveHistoryProps {
   moves: FlatMove[];

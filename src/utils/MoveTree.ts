@@ -3,6 +3,7 @@
  */
 
 import { Chess, Move } from 'chess.js';
+import { PGNArrow, PGNHighlight } from '@/types/annotation.types';
 
 export interface MoveNode {
   id: string;
@@ -18,6 +19,8 @@ export interface MoveNode {
   eval?: number;       // Centipawns (e.g., 17 for 0.17 pawns)
   evalMate?: number;   // Mate in N (positive = white mates, negative = black mates)
   clock?: number;      // Clock time in seconds
+  arrows?: PGNArrow[];
+  highlights?: PGNHighlight[];
 }
 
 export class MoveTree {
@@ -511,6 +514,8 @@ export class MoveTree {
       eval: node.eval,
       evalMate: node.evalMate,
       clock: node.clock,
+      arrows: node.arrows,
+      highlights: node.highlights,
     }));
   }
 
@@ -530,6 +535,8 @@ export class MoveTree {
         eval: serialized.eval,
         evalMate: serialized.evalMate,
         clock: serialized.clock,
+        arrows: serialized.arrows,
+        highlights: serialized.highlights,
       };
       node.children = this.deserializeNodes(serialized.children, node);
       return node;
@@ -550,6 +557,8 @@ export interface SerializedMoveNode {
   eval?: number;
   evalMate?: number;
   clock?: number;
+  arrows?: import('@/types/annotation.types').PGNArrow[];
+  highlights?: import('@/types/annotation.types').PGNHighlight[];
 }
 
 export interface SerializedMoveTree {

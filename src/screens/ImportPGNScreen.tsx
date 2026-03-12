@@ -39,6 +39,7 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
   const [isImportingLichess, setIsImportingLichess] = useState(false);
   const [lichessStudyUrl, setLichessStudyUrl] = useState('');
   const [chessableMode, setChessableMode] = useState(false);
+  const [chessableDirectMode, setChessableDirectMode] = useState(false);
   const { addRepertoire, addUserGames, addMasterGames, reviewSettings } = useStore();
 
   const readFileWithTimeout = async (uri: string, timeoutMs: number = 15000): Promise<string> => {
@@ -273,66 +274,95 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
             await addMasterGames(masterGames);
           }
 
-          // Merge each group into chapters, splitting by starting FEN.
-          // Games with standard starting position merge together;
-          // games with a custom FEN become separate chapters.
           const groupEntries = Array.from(grouped.entries());
           const chapters = [];
           let chapterOrder = 0;
-          for (let gi = 0; gi < groupEntries.length; gi++) {
-            const [groupName, groupGames] = groupEntries[gi];
-            setProgress({
-              current: gi + 1,
-              total: groupEntries.length,
-              phase: `Merging chapter ${gi + 1} of ${groupEntries.length}...`,
-            });
 
-            // Split into standard-start games and custom-FEN games
-            const standardGames = groupGames.filter(g => !g.headers.FEN);
-            const customFenGames = groupGames.filter(g => g.headers.FEN);
-
-            // Merge standard-start games into one chapter
-            if (standardGames.length > 0) {
-              const tree = new MoveTree();
-              for (const game of standardGames) {
-                PGNService.mergeGameIntoTree(game, tree);
-              }
-              chapters.push({
-                id: generateId(),
-                name: groupName,
-                pgn: '',
-                moveTree: tree.toJSON(),
-                order: chapterOrder++,
-                createdAt: new Date(),
-                updatedAt: new Date(),
+          if (chessableDirectMode) {
+            // Direct mode: each game becomes its own chapter
+            for (let gi = 0; gi < groupEntries.length; gi++) {
+              const [groupName, groupGames] = groupEntries[gi];
+              setProgress({
+                current: gi + 1,
+                total: groupEntries.length,
+                phase: `Processing group ${gi + 1} of ${groupEntries.length}...`,
               });
-            }
-
-            // Group custom-FEN games by their FEN, merge games sharing the same start position
-            const fenGroups = new Map<string, typeof customFenGames>();
-            for (const game of customFenGames) {
-              const fen = game.headers.FEN!;
-              const group = fenGroups.get(fen);
-              if (group) { group.push(game); } else { fenGroups.set(fen, [game]); }
-            }
-            for (const [fen, fenGames] of fenGroups) {
-              const tree = new MoveTree(fen);
-              for (const game of fenGames) {
-                PGNService.mergeGameIntoTree(game, tree);
+              for (let i = 0; i < groupGames.length; i++) {
+                const chapterName = groupGames.length > 1
+                  ? `${groupName} — Var ${i + 1}`
+                  : groupName;
+                const moveTree = PGNService.toMoveTree(groupGames[i]);
+                chapters.push({
+                  id: generateId(),
+                  name: chapterName,
+                  pgn: '',
+                  moveTree: moveTree.toJSON(),
+                  order: chapterOrder++,
+                  createdAt: new Date(),
+                  updatedAt: new Date(),
+                });
               }
-              chapters.push({
-                id: generateId(),
-                name: groupName,
-                pgn: '',
-                moveTree: tree.toJSON(),
-                order: chapterOrder++,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-              });
+              await new Promise(resolve => requestAnimationFrame(resolve));
             }
+          } else {
+            // Merge mode: merge variations into chapters, splitting by starting FEN.
+            // Games with standard starting position merge together;
+            // games with a custom FEN become separate chapters.
+            for (let gi = 0; gi < groupEntries.length; gi++) {
+              const [groupName, groupGames] = groupEntries[gi];
+              setProgress({
+                current: gi + 1,
+                total: groupEntries.length,
+                phase: `Merging chapter ${gi + 1} of ${groupEntries.length}...`,
+              });
 
-            // Yield to UI between groups
-            await new Promise(resolve => requestAnimationFrame(resolve));
+              // Split into standard-start games and custom-FEN games
+              const standardGames = groupGames.filter(g => !g.headers.FEN);
+              const customFenGames = groupGames.filter(g => g.headers.FEN);
+
+              // Merge standard-start games into one chapter
+              if (standardGames.length > 0) {
+                const tree = new MoveTree();
+                for (const game of standardGames) {
+                  PGNService.mergeGameIntoTree(game, tree);
+                }
+                chapters.push({
+                  id: generateId(),
+                  name: groupName,
+                  pgn: '',
+                  moveTree: tree.toJSON(),
+                  order: chapterOrder++,
+                  createdAt: new Date(),
+                  updatedAt: new Date(),
+                });
+              }
+
+              // Group custom-FEN games by their FEN, merge games sharing the same start position
+              const fenGroups = new Map<string, typeof customFenGames>();
+              for (const game of customFenGames) {
+                const fen = game.headers.FEN!;
+                const group = fenGroups.get(fen);
+                if (group) { group.push(game); } else { fenGroups.set(fen, [game]); }
+              }
+              for (const [fen, fenGames] of fenGroups) {
+                const tree = new MoveTree(fen);
+                for (const game of fenGames) {
+                  PGNService.mergeGameIntoTree(game, tree);
+                }
+                chapters.push({
+                  id: generateId(),
+                  name: groupName,
+                  pgn: '',
+                  moveTree: tree.toJSON(),
+                  order: chapterOrder++,
+                  createdAt: new Date(),
+                  updatedAt: new Date(),
+                });
+              }
+
+              // Yield to UI between groups
+              await new Promise(resolve => requestAnimationFrame(resolve));
+            }
           }
 
           const classification = OpeningClassifier.classifyRepertoire(
@@ -609,7 +639,10 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
               {/* Chessable mode toggle */}
               <TouchableOpacity
                 style={styles.chessableToggle}
-                onPress={() => setChessableMode(!chessableMode)}
+                onPress={() => {
+                  if (chessableMode) setChessableDirectMode(false);
+                  setChessableMode(!chessableMode);
+                }}
                 activeOpacity={0.7}
               >
                 <View style={[styles.checkbox, chessableMode && styles.checkboxActive]}>
@@ -617,6 +650,19 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
                 </View>
                 <Text style={styles.chessableLabel}>Chessable import (merge variations)</Text>
               </TouchableOpacity>
+
+              {chessableMode && (
+                <TouchableOpacity
+                  style={[styles.chessableToggle, { marginTop: 8, marginLeft: 32 }]}
+                  onPress={() => setChessableDirectMode(!chessableDirectMode)}
+                  activeOpacity={0.7}
+                >
+                  <View style={[styles.checkbox, chessableDirectMode && styles.checkboxActive]}>
+                    {chessableDirectMode && <Text style={styles.checkmark}>✓</Text>}
+                  </View>
+                  <Text style={styles.chessableLabel}>Direct variations (one chapter per game)</Text>
+                </TouchableOpacity>
+              )}
             </>
           )}
 

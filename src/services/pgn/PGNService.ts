@@ -5,6 +5,7 @@
 import { parse } from '@mliebelt/pgn-parser';
 import { UserGame } from '@types';
 import { MoveTree, MoveNode } from '@utils/MoveTree';
+import { CAL_COLORS } from '@/types/annotation.types';
 
 interface ParsedGame {
   headers: Record<string, string>;
@@ -388,6 +389,30 @@ export class PGNService {
           + parseInt(parts[1], 10) * 60
           + parseInt(parts[2], 10);
       }
+    }
+
+    // @mliebelt/pgn-parser exposes [%cal] as colorArrows and [%csl] as colorFields
+    const calRaw = diag.cal ?? diag.colorArrows;
+    if (calRaw) {
+      const calArr = Array.isArray(calRaw) ? calRaw : [calRaw];
+      node.arrows = calArr
+        .filter((entry: string) => typeof entry === 'string' && entry.length >= 5)
+        .map((entry: string) => ({
+          color: CAL_COLORS[entry[0]] ?? '#15781B',
+          from: entry.substring(1, 3),
+          to: entry.substring(3, 5),
+        }));
+    }
+
+    const cslRaw = diag.csl ?? diag.colorFields;
+    if (cslRaw) {
+      const cslArr = Array.isArray(cslRaw) ? cslRaw : [cslRaw];
+      node.highlights = cslArr
+        .filter((entry: string) => typeof entry === 'string' && entry.length >= 3)
+        .map((entry: string) => ({
+          color: CAL_COLORS[entry[0]] ?? '#15781B',
+          square: entry.substring(1, 3),
+        }));
     }
   }
 

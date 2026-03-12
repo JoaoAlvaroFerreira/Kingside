@@ -13,6 +13,7 @@ import { MoveHistory } from '@components/chess/MoveHistory/MoveHistory';
 import { EvalBar, KeyMoveMarker } from '@components/chess/EvalBar/EvalBar';
 import { EngineLines } from '@components/chess/EngineLines/EngineLines';
 import { MoveTree } from '@utils/MoveTree';
+import { NAG_SYMBOLS } from '@utils/nagSymbols';
 import { EngineEvaluation, ScreenKey } from '@types';
 import { SettingsModal } from './SettingsModal';
 import { useStore } from '@store';
@@ -161,6 +162,22 @@ export const ChessWorkspace: React.FC<ChessWorkspaceProps> = ({
   const currentComment = moveTree?.isAtStart()
     ? moveTree.getRootComment()
     : moveTree?.getCurrentNode()?.comment;
+
+  const currentNode = moveTree?.getCurrentNode();
+  const pgnarrows = currentNode?.arrows;
+
+  const nagBadge = useMemo(() => {
+    if (!currentNode?.nags?.length) return undefined;
+    const symbol = NAG_SYMBOLS[currentNode.nags[0]];
+    if (!symbol) return undefined;
+    // Derive destination square from SAN using last [a-h][1-8] match
+    const san = currentNode.san;
+    const matches = san.match(/[a-h][1-8]/g);
+    if (!matches || matches.length === 0) return undefined;
+    const square = matches[matches.length - 1];
+    return { square, symbol };
+  }, [currentNode]);
+
   // MoveHistory renders only when visible AND has required props
   const isMoveHistoryRendered = Boolean(moveHistoryVisible && moveTree && onNavigate);
 
@@ -193,6 +210,8 @@ export const ChessWorkspace: React.FC<ChessWorkspaceProps> = ({
               boardSizePixels={actualBoardSize}
               bestMove={hintArrow || (evalBarVisible ? activeEval?.bestMove : undefined)}
               arrowColor={hintArrow ? (hintArrowColor || 'rgba(198, 40, 40, 0.75)') : undefined}
+              pgnarrows={pgnarrows}
+              nagBadge={nagBadge}
             />
           </View>
         </View>

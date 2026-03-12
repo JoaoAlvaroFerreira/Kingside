@@ -23,7 +23,8 @@ export const LineExtractor = {
     repertoireId: string,
     chapterId: string,
     color: RepertoireColor,
-    maxDepth?: number
+    maxDepth?: number,
+    opponentBranchingOnly?: boolean
   ): Line[] {
     const tree = MoveTree.fromJSON(moveTreeData);
     const lines: Line[] = [];
@@ -41,7 +42,8 @@ export const LineExtractor = {
       repertoireId,
       chapterId,
       maxDepth ?? Infinity,
-      lines
+      lines,
+      opponentBranchingOnly ?? false
     );
 
     return lines;
@@ -61,7 +63,8 @@ export const LineExtractor = {
     repertoireId: string,
     chapterId: string,
     maxDepth: number,
-    lines: Line[]
+    lines: Line[],
+    opponentBranchingOnly: boolean = false
   ): void {
     // No more moves or hit depth limit - save current line if non-empty
     if (nodes.length === 0 || depth >= maxDepth) {
@@ -89,8 +92,18 @@ export const LineExtractor = {
       repertoireId,
       chapterId,
       maxDepth,
-      lines
+      lines,
+      opponentBranchingOnly
     );
+
+    // When opponent-only branching is on, skip user-move alternatives
+    if (opponentBranchingOnly && nodes.length > 1) {
+      const isWhiteMove = !nodes[0].isBlack;
+      const isUserMove = (color === 'white') === isWhiteMove;
+      if (isUserMove) {
+        return; // Skip variations at user-move positions
+      }
+    }
 
     // Process variations (non-first children)
     for (let i = 1; i < nodes.length; i++) {
@@ -110,7 +123,8 @@ export const LineExtractor = {
         repertoireId,
         chapterId,
         maxDepth,
-        lines
+        lines,
+        opponentBranchingOnly
       );
     }
   },

@@ -78,6 +78,7 @@ export interface TrainingConfig {
   maxDepth?: number;              // Optional: limit drilling depth
   includeOnlyDueLines?: boolean;  // Filter to lines due for review
   learnMode?: boolean;            // Show arrows + comments, skip rating
+  opponentBranchingOnly?: boolean;  // Skip user-move variations (only branch on opponent moves)
 }
 
 /**

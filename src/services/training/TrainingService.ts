@@ -37,7 +37,8 @@ export const TrainingService = {
         repertoire.id,
         chapter.id,
         repertoire.color,
-        config.maxDepth
+        config.maxDepth,
+        config.opponentBranchingOnly
       );
       allLines = allLines.concat(lines);
     }

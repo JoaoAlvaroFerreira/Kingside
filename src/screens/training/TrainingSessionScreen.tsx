@@ -35,6 +35,7 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
   const [expectedMove, setExpectedMove] = useState<string>('');
   const [hintArrowUci, setHintArrowUci] = useState<string | undefined>(undefined);
   const [currentComment, setCurrentComment] = useState<string | undefined>(undefined);
+  const [opponentComment, setOpponentComment] = useState<string | undefined>(undefined);
 
   const isLearnMode = session?.learnMode ?? false;
 
@@ -58,13 +59,23 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
   const updateComment = (sess: TrainingSession) => {
     if (!sess.learnMode) {
       setCurrentComment(undefined);
+      setOpponentComment(undefined);
       return;
     }
     const currentLine = sess.lines[sess.currentLineIndex];
-    if (!currentLine) { setCurrentComment(undefined); return; }
+    if (!currentLine) { setCurrentComment(undefined); setOpponentComment(undefined); return; }
     const userMoves = currentLine.moves.filter(m => m.isUserMove);
     const currentUserMove = userMoves[sess.currentMoveIndex];
     setCurrentComment(currentUserMove?.comment || undefined);
+
+    // Find the opponent move immediately before this user move
+    if (currentUserMove) {
+      const idx = currentLine.moves.findIndex(m => m.nodeId === currentUserMove.nodeId);
+      const prevMove = idx > 0 ? currentLine.moves[idx - 1] : null;
+      setOpponentComment(prevMove && !prevMove.isUserMove ? (prevMove.comment || undefined) : undefined);
+    } else {
+      setOpponentComment(undefined);
+    }
   };
 
   // Initialize session
@@ -137,17 +148,7 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
     setHintArrowUci(undefined);
 
     if (result.feedback === 'line-complete') {
-      if (isLearnMode) {
-        // Learn mode: brief feedback then auto-advance
-        setFeedback('correct');
-        setCurrentComment(undefined);
-        setTimeout(() => {
-          setFeedback(null);
-          completeLineAndAdvance();
-        }, timing.lineCompleteDelayMs);
-      } else {
-        setSession({ ...session, awaitingRating: true });
-      }
+      setSession({ ...session, awaitingRating: true });
       return;
     }
 
@@ -186,12 +187,9 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
           }
           updateComment(session);
         } else {
-          if (isLearnMode) {
-            setCurrentComment(undefined);
-            setTimeout(() => completeLineAndAdvance(), timing.lineCompleteDelayMs);
-          } else {
-            setSession({ ...session, awaitingRating: true });
-          }
+          setCurrentComment(undefined);
+          setOpponentComment(undefined);
+          setSession({ ...session, awaitingRating: true });
         }
       };
 
@@ -221,18 +219,15 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
           }
           updateComment(session);
         } else {
-          if (isLearnMode) {
-            setCurrentComment(undefined);
-            setTimeout(() => completeLineAndAdvance(), timing.lineCompleteDelayMs);
-          } else {
-            setSession({ ...session, awaitingRating: true });
-          }
+          setCurrentComment(undefined);
+          setOpponentComment(undefined);
+          setSession({ ...session, awaitingRating: true });
         }
       }, timing.correctDelayMs);
     }
   };
 
-  const completeLineAndAdvance = async () => {
+  const _completeLineAndAdvance = async () => {
     if (!session) return;
 
     const { updatedStats, hasMore } = TrainingService.completeLineAndAdvance(
@@ -447,7 +442,7 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
               showSettingsGear={false}
               orientationOverride={session.color}
               hintArrow={isLearnMode ? learnArrowUci : hintArrowUci}
-              hintArrowColor={isLearnMode ? 'rgba(74, 158, 255, 0.7)' : undefined}
+              hintArrowColor={isLearnMode ? 'rgba(156, 39, 176, 0.7)' : undefined}
               verticalOffset={HEADER_HEIGHT}
               maxBoardSize={maxBoardSize}
             />
@@ -468,15 +463,34 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
           )}
         </View>
 
-        {/* Comment Box (learn mode) */}
-        {isLearnMode && currentComment && (
-          <ScrollView
-            style={styles.commentBox}
-            contentContainerStyle={{ paddingBottom: 10 }}
-            nestedScrollEnabled
-          >
-            <Text style={styles.commentText}>{currentComment}</Text>
-          </ScrollView>
+        {/* Comment Boxes (learn mode) */}
+        {isLearnMode && (opponentComment || currentComment) && (
+          <View>
+            {opponentComment && (
+              <ScrollView
+                style={[styles.commentBox, styles.commentBoxOpponent]}
+                contentContainerStyle={{ paddingBottom: 10 }}
+                nestedScrollEnabled
+              >
+                {(opponentComment && currentComment) && (
+                  <Text style={styles.commentLabel}>{"Opponent's move:"}</Text>
+                )}
+                <Text style={styles.commentText}>{opponentComment}</Text>
+              </ScrollView>
+            )}
+            {currentComment && (
+              <ScrollView
+                style={styles.commentBox}
+                contentContainerStyle={{ paddingBottom: 10 }}
+                nestedScrollEnabled
+              >
+                {(opponentComment && currentComment) && (
+                  <Text style={styles.commentLabel}>Your move:</Text>
+                )}
+                <Text style={styles.commentText}>{currentComment}</Text>
+              </ScrollView>
+            )}
+          </View>
         )}
 
         {/* Feedback — directly below board so it's always visible */}
@@ -531,6 +545,12 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
                 <Text style={styles.ratingSubtext}>Longer</Text>
               </TouchableOpacity>
             </View>
+            <TouchableOpacity
+              style={styles.deleteLineButton}
+              onPress={() => handleLongPressLine(session.currentLineIndex)}
+            >
+              <Text style={styles.deleteLineText}>Delete Line</Text>
+            </TouchableOpacity>
           </View>
         )}
 
@@ -654,6 +674,18 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
   },
+  commentBoxOpponent: {
+    borderLeftColor: '#FFA726',
+    marginBottom: 4,
+  },
+  commentLabel: {
+    color: '#aaa',
+    fontSize: 11,
+    marginBottom: 4,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
   feedbackContainer: {
     marginHorizontal: 12,
     marginTop: 8,
@@ -728,5 +760,14 @@ const styles = StyleSheet.create({
     fontSize: 10,
     marginTop: 1,
     opacity: 0.8,
+  },
+  deleteLineButton: {
+    marginTop: 8,
+    alignItems: 'center',
+    paddingVertical: 6,
+  },
+  deleteLineText: {
+    color: '#888',
+    fontSize: 12,
   },
 });

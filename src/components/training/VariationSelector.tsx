@@ -2,7 +2,7 @@
  * VariationSelector - Display and switch between training lines
  */
 
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { Line } from '@types';
 
@@ -23,6 +23,16 @@ export const VariationSelector: React.FC<VariationSelectorProps> = ({
   lineProgress = {},
   holdbackCount = 0,
 }) => {
+  const scrollViewRef = useRef<ScrollView>(null);
+  const itemOffsets = useRef<Record<number, number>>({});
+
+  useEffect(() => {
+    const y = itemOffsets.current[currentLineIndex];
+    if (y !== undefined) {
+      scrollViewRef.current?.scrollTo({ y: Math.max(0, y - 20), animated: true });
+    }
+  }, [currentLineIndex]);
+
   const getLinePreview = (line: Line, maxMoves: number = 12): string => {
     // Show moves from the branch point (where this line diverges from main)
     const startPly = line.branchPoint ?? 0;
@@ -60,7 +70,7 @@ export const VariationSelector: React.FC<VariationSelectorProps> = ({
       {holdbackCount > 0 && (
         <Text style={styles.holdbackText}>+{holdbackCount} on hold</Text>
       )}
-      <ScrollView style={styles.list} showsVerticalScrollIndicator={true} nestedScrollEnabled>
+      <ScrollView ref={scrollViewRef} style={styles.list} showsVerticalScrollIndicator={true} nestedScrollEnabled>
         {lines.map((line, index) => {
           const isCurrent = index === currentLineIndex;
           const status = getLineStatus(line);
@@ -76,6 +86,7 @@ export const VariationSelector: React.FC<VariationSelectorProps> = ({
               onPress={() => onSelectLine(index)}
               onLongPress={() => onLongPressLine?.(index)}
               delayLongPress={500}
+              onLayout={(e) => { itemOffsets.current[index] = e.nativeEvent.layout.y; }}
             >
               <View style={styles.lineHeader}>
                 <View style={styles.lineInfo}>
@@ -128,7 +139,7 @@ const styles = StyleSheet.create({
   },
   lineItemCurrent: {
     borderColor: '#4a9eff',
-    backgroundColor: '#2a3a4a',
+    backgroundColor: '#344a5e',
   },
   lineItemComplete: {
     opacity: 0.6,

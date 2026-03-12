@@ -12,6 +12,7 @@
 import React, { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import {
   View,
+  Text,
   StyleSheet,
   useWindowDimensions,
   PanResponder,
@@ -31,6 +32,8 @@ interface InteractiveChessBoardProps {
   boardSizePixels?: number;
   bestMove?: string;
   arrowColor?: string;
+  pgnarrows?: Array<{ from: string; to: string; color: string }>;
+  nagBadge?: { square: string; symbol: string };
 }
 
 const squareToCenterPixel = (square: string, squareSize: number, orientation: 'white' | 'black') => {
@@ -175,6 +178,8 @@ export const InteractiveChessBoard: React.FC<InteractiveChessBoardProps> = ({
   boardSizePixels,
   bestMove,
   arrowColor = 'rgba(39, 174, 96, 0.7)',
+  pgnarrows,
+  nagBadge,
 }) => {
   const { width, height } = useWindowDimensions();
 
@@ -586,6 +591,29 @@ export const InteractiveChessBoard: React.FC<InteractiveChessBoardProps> = ({
             )}
           </View>
 
+          {/* PGN annotation arrows */}
+          {pgnarrows && pgnarrows.length > 0 && (() => {
+            const paths = pgnarrows
+              .map(a => {
+                const from = squareToCenterPixel(a.from, squareSize, orientation);
+                const to = squareToCenterPixel(a.to, squareSize, orientation);
+                const d = getArrowPath(from.x, from.y, to.x, to.y, squareSize);
+                return d ? { d, color: a.color } : null;
+              })
+              .filter(Boolean) as Array<{ d: string; color: string }>;
+
+            if (paths.length === 0) return null;
+            return (
+              <View style={[styles.arrowOverlay, { width: boardSize, height: boardSize }]} pointerEvents="none">
+                <Svg width={boardSize} height={boardSize} viewBox={`0 0 ${boardSize} ${boardSize}`}>
+                  {paths.map((p, i) => (
+                    <Path key={i} d={p.d} fill={p.color + 'b3'} />
+                  ))}
+                </Svg>
+              </View>
+            );
+          })()}
+
           {/* Best-move arrow */}
           {bestMove && bestMove.length >= 4 && /^[a-h][1-8][a-h][1-8]/.test(bestMove) && (() => {
             const from = squareToCenterPixel(bestMove.substring(0, 2), squareSize, orientation);
@@ -598,6 +626,28 @@ export const InteractiveChessBoard: React.FC<InteractiveChessBoardProps> = ({
                 </Svg>
               </View>
             ) : null;
+          })()}
+
+          {/* NAG badge */}
+          {nagBadge && (() => {
+            const destCenter = squareToCenterPixel(nagBadge.square, squareSize, orientation);
+            const badgeX = destCenter.x + squareSize * 0.15;
+            const badgeY = destCenter.y - squareSize * 0.55;
+            return (
+              <View
+                pointerEvents="none"
+                style={[
+                  styles.nagBadge,
+                  {
+                    position: 'absolute',
+                    left: badgeX - 10,
+                    top: badgeY - 10,
+                  },
+                ]}
+              >
+                <Text style={styles.nagBadgeText}>{nagBadge.symbol}</Text>
+              </View>
+            );
           })()}
         </View>
       </View>
@@ -664,5 +714,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 100,
+  },
+  nagBadge: {
+    backgroundColor: 'rgba(0,0,0,0.75)',
+    borderRadius: 4,
+    paddingHorizontal: 3,
+    paddingVertical: 1,
+    minWidth: 20,
+    alignItems: 'center',
+    zIndex: 60,
+  },
+  nagBadgeText: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: 'bold',
   },
 });

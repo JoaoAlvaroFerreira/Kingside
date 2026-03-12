@@ -26,6 +26,7 @@ export default function TrainingDashboardScreen({ navigation }: TrainingDashboar
   const [maxDepth, setMaxDepth] = useState<string>('');
   const [includeOnlyDue, setIncludeOnlyDue] = useState(false);
   const [learnMode, setLearnMode] = useState(false);
+  const [opponentBranchingOnly, setOpponentBranchingOnly] = useState(false);
 
   // Get selected repertoire
   const selectedRepertoire = useMemo(
@@ -51,7 +52,8 @@ export default function TrainingDashboardScreen({ navigation }: TrainingDashboar
         selectedRepertoire.id,
         chapter.id,
         selectedRepertoire.color,
-        maxDepth ? parseInt(maxDepth, 10) * 2 : undefined
+        maxDepth ? parseInt(maxDepth, 10) * 2 : undefined,
+        opponentBranchingOnly
       );
       allLines += LineExtractor.filterLinesWithUserMoves(lines).length;
     }
@@ -69,7 +71,7 @@ export default function TrainingDashboardScreen({ navigation }: TrainingDashboar
     const completionPercent = allLines > 0 ? Math.round((linesLearned / allLines) * 100) : 0;
 
     return { totalLines: allLines, linesDue, linesLearned, completionPercent };
-  }, [selectedRepertoire, selectedChapterIds, maxDepth, lineStats]);
+  }, [selectedRepertoire, selectedChapterIds, maxDepth, lineStats, opponentBranchingOnly]);
 
   const handleStartSession = () => {
     if (!selectedRepertoire) {
@@ -99,6 +101,7 @@ export default function TrainingDashboardScreen({ navigation }: TrainingDashboar
       maxDepth: maxDepth ? parseInt(maxDepth, 10) * 2 : undefined,
       includeOnlyDueLines: includeOnlyDue,
       learnMode,
+      opponentBranchingOnly,
     });
   };
 
@@ -223,6 +226,15 @@ export default function TrainingDashboardScreen({ navigation }: TrainingDashboar
             {learnMode && <Text style={styles.checkmark}>✓</Text>}
           </View>
           <Text style={styles.checkboxLabel}>Learn mode (show arrows + comments)</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.checkboxRow, { marginTop: 12 }]}
+          onPress={() => setOpponentBranchingOnly(!opponentBranchingOnly)}
+        >
+          <View style={[styles.checkbox, opponentBranchingOnly && styles.checkboxSelected]}>
+            {opponentBranchingOnly && <Text style={styles.checkmark}>✓</Text>}
+          </View>
+          <Text style={styles.checkboxLabel}>Main line only for my moves</Text>
         </TouchableOpacity>
       </View>
 
