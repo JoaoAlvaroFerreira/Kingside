@@ -463,6 +463,45 @@ export class PGNService {
   }
 
   /**
+   * Merge only the mainline of a parsed game into a MoveTree (no variations).
+   * Used for chessable direct mode to keep one chapter per group with only trainable lines.
+   */
+  static mergeMainlineIntoTree(parsed: ParsedGame, moveTree: MoveTree): void {
+    const processMainline = (move: any) => {
+      if (!move) return;
+      if (move.notation) {
+        const san = typeof move.notation === 'string'
+          ? move.notation
+          : move.notation.notation;
+        if (san) {
+          moveTree.addMove(san);
+          const currentNode = moveTree.getCurrentNode();
+          if (currentNode) {
+            if (move.commentAfter) {
+              const trimmed = move.commentAfter.trim();
+              currentNode.comment = trimmed || undefined;
+            }
+            if (move.commentDiag) {
+              this.parseCommentDiag(currentNode, move.commentDiag);
+            }
+            if (move.nag) {
+              currentNode.nags = Array.isArray(move.nag)
+                ? move.nag.map((n: string) => parseInt(String(n).replace('$', ''), 10))
+                : [parseInt(String(move.nag).replace('$', ''), 10)];
+            }
+          }
+        }
+      }
+      if (move.next) processMainline(move.next);
+    };
+
+    if (Array.isArray(parsed.moves)) {
+      parsed.moves.forEach(move => processMainline(move));
+    }
+    moveTree.goToStart();
+  }
+
+  /**
    * Extract opening name from headers
    */
   static getOpeningName(parsed: ParsedGame): string | undefined {

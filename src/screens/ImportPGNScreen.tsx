@@ -279,7 +279,8 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
           let chapterOrder = 0;
 
           if (chessableDirectMode) {
-            // Direct mode: each game becomes its own chapter
+            // Direct mode: merge mainlines per group (one chapter per white name),
+            // keeping only the intended trainable line without sub-variations.
             for (let gi = 0; gi < groupEntries.length; gi++) {
               const [groupName, groupGames] = groupEntries[gi];
               setProgress({
@@ -287,21 +288,48 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
                 total: groupEntries.length,
                 phase: `Processing group ${gi + 1} of ${groupEntries.length}...`,
               });
-              for (let i = 0; i < groupGames.length; i++) {
-                const chapterName = groupGames.length > 1
-                  ? `${groupName} — Var ${i + 1}`
-                  : groupName;
-                const moveTree = PGNService.toMoveTree(groupGames[i]);
+
+              const standardGames = groupGames.filter(g => !g.headers.FEN);
+              const customFenGames = groupGames.filter(g => g.headers.FEN);
+
+              if (standardGames.length > 0) {
+                const tree = new MoveTree();
+                for (const game of standardGames) {
+                  PGNService.mergeMainlineIntoTree(game, tree);
+                }
                 chapters.push({
                   id: generateId(),
-                  name: chapterName,
+                  name: groupName,
                   pgn: '',
-                  moveTree: moveTree.toJSON(),
+                  moveTree: tree.toJSON(),
                   order: chapterOrder++,
                   createdAt: new Date(),
                   updatedAt: new Date(),
                 });
               }
+
+              const fenGroups = new Map<string, typeof customFenGames>();
+              for (const game of customFenGames) {
+                const fen = game.headers.FEN!;
+                const group = fenGroups.get(fen);
+                if (group) { group.push(game); } else { fenGroups.set(fen, [game]); }
+              }
+              for (const [fen, fenGames] of fenGroups) {
+                const tree = new MoveTree(fen);
+                for (const game of fenGames) {
+                  PGNService.mergeMainlineIntoTree(game, tree);
+                }
+                chapters.push({
+                  id: generateId(),
+                  name: groupName,
+                  pgn: '',
+                  moveTree: tree.toJSON(),
+                  order: chapterOrder++,
+                  createdAt: new Date(),
+                  updatedAt: new Date(),
+                });
+              }
+
               await new Promise(resolve => requestAnimationFrame(resolve));
             }
           } else {
@@ -660,7 +688,7 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
                   <View style={[styles.checkbox, chessableDirectMode && styles.checkboxActive]}>
                     {chessableDirectMode && <Text style={styles.checkmark}>✓</Text>}
                   </View>
-                  <Text style={styles.chessableLabel}>Direct variations (one chapter per game)</Text>
+                  <Text style={styles.chessableLabel}>Direct variations (mainlines only, merged by name)</Text>
                 </TouchableOpacity>
               )}
             </>
