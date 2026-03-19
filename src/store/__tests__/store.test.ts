@@ -36,6 +36,12 @@ jest.mock('@services/gameReview/GameReviewService', () => ({
 }));
 
 jest.mock('@services/database/DatabaseService', () => ({
+  DatabaseOpenError: class DatabaseOpenError extends Error {
+    constructor(message: string) {
+      super(message);
+      this.name = 'DatabaseOpenError';
+    }
+  },
   DatabaseService: {
     initialize: jest.fn().mockResolvedValue(undefined),
     getUserGamesCount: jest.fn().mockResolvedValue(0),
