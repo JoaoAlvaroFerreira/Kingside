@@ -148,6 +148,7 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
     setHintArrowUci(undefined);
 
     if (result.feedback === 'line-complete') {
+      if (result.resultFen) setCurrentFen(result.resultFen);
       setSession({ ...session, awaitingRating: true });
       return;
     }
@@ -272,12 +273,15 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
 
     if (hasMore) {
       // Move to next line
+      setFeedback(null);
+      setHintArrowUci(undefined);
       setSession({ ...session });
       const position = TrainingService.getCurrentPosition(session);
       if (position) {
         setCurrentFen(position.fen);
         setExpectedMove(position.expectedMove);
       }
+      updateComment(session);
     } else {
       // Session complete
       const msg = `Training complete! You drilled ${session.linesCompleted} of ${session.totalLineCount} lines.`;
@@ -289,6 +293,21 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
       setTrainingSession(null);
       navigation.goBack();
     }
+  };
+
+  const handleRepeatVariation = () => {
+    if (!session) return;
+    session.currentMoveIndex = 0;
+    session.awaitingRating = false;
+    setFeedback(null);
+    setHintArrowUci(undefined);
+    setSession({ ...session });
+    const position = TrainingService.getCurrentPosition(session);
+    if (position) {
+      setCurrentFen(position.fen);
+      setExpectedMove(position.expectedMove);
+    }
+    updateComment(session);
   };
 
   const handleEndSession = () => {
@@ -514,37 +533,58 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
         {/* Rating Buttons — directly below board so it's always visible */}
         {session.awaitingRating && (
           <View style={styles.ratingContainer}>
-            <Text style={styles.ratingTitle}>How difficult was this line?</Text>
-            <View style={styles.ratingButtons}>
-              <TouchableOpacity
-                style={[styles.ratingButton, styles.ratingAgain]}
-                onPress={() => handleRating(0)}
-              >
-                <Text style={styles.ratingButtonText}>Again</Text>
-                <Text style={styles.ratingSubtext}>Restart</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.ratingButton, styles.ratingHard]}
-                onPress={() => handleRating(3)}
-              >
-                <Text style={styles.ratingButtonText}>Hard</Text>
-                <Text style={styles.ratingSubtext}>Soon</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.ratingButton, styles.ratingGood]}
-                onPress={() => handleRating(4)}
-              >
-                <Text style={styles.ratingButtonText}>Good</Text>
-                <Text style={styles.ratingSubtext}>Normal</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.ratingButton, styles.ratingEasy]}
-                onPress={() => handleRating(5)}
-              >
-                <Text style={styles.ratingButtonText}>Easy</Text>
-                <Text style={styles.ratingSubtext}>Longer</Text>
-              </TouchableOpacity>
-            </View>
+            {isLearnMode ? (
+              <>
+                <View style={styles.ratingButtons}>
+                  <TouchableOpacity
+                    style={[styles.ratingButton, styles.ratingAgain]}
+                    onPress={handleRepeatVariation}
+                  >
+                    <Text style={styles.ratingButtonText}>Repeat</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.ratingButton, styles.ratingGood, { flex: 2 }]}
+                    onPress={() => handleRating(4)}
+                  >
+                    <Text style={styles.ratingButtonText}>Next</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            ) : (
+              <>
+                <Text style={styles.ratingTitle}>How difficult was this line?</Text>
+                <View style={styles.ratingButtons}>
+                  <TouchableOpacity
+                    style={[styles.ratingButton, styles.ratingAgain]}
+                    onPress={() => handleRating(0)}
+                  >
+                    <Text style={styles.ratingButtonText}>Again</Text>
+                    <Text style={styles.ratingSubtext}>Restart</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.ratingButton, styles.ratingHard]}
+                    onPress={() => handleRating(3)}
+                  >
+                    <Text style={styles.ratingButtonText}>Hard</Text>
+                    <Text style={styles.ratingSubtext}>Soon</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.ratingButton, styles.ratingGood]}
+                    onPress={() => handleRating(4)}
+                  >
+                    <Text style={styles.ratingButtonText}>Good</Text>
+                    <Text style={styles.ratingSubtext}>Normal</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.ratingButton, styles.ratingEasy]}
+                    onPress={() => handleRating(5)}
+                  >
+                    <Text style={styles.ratingButtonText}>Easy</Text>
+                    <Text style={styles.ratingSubtext}>Longer</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
             <TouchableOpacity
               style={styles.deleteLineButton}
               onPress={() => handleLongPressLine(session.currentLineIndex)}

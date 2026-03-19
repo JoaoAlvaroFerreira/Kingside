@@ -166,6 +166,7 @@ export const TrainingService = {
         expectedMove: currentUserMove.san,
         userMove: move.san,
         feedback: 'line-complete',
+        resultFen: currentUserMove.fen,
       };
     }
 

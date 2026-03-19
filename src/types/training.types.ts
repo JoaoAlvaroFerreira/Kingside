@@ -140,6 +140,7 @@ export interface DrillResult {
   };
   opponentMove?: string;          // Move to auto-play
   opponentFen?: string;           // FEN after opponent move
+  resultFen?: string;             // FEN after the last user move (line-complete)
 }
 
 // ============================================
