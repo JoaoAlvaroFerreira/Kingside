@@ -25,7 +25,7 @@ import { ScreenSettingsService } from '@services/settings/ScreenSettingsService'
 import { GameReviewService } from '@services/gameReview/GameReviewService';
 import { EngineAnalyzer } from '@services/engine/EngineAnalyzer';
 import { stockfishBridge } from '@services/engine/StockfishBridge';
-import { DatabaseService } from '@services/database/DatabaseService';
+import { DatabaseService, DatabaseOpenError } from '@services/database/DatabaseService';
 import { MigrationService } from '@services/database/MigrationService';
 
 interface AppState {
@@ -41,11 +41,13 @@ interface AppState {
   gameReviewStatuses: GameReviewStatus[];
   currentReviewSession: GameReviewSession | null;
   isLoading: boolean;
+  dbError: boolean;
   isAnalyzing: boolean;
   analysisProgress: AnalysisProgress | null;
 
   // Actions
   initialize: () => Promise<void>;
+  resetDatabase: () => Promise<void>;
 
   // Repertoire actions
   addRepertoire: (r: Repertoire) => Promise<void>;
@@ -103,6 +105,7 @@ export const useStore = create<AppState>((set, get) => ({
   gameReviewStatuses: [],
   currentReviewSession: null,
   isLoading: true,
+  dbError: false,
   isAnalyzing: false,
   analysisProgress: null,
 
@@ -149,9 +152,21 @@ export const useStore = create<AppState>((set, get) => ({
       set({ repertoires, userGamesCount, masterGamesCount, reviewCards, lineStats, reviewSettings, screenSettings, gameReviewStatuses, isLoading: false });
     } catch (error) {
       console.error('Store: Initialization failed:', error);
-      // Still clear loading so the app is usable with defaults
-      set({ isLoading: false });
+      if (error instanceof DatabaseOpenError) {
+        set({ isLoading: false, dbError: true });
+      } else {
+        // Non-fatal schema/migration error — still let the app start
+        set({ isLoading: false });
+      }
     }
+  },
+
+  resetDatabase: async () => {
+    await DatabaseService.deleteDatabase();
+    set({ dbError: false, isLoading: true });
+    // Re-run full initialization against the now-empty database
+    const { initialize } = get();
+    await initialize();
   },
 
   addRepertoire: async (repertoire) => {

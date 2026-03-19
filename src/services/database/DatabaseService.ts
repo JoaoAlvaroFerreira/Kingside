@@ -8,6 +8,15 @@ import { UserGame, MasterGame, Repertoire, normalizeFen, EngineEvaluation } from
 import { Chess } from 'chess.js';
 import { WebDatabaseService } from './WebDatabaseService';
 import { extractChapterPositions, mergePositionMaps, PositionMap } from '@utils/extractRepertoirePositions';
+import * as FileSystem from 'expo-file-system';
+
+/** Thrown when the database cannot be opened even after WAL recovery. */
+export class DatabaseOpenError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'DatabaseOpenError';
+  }
+}
 
 const DB_NAME = 'kingside.db';
 const PAGE_SIZE = 25; // Games per page
@@ -36,6 +45,50 @@ class DatabaseServiceClass {
   /** Called when background indexing completes */
   onIndexingComplete?: () => void;
 
+  /** Path to the SQLite directory used by expo-sqlite on native. */
+  private get sqliteDir(): string {
+    return `${FileSystem.documentDirectory}SQLite/`;
+  }
+
+  /**
+   * Open the database with a timeout. Rejects with DatabaseOpenError on failure.
+   */
+  private async openWithTimeout(timeoutMs: number): Promise<any> {
+    return Promise.race([
+      SQLite.openDatabaseAsync(DB_NAME),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new DatabaseOpenError(`openDatabaseAsync timed out after ${timeoutMs}ms`)), timeoutMs)
+      ),
+    ]);
+  }
+
+  /**
+   * Delete WAL and SHM sidecar files so a subsequent open can start fresh.
+   * Safe to call even if the files don't exist.
+   */
+  async deleteWalFiles(): Promise<void> {
+    for (const suffix of ['-wal', '-shm']) {
+      try {
+        await FileSystem.deleteAsync(`${this.sqliteDir}${DB_NAME}${suffix}`, { idempotent: true });
+      } catch { /* ignore */ }
+    }
+    console.log('[DatabaseService] WAL/SHM files deleted');
+  }
+
+  /**
+   * Delete the entire database file (and its sidecars).
+   * All data will be lost. Call only as a last-resort recovery step.
+   */
+  async deleteDatabase(): Promise<void> {
+    for (const suffix of ['', '-wal', '-shm']) {
+      try {
+        await FileSystem.deleteAsync(`${this.sqliteDir}${DB_NAME}${suffix}`, { idempotent: true });
+      } catch { /* ignore */ }
+    }
+    this.db = null;
+    console.log('[DatabaseService] Database files deleted');
+  }
+
   /**
    * Initialize database and create tables
    */
@@ -52,9 +105,25 @@ class DatabaseServiceClass {
       throw new Error('SQLite module not available on this platform');
     }
 
+    // Attempt 1: normal open with a 5-second timeout
     try {
-      this.db = await SQLite.openDatabaseAsync(DB_NAME);
+      this.db = await this.openWithTimeout(5000);
+    } catch (e) {
+      // Open timed out or failed — delete WAL/SHM and retry once
+      console.warn('[DatabaseService] Initial open failed, attempting WAL recovery:', e);
+      await this.deleteWalFiles();
+      try {
+        this.db = await this.openWithTimeout(8000);
+        console.log('[DatabaseService] Opened database after WAL recovery');
+      } catch (e2) {
+        // Database is unrecoverable without wiping it
+        throw new DatabaseOpenError(
+          `Database could not be opened even after WAL recovery: ${e2}`
+        );
+      }
+    }
 
+    try {
       // Create user_games table
       await this.db.execAsync(`
         CREATE TABLE IF NOT EXISTS user_games (
@@ -124,7 +193,7 @@ class DatabaseServiceClass {
 
       console.log('[DatabaseService] Database initialized successfully');
     } catch (error) {
-      console.error('[DatabaseService] Failed to initialize database:', error);
+      console.error('[DatabaseService] Failed to initialize database schema:', error);
       throw error;
     }
   }
