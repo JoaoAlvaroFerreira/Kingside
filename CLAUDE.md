@@ -288,7 +288,15 @@ adb install -r android/app/build/outputs/apk/debug/app-debug.apk
 # Quick Scripts (in project root)
 quick-rebuild.bat                             # Fast debug rebuild + install
 build-release-apk.bat                         # Generate standalone release APK
+release.bat v1.2.3                            # Build release APK + tag + push + GitHub release (gh CLI)
 ```
+
+## App Icon / Splash
+
+- Source design: `logo.svg` (project root) — 680x680 rook icon, bg `#080e1a`, accent `#7eb8e8`.
+- Generated assets in `assets/images/`: `icon.png`, `adaptive-icon.png`, `favicon.png` (full design), `splash-icon.png`/`.svg` (rook only, transparent, for splash).
+- Referenced from `app.json` (`icon`, `android.adaptiveIcon`, `web.favicon`, `expo-splash-screen` plugin).
+- Android native resources (`android/app/src/main/res/mipmap-*/ic_launcher*.webp`, `drawable-*/splashscreen_logo.png`, `values/colors.xml` splashscreen_background) are **manually generated** from the SVGs — this project does NOT use `expo prebuild` (would risk clobbering custom native Stockfish integration). To regenerate after changing `logo.svg`, re-run `rsvg-convert` at each density (mdpi 48/288, hdpi 72/432, xhdpi 96/576, xxhdpi 144/864, xxxhdpi 192/1152 for icon/splash respectively) and rebuild.
 
 ## Known Issues
 
