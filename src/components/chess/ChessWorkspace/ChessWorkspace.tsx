@@ -141,7 +141,7 @@ export const ChessWorkspace: React.FC<ChessWorkspaceProps> = ({
   const actualBoardSize = Math.max(140, Math.floor(cappedForBoard * sizeScale));
 
   // Narrow mode: move history sits below the board and can be a bit smaller
-  const narrowHistoryHeight = Math.max(80, Math.floor(actualBoardSize * 0.45));
+  const narrowHistoryHeight = Math.max(110, Math.floor(actualBoardSize * 0.45));
 
   // Only recompute flat moves when the tree structure changes (add/delete/promote),
   // NOT on every navigation. This avoids O(n) work on each arrow-key press.
