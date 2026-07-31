@@ -6,6 +6,7 @@ import { MoveTree } from '@utils/MoveTree';
 import { UserGame, MasterGame, computeFensFromMoves, normalizeFen } from '@types';
 import { PGNService } from '@services/pgn/PGNService';
 import { useGameSearch } from '@hooks/useGameSearch';
+import { ChapterFenMatch } from '@utils/extractRepertoirePositions';
 
 interface AnalysisBoardScreenProps {
   route?: {
@@ -82,6 +83,10 @@ export default function AnalysisBoardScreen({ route, navigation }: AnalysisBoard
     forceUpdate(n => n + 1);
   }, [moveTree, currentFen]);
 
+  const handleSelectRepertoireMatch = useCallback((match: ChapterFenMatch) => {
+    navigation?.navigate?.('RepertoireStudy', { repertoireId: match.repertoireId, chapterId: match.chapterId });
+  }, [navigation]);
+
   const triggerUpdate = useCallback(() => forceUpdate(n => n + 1), []);
 
   const handleMove = useCallback((from: string, to: string) => {
@@ -123,6 +128,7 @@ export default function AnalysisBoardScreen({ route, navigation }: AnalysisBoard
       masterGames={masterGames}
       loadingGames={loadingGames}
       onSelectGame={handleSelectGame}
+      onSelectRepertoireMatch={handleSelectRepertoireMatch}
     />
   );
 }

@@ -19,6 +19,7 @@ export const ScreenSettingsService = {
         coordinatesVisible: true,
         moveHistoryVisible: true,
         boardSize: 'xlarge',
+        visibleTabs: { yourGames: true, masterGames: true, findPosition: true },
       },
       repertoire: {
         orientation: 'white', // Will be overridden by repertoire.color
@@ -26,6 +27,7 @@ export const ScreenSettingsService = {
         coordinatesVisible: true,
         moveHistoryVisible: true,
         boardSize: 'xlarge',
+        visibleTabs: { yourGames: true, masterGames: true, findPosition: true },
       },
       gameReview: {
         orientation: 'white', // Will be overridden by session.userColor
@@ -33,6 +35,7 @@ export const ScreenSettingsService = {
         coordinatesVisible: true,
         moveHistoryVisible: false,
         boardSize: 'xlarge',
+        visibleTabs: { yourGames: true, masterGames: true, findPosition: true },
       },
       training: {
         orientation: 'white', // Will be overridden by card.color
@@ -40,6 +43,7 @@ export const ScreenSettingsService = {
         coordinatesVisible: true,
         moveHistoryVisible: false,
         boardSize: 'xlarge',
+        visibleTabs: { yourGames: true, masterGames: true, findPosition: true },
       },
     };
   },

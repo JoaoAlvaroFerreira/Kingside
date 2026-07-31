@@ -15,6 +15,7 @@ import { ChapterList } from '@components/repertoire/ChapterList';
 import { ChapterSelectModal } from '@components/ChapterSelectModal';
 import { UserGame, MasterGame } from '@types';
 import { useGameSearch } from '@hooks/useGameSearch';
+import { ChapterFenMatch } from '@utils/extractRepertoirePositions';
 
 interface RepertoireStudyScreenProps {
   navigation: any;
@@ -62,6 +63,10 @@ export default function RepertoireStudyScreen({ navigation, route }: RepertoireS
 
   const handleSelectGame = (game: UserGame | MasterGame) => {
     navigation.navigate('Analysis', { game });
+  };
+
+  const handleSelectRepertoireMatch = (match: ChapterFenMatch) => {
+    navigation.navigate('RepertoireStudy', { repertoireId: match.repertoireId, chapterId: match.chapterId });
   };
 
   const handleMove = (from: string, to: string) => {
@@ -175,6 +180,7 @@ export default function RepertoireStudyScreen({ navigation, route }: RepertoireS
         masterGames={masterGames}
         loadingGames={loadingGames}
         onSelectGame={handleSelectGame}
+        onSelectRepertoireMatch={handleSelectRepertoireMatch}
         wideLeftPanel={wideLeftPanel}
         narrowHeader={narrowHeader}
       />

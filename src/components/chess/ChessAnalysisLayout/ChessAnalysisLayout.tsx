@@ -13,13 +13,15 @@ import { ChessWorkspace } from '@components/chess/ChessWorkspace/ChessWorkspace'
 import { MoveHistory } from '@components/chess/MoveHistory/MoveHistory';
 import { SettingsModal } from '@components/chess/ChessWorkspace/SettingsModal';
 import { GameList } from '@components/repertoire/GameList';
+import { RepertoireMatchList } from '@components/repertoire/RepertoireMatchList';
 import { MoveTree } from '@utils/MoveTree';
-import { UserGame, MasterGame, ScreenKey } from '@types';
+import { buildChapterFenIndex, ChapterFenMatch } from '@utils/extractRepertoirePositions';
+import { UserGame, MasterGame, ScreenKey, normalizeFen } from '@types';
 import { useStore } from '@store';
 
 const WIDE_GAME_LIST_HEIGHT = 180;
 
-type AnalysisTab = 'moves' | 'yourGames' | 'masterGames';
+type AnalysisTab = 'moves' | 'yourGames' | 'masterGames' | 'findPosition';
 
 interface ChessAnalysisLayoutProps {
   // MoveTree state (owned by parent screen)
@@ -44,6 +46,7 @@ interface ChessAnalysisLayoutProps {
   masterGames: MasterGame[];
   loadingGames: boolean;
   onSelectGame: (game: UserGame | MasterGame) => void;
+  onSelectRepertoireMatch: (match: ChapterFenMatch) => void;
 
   // Optional content injected into the wide layout (e.g. left panel for repertoire)
   wideLeftPanel?: React.ReactNode;
@@ -69,15 +72,23 @@ export function ChessAnalysisLayout({
   masterGames,
   loadingGames,
   onSelectGame,
+  onSelectRepertoireMatch,
   wideLeftPanel,
   narrowHeader,
 }: ChessAnalysisLayoutProps) {
   const { width, height } = useWindowDimensions();
-  const { screenSettings } = useStore();
+  const { screenSettings, repertoires } = useStore();
   const isWide = width > 700 && width > height;
 
   const [activeTab, setActiveTab] = useState<AnalysisTab>('moves');
   const [settingsVisible, setSettingsVisible] = useState(false);
+
+  const visibleTabs = screenSettings[screenKey].visibleTabs;
+  const chapterFenIndex = useMemo(() => buildChapterFenIndex(repertoires), [repertoires]);
+  const repertoireMatches = useMemo(
+    () => chapterFenIndex.get(normalizeFen(currentFen)) ?? [],
+    [chapterFenIndex, currentFen]
+  );
 
   // Flat moves for standalone MoveHistory (narrow/tabbed mode)
   const structureVersion = moveTree.structureVersion;
@@ -106,9 +117,11 @@ export function ChessAnalysisLayout({
 
   const TABS: { key: AnalysisTab; label: string }[] = [
     { key: 'moves', label: 'Moves' },
-    { key: 'yourGames', label: `Your Games (${userGames.length})` },
-    { key: 'masterGames', label: `Master (${masterGames.length})` },
+    ...(visibleTabs.yourGames ? [{ key: 'yourGames' as const, label: `Your Games (${userGames.length})` }] : []),
+    ...(visibleTabs.masterGames ? [{ key: 'masterGames' as const, label: `Master (${masterGames.length})` }] : []),
+    ...(visibleTabs.findPosition ? [{ key: 'findPosition' as const, label: `Find Position (${repertoireMatches.length})` }] : []),
   ];
+  const effectiveActiveTab: AnalysisTab = TABS.some(t => t.key === activeTab) ? activeTab : 'moves';
 
   // ── Wide layout: board + inline MoveHistory, game lists below ──
   if (isWide) {
@@ -124,24 +137,37 @@ export function ChessAnalysisLayout({
               verticalOffset={WIDE_GAME_LIST_HEIGHT}
             />
             <View style={styles.wideBottomSection}>
-              <View style={styles.gameListHalf}>
-                <GameList
-                  title="Your Games"
-                  games={userGames}
-                  onSelect={onSelectGame}
-                  defaultCollapsed={false}
-                  loading={loadingGames}
-                />
-              </View>
-              <View style={styles.gameListHalf}>
-                <GameList
-                  title="Master Games"
-                  games={masterGames}
-                  onSelect={onSelectGame}
-                  defaultCollapsed={false}
-                  loading={loadingGames}
-                />
-              </View>
+              {visibleTabs.yourGames && (
+                <View style={styles.gameListHalf}>
+                  <GameList
+                    title="Your Games"
+                    games={userGames}
+                    onSelect={onSelectGame}
+                    defaultCollapsed={false}
+                    loading={loadingGames}
+                  />
+                </View>
+              )}
+              {visibleTabs.masterGames && (
+                <View style={styles.gameListHalf}>
+                  <GameList
+                    title="Master Games"
+                    games={masterGames}
+                    onSelect={onSelectGame}
+                    defaultCollapsed={false}
+                    loading={loadingGames}
+                  />
+                </View>
+              )}
+              {visibleTabs.findPosition && (
+                <View style={styles.gameListHalf}>
+                  <RepertoireMatchList
+                    matches={repertoireMatches}
+                    onSelect={onSelectRepertoireMatch}
+                    defaultCollapsed={false}
+                  />
+                </View>
+              )}
             </View>
           </View>
         </View>
@@ -165,10 +191,10 @@ export function ChessAnalysisLayout({
         {TABS.map(tab => (
           <TouchableOpacity
             key={tab.key}
-            style={[styles.tabButton, activeTab === tab.key && styles.tabButtonActive]}
+            style={[styles.tabButton, effectiveActiveTab === tab.key && styles.tabButtonActive]}
             onPress={() => setActiveTab(tab.key)}
           >
-            <Text style={[styles.tabButtonText, activeTab === tab.key && styles.tabButtonTextActive]}>
+            <Text style={[styles.tabButtonText, effectiveActiveTab === tab.key && styles.tabButtonTextActive]}>
               {tab.label}
             </Text>
           </TouchableOpacity>
@@ -177,7 +203,7 @@ export function ChessAnalysisLayout({
 
       {/* Tab Content */}
       <View style={styles.tabContent}>
-        {activeTab === 'moves' && (
+        {effectiveActiveTab === 'moves' && (
           <MoveHistory
             moves={flatMoves}
             currentNodeId={currentNodeId}
@@ -194,7 +220,7 @@ export function ChessAnalysisLayout({
           />
         )}
 
-        {activeTab === 'yourGames' && (
+        {effectiveActiveTab === 'yourGames' && (
           <View style={styles.tabGameList}>
             {loadingGames ? (
               <View style={styles.tabLoading}>
@@ -213,7 +239,7 @@ export function ChessAnalysisLayout({
           </View>
         )}
 
-        {activeTab === 'masterGames' && (
+        {effectiveActiveTab === 'masterGames' && (
           <View style={styles.tabGameList}>
             {loadingGames ? (
               <View style={styles.tabLoading}>
@@ -229,6 +255,16 @@ export function ChessAnalysisLayout({
                 loading={false}
               />
             )}
+          </View>
+        )}
+
+        {effectiveActiveTab === 'findPosition' && (
+          <View style={styles.tabGameList}>
+            <RepertoireMatchList
+              matches={repertoireMatches}
+              onSelect={onSelectRepertoireMatch}
+              defaultCollapsed={false}
+            />
           </View>
         )}
       </View>

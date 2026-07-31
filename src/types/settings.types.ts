@@ -8,6 +8,11 @@ export interface ScreenSettings {
   coordinatesVisible: boolean;
   moveHistoryVisible: boolean;
   boardSize: 'tiny' | 'small' | 'medium' | 'large' | 'xlarge';
+  visibleTabs: {
+    yourGames: boolean;
+    masterGames: boolean;
+    findPosition: boolean;
+  };
 }
 
 export interface AllScreenSettings {

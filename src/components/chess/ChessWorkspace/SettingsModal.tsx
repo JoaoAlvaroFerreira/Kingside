@@ -35,6 +35,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [coordinatesVisible, setCoordinatesVisible] = useState(currentSettings.coordinatesVisible);
   const [moveHistoryVisible, setMoveHistoryVisible] = useState(currentSettings.moveHistoryVisible);
   const [boardSize, setBoardSize] = useState(currentSettings.boardSize || 'small');
+  const [visibleTabs, setVisibleTabs] = useState(currentSettings.visibleTabs);
+
+  const showTabSettings = screenKey === 'analysis' || screenKey === 'repertoire';
 
   const handleSave = async () => {
     await updateScreenSettings(screenKey, {
@@ -43,6 +46,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       coordinatesVisible,
       moveHistoryVisible,
       boardSize,
+      visibleTabs,
     });
     onClose();
   };
@@ -54,6 +58,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     setCoordinatesVisible(currentSettings.coordinatesVisible);
     setMoveHistoryVisible(currentSettings.moveHistoryVisible);
     setBoardSize(currentSettings.boardSize || 'small');
+    setVisibleTabs(currentSettings.visibleTabs);
     onClose();
   };
 
@@ -251,6 +256,49 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 />
               </View>
             </View>
+
+            {/* Tab Visibility */}
+            {showTabSettings && (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Tabs</Text>
+
+                <View style={styles.switchRow}>
+                  <View style={styles.switchLabel}>
+                    <Text style={styles.label}>Your Games</Text>
+                  </View>
+                  <Switch
+                    value={visibleTabs.yourGames}
+                    onValueChange={(value) => setVisibleTabs({ ...visibleTabs, yourGames: value })}
+                    trackColor={{ false: '#444', true: '#4a9eff' }}
+                    thumbColor={visibleTabs.yourGames ? '#fff' : '#bbb'}
+                  />
+                </View>
+
+                <View style={[styles.switchRow, styles.switchRowSpacing]}>
+                  <View style={styles.switchLabel}>
+                    <Text style={styles.label}>Master Games</Text>
+                  </View>
+                  <Switch
+                    value={visibleTabs.masterGames}
+                    onValueChange={(value) => setVisibleTabs({ ...visibleTabs, masterGames: value })}
+                    trackColor={{ false: '#444', true: '#4a9eff' }}
+                    thumbColor={visibleTabs.masterGames ? '#fff' : '#bbb'}
+                  />
+                </View>
+
+                <View style={[styles.switchRow, styles.switchRowSpacing]}>
+                  <View style={styles.switchLabel}>
+                    <Text style={styles.label}>Find Position</Text>
+                  </View>
+                  <Switch
+                    value={visibleTabs.findPosition}
+                    onValueChange={(value) => setVisibleTabs({ ...visibleTabs, findPosition: value })}
+                    trackColor={{ false: '#444', true: '#4a9eff' }}
+                    thumbColor={visibleTabs.findPosition ? '#fff' : '#bbb'}
+                  />
+                </View>
+              </View>
+            )}
           </ScrollView>
 
           {/* Footer */}
@@ -353,6 +401,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+  },
+  switchRowSpacing: {
+    marginTop: 8,
   },
   switchLabel: {
     flex: 1,
