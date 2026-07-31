@@ -18,7 +18,10 @@ echo ========================================
 echo.
 
 REM Build the release APK
-call build-release-apk.bat --ci
+REM NOTE: must use an explicit path (%~dp0), not a bare filename — some
+REM shells/sandboxes that hand off to cmd.exe don't replicate cmd's
+REM implicit "search CWD first" behavior for bare command names.
+call "%~dp0build-release-apk.bat" --ci
 if %ERRORLEVEL% NEQ 0 (
     echo ERROR: Build failed. Aborting release.
     exit /b 1

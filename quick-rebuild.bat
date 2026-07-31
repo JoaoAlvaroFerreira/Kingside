@@ -6,7 +6,9 @@ echo.
 
 echo [1/2] Building debug APK...
 cd android
-call gradlew assembleDebug
+REM Explicit .\ prefix — bare "gradlew" fails to resolve under some
+REM shells/sandboxes that hand off to cmd.exe (see release.bat note).
+call .\gradlew assembleDebug
 if %ERRORLEVEL% NEQ 0 (
     echo.
     echo ERROR: Build failed!

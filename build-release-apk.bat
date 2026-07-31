@@ -35,7 +35,9 @@ if %ERRORLEVEL% NEQ 0 (
 
 echo [3/3] Building release APK...
 cd android
-call gradlew assembleRelease
+REM Explicit .\ prefix — bare "gradlew" fails to resolve under some
+REM shells/sandboxes that hand off to cmd.exe (see release.bat note).
+call .\gradlew assembleRelease
 if %ERRORLEVEL% NEQ 0 (
     echo ERROR: Build failed. Check the output above.
     cd ..
