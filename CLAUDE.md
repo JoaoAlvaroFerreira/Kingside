@@ -43,8 +43,7 @@ Kingside is a React Native/Expo chess training app. Personal tool for a 2000+ ra
 ```
 
 **State Management:**
-- Zustand store (`src/store/index.ts`) with AsyncStorage persistence
-- Separate arrays: `repertoires[]`, `userGames[]`, `masterGames[]`, `reviewCards[]`, `gameReviewStatuses[]`, `reviewSettings`
+- Zustand store (`src/store/index.ts`) — most data via `DatabaseService` (SQLite), but `lineStats`, `reviewCards`, and `gameReviewStatuses` still persist through `StorageService` (AsyncStorage) pending migration
 - Date objects serialized/deserialized with custom reviver
 
 **Navigation:**
@@ -59,21 +58,23 @@ Kingside is a React Native/Expo chess training app. Personal tool for a 2000+ ra
 - **Game Review**: Engine analysis integration (local Stockfish), FEN-based repertoire matching with complete transposition detection, Lichess win-probability classification (blunder ≥30%, mistake ≥20%, inaccuracy ≥10%), eval graph, 4-tab UI (Key Moves / Graph / Your Games / Master Games)
 - **Interactive Chess Board**: Full variation support, comment display (💬 indicators), touch handling optimized for mobile
 - **Screen Settings**: Per-screen UI preferences (orientation, engine, eval bar, coordinates, move history)
-- **Database**: SQLite storage for **all data** (games + repertoires + settings). Migration service migrates from AsyncStorage on first launch.
+- **Database**: SQLite storage for games, repertoires, settings, and FEN position indexes. `lineStats`, `reviewCards`, and `gameReviewStatuses` still in AsyncStorage — pending migration.
 - **ChessWorkspace**: Centralized board+engine+movehistory layout. Engine runs internally via `useEngine` — **do not call `useEngine` in screens that use ChessWorkspace**. Percentage-based board sizing. Wide/narrow responsive layout.
 - **Orientation**: Full landscape/tablet support (`app.json "orientation": "default"`, `AndroidManifest screenOrientation="fullSensor"`)
-- **Training Services**: `LineGenerator` (lazy DFS batches), `BreadthFirstTrainer` (BFS queue for user-move positions)
+- **Training System**: `TrainingDashboardScreen` + `TrainingSessionScreen` (full drill UI), `TrainingService` (SM2-based scheduling), `SM2Service`, `LineGenerator` (lazy DFS batches), `BreadthFirstTrainer` (BFS queue for user-move positions)
+- **FEN Position Index**: `searchUserGamesByFEN` / `searchMasterGamesByFEN` — SQLite FEN index ready, UI not yet wired
 
 ### 🚧 In Progress
-- **Training System**: LineGenerator and BreadthFirstTrainer implemented; UI/UX drill flow not yet built
-- **Local Stockfish**: Rewritten 2026-02-16, verify on device
+- **Local Stockfish**: Rewritten 2026-02-16, verify works correctly on device
+- **Mistake-Driven Training**: Game Review flags deviations; training hasn't been wired to boost those line priorities yet
 
 ### 📋 TODO
-- **Spaced Repetition**: SM2 algorithm with context-aware cards, mistake-driven priority, difficulty scaling
-- **Training Drill UI**: Wire up BFS queue + LineGenerator into a usable training screen
-- **Decision Tree Visualization**: Show branching points explicitly
+- **Wire Review → Training**: When Game Review flags a deviation, reset/boost that line's SM2 interval in `lineStats`
+- **Position Browser**: "Your games / Master games from this position" panel on Analysis Board (DB layer done, needs UI)
+- **Decision Tree Visualization**: Show branching points explicitly in repertoire study
+- **Dead Code Audit**: `ReviewCard` + `CardGenerator` path exists in the store but no screen uses it — decide to delete or build out
 - **Linked Positions**: Connect similar structures across different openings
-- **Backend & Sync**: User authentication, cloud storage, multi-device sync
+- **Backend & Sync**: Export/restore DB file to Google Drive as a low-cost alternative to full cloud sync
 
 ## Key Implementation Patterns
 
@@ -300,10 +301,17 @@ release.bat v1.2.3                            # Build release APK + tag + push +
 
 ## Known Issues
 
-### 1. Database Migration
-**Status:** ONGOING - Games stored in SQLite
+### 1. Incomplete Storage Migration
+**Status:** ONGOING — `lineStats`, `reviewCards`, and `gameReviewStatuses` still persist via `StorageService` (AsyncStorage), not SQLite. `DatabaseService` handles everything else. The `deleteRepertoire` action cascades across both stores with no transaction — a crash mid-delete can leave orphaned cards/stats. `updateLineStats` rewrites the full array to AsyncStorage on every training answer; fine now, painful at scale.
 
-User games and master games moved to SQLite database. Repertoires still in AsyncStorage. Migration service handles schema updates.
+### 2. Jest runs test suite twice
+A stale git worktree at `.claude/worktrees/agent-a7302f27` causes Jest to discover and run tests there in addition to `src/`. Fix: `git worktree remove .claude/worktrees/agent-a7302f27` and add `testPathIgnorePatterns: ['/.claude/']` to `jest.config.js`.
+
+### 3. MoveHistory floating nav arrows not persistent
+The floating prev/next arrows on the MoveHistory component disappear or lose state — ongoing issue, root cause not yet diagnosed.
+
+### 4. Console.log in production code
+131 `console.log` calls in non-test source files. Touch handlers are the critical ones (documented to cause lag). Consider `babel-plugin-transform-remove-console` for release builds.
 
 ## Important Notes
 
@@ -325,10 +333,11 @@ User games and master games moved to SQLite database. Repertoires still in Async
 
 ### Storage & Persistence
 - **Date objects**: Automatically serialized/deserialized with custom reviver
-- **All data in SQLite**: Repertoires, games, and settings all stored in `DatabaseService`. `StorageService` (AsyncStorage) is legacy — do not use for new data.
-- **Automatic save**: Store mutations write to `DatabaseService` immediately
-- **Store initialization**: `App.tsx` calls `initialize()` which loads from `DatabaseService`
-- **Migration**: `MigrationService.migrateRepertoiresAndSettings()` runs once on first launch to move data from AsyncStorage to SQLite
+- **SQLite via DatabaseService**: Repertoires, games, settings, and FEN indexes. Always use this for new data.
+- **AsyncStorage via StorageService**: `lineStats`, `reviewCards`, `gameReviewStatuses` — legacy, not yet migrated
+- **Automatic save**: Store mutations write to DB immediately
+- **Store initialization**: `App.tsx` calls `initialize()` which loads from both stores
+- **Migration**: `MigrationService` runs once on first launch to move AsyncStorage data to SQLite
 
 ### Game Review
 - **FEN-based matching**: Uses position map built from MoveTree
@@ -370,21 +379,28 @@ npm test -- --coverage            # Generate coverage report
 
 **Current Coverage:**
 - `GameReviewService` - FEN-based repertoire matching with transposition detection (18 tests)
+- `MoveTree` - core data structure (full coverage)
+- `TrainingService` - SM2 scheduling and line stats
+- `DatabaseService`, `PGNService`, `StorageService`, `ScreenSettingsService`, `OpeningClassifier`
 
 ## Next Steps
 
-### Immediate Priority
-1. **Verify Engine on Device**: Rebuild and test local Stockfish (rewritten 2026-02-16)
-2. **Training Drill UI**: Wire BFS queue + LineGenerator into interactive drill screen
-3. **SM2 Algorithm**: Implement spaced repetition scheduling with difficulty scaling
-4. **Review Card Generation**: Auto-create cards from repertoire positions
+### Phase 0 — Hygiene (cheap, do first)
+1. **Fix Jest double-run**: Remove stale worktree + add `testPathIgnorePatterns` (see Known Issues #2)
+2. **Dead code decision**: Delete `ReviewCard` + `CardGenerator` path or consciously build it out — currently orphaned in the store with no UI
 
-### Short-Term
-5. **Position Filtering**: Filter user/master games by current board position (FEN indexing in DB)
-6. **Decision Tree Visualization**: Show branching points explicitly
-7. **Analysis Board**: Add keyboard shortcuts (ArrowLeft/Right navigation)
+### Phase 1 — Complete Storage Migration
+3. Migrate `lineStats`, `reviewCards`, `gameReviewStatuses` to SQLite with per-row writes
+4. Make `deleteRepertoire` cascade in a single transaction across both stores
 
-### Long-Term
-8. **Linked Positions**: Connect similar structures across different openings
-9. **Move Categorization**: Tag moves as forced, main line, sideline, dubious, or novelty
-10. **Backend & Sync**: User authentication, cloud storage, multi-device sync
+### Phase 2 — The Differentiator: Wire Review → Training
+5. When Game Review flags a repertoire deviation, reset/boost that line's SM2 interval in `lineStats` — this closes the loop between the two halves that already exist
+
+### Phase 3 — Cash In the FEN Index
+6. **Position Browser**: Add "Your games / Master games from this position" to Analysis Board (DB layer complete, just needs UI)
+7. **Decision Tree Visualization**: Render branching points in repertoire study
+
+### Phase 4 — Long-Term
+8. **Move Categorization**: Tag moves as forced / main line / sideline / dubious / novelty
+9. **Linked Positions**: Connect similar pawn structures across different openings
+10. **Backup/Restore**: Export/restore DB file to Google Drive (90% of sync value, 5% of the effort vs. full backend)
