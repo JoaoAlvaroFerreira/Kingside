@@ -70,6 +70,7 @@ Kingside is a React Native/Expo chess training app. Personal tool for a 2000+ ra
 - **Mistake-Driven Training**: Game Review flags deviations; training hasn't been wired to boost those line priorities yet
 
 ### 📋 TODO
+- **Fix Find Position startup perf**: `buildChapterFenIndex` (`src/utils/extractRepertoirePositions.ts`) is called eagerly via `useMemo` in `ChessAnalysisLayout.tsx` on every app load (default home screen). `extractChapterPositions` enumerates every root-to-leaf line in a chapter's move tree separately (combinatorial in branching factor) and replays each line from scratch with a fresh `Chess()` instance — for repertoires with real depth/variations this can take a very long time and makes app startup look like it's hung. Fix: single incremental DFS reusing one `Chess` instance (push/undo moves, O(nodes) instead of O(lines × depth)), and/or make the index build lazy (only when the Find Position tab is opened) instead of eager on mount. Confirmed on-device 2026-07-31: app eventually loads, just very slowly with a large repertoire set.
 - **Wire Review → Training**: When Game Review flags a deviation, reset/boost that line's SM2 interval in `lineStats`
 - **Position Browser**: "Your games / Master games from this position" panel on Analysis Board (DB layer done, needs UI)
 - **Decision Tree Visualization**: Show branching points explicitly in repertoire study
