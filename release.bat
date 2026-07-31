@@ -2,7 +2,7 @@
 setlocal
 
 if "%~1"=="" (
-    echo Usage: release.bat v1.0.0
+    echo Usage: release.bat v1.3.0
     echo.
     echo This will build the release APK, tag the commit, and create a GitHub release.
     exit /b 1
