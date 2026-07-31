@@ -57,12 +57,13 @@ Kingside is a React Native/Expo chess training app. Personal tool for a 2000+ ra
 - **Repertoire Management**: Fixed 4-level hierarchy (Color → Opening Type → Variation → Sub-variation → Chapters), auto-categorization via ECO codes, chapter select modal, `lastStudiedAt` tracking
 - **Game Review**: Engine analysis integration (local Stockfish), FEN-based repertoire matching with complete transposition detection, Lichess win-probability classification (blunder ≥30%, mistake ≥20%, inaccuracy ≥10%), eval graph, 4-tab UI (Key Moves / Graph / Your Games / Master Games)
 - **Interactive Chess Board**: Full variation support, comment display (💬 indicators), touch handling optimized for mobile
-- **Screen Settings**: Per-screen UI preferences (orientation, engine, eval bar, coordinates, move history)
+- **Screen Settings**: Per-screen UI preferences (orientation, engine, eval bar, coordinates, move history, per-tab visibility for Your Games / Master Games / Find Position)
 - **Database**: SQLite storage for games, repertoires, settings, and FEN position indexes. `lineStats`, `reviewCards`, and `gameReviewStatuses` still in AsyncStorage — pending migration.
 - **ChessWorkspace**: Centralized board+engine+movehistory layout. Engine runs internally via `useEngine` — **do not call `useEngine` in screens that use ChessWorkspace**. Percentage-based board sizing. Wide/narrow responsive layout.
 - **Orientation**: Full landscape/tablet support (`app.json "orientation": "default"`, `AndroidManifest screenOrientation="fullSensor"`)
 - **Training System**: `TrainingDashboardScreen` + `TrainingSessionScreen` (full drill UI), `TrainingService` (SM2-based scheduling), `SM2Service`, `LineGenerator` (lazy DFS batches), `BreadthFirstTrainer` (BFS queue for user-move positions)
 - **FEN Position Index**: `searchUserGamesByFEN` / `searchMasterGamesByFEN` — SQLite FEN index ready, UI not yet wired
+- **Find Position**: "Find Position" tab on Analysis Board / Repertoire Study lists which repertoire chapters contain the current FEN (in-memory chapter-level index via `buildChapterFenIndex`, `src/utils/extractRepertoirePositions.ts`), tap to jump to that chapter
 
 ### 🚧 In Progress
 - **Local Stockfish**: Rewritten 2026-02-16, verify works correctly on device
@@ -289,8 +290,10 @@ adb install -r android/app/build/outputs/apk/debug/app-debug.apk
 # Quick Scripts (in project root)
 quick-rebuild.bat                             # Fast debug rebuild + install
 build-release-apk.bat                         # Generate standalone release APK
-release.bat v1.2.3                            # Build release APK + tag + push + GitHub release (gh CLI)
+release.bat v1.3.0                            # Build release APK + tag + push + GitHub release (gh CLI)
 ```
+
+**Batch script gotcha (Claude Code / git-bash):** these `.bat` files call sibling scripts (`build-release-apk.bat`, `gradlew`) by bare filename. Some shells that hand off `.bat` execution to `cmd.exe` — including git-bash's sandboxed invocation used by Claude Code's Bash tool — don't replicate cmd's implicit "search current directory first" behavior for bare command names, so `call gradlew ...` fails with "not recognized" even though the file is right there. All three scripts now use explicit paths (`%~dp0` for sibling scripts, `.\` for `gradlew`) to work around this; a normal Windows terminal was never affected. If you add a new `call` to another script/binary in one of these files, qualify the path the same way.
 
 ## App Icon / Splash
 
@@ -304,13 +307,10 @@ release.bat v1.2.3                            # Build release APK + tag + push +
 ### 1. Incomplete Storage Migration
 **Status:** ONGOING — `lineStats`, `reviewCards`, and `gameReviewStatuses` still persist via `StorageService` (AsyncStorage), not SQLite. `DatabaseService` handles everything else. The `deleteRepertoire` action cascades across both stores with no transaction — a crash mid-delete can leave orphaned cards/stats. `updateLineStats` rewrites the full array to AsyncStorage on every training answer; fine now, painful at scale.
 
-### 2. Jest runs test suite twice
-A stale git worktree at `.claude/worktrees/agent-a7302f27` causes Jest to discover and run tests there in addition to `src/`. Fix: `git worktree remove .claude/worktrees/agent-a7302f27` and add `testPathIgnorePatterns: ['/.claude/']` to `jest.config.js`.
-
-### 3. MoveHistory floating nav arrows not persistent
+### 2. MoveHistory floating nav arrows not persistent
 The floating prev/next arrows on the MoveHistory component disappear or lose state — ongoing issue, root cause not yet diagnosed.
 
-### 4. Console.log in production code
+### 3. Console.log in production code
 131 `console.log` calls in non-test source files. Touch handlers are the critical ones (documented to cause lag). Consider `babel-plugin-transform-remove-console` for release builds.
 
 ## Important Notes
@@ -386,21 +386,20 @@ npm test -- --coverage            # Generate coverage report
 ## Next Steps
 
 ### Phase 0 — Hygiene (cheap, do first)
-1. **Fix Jest double-run**: Remove stale worktree + add `testPathIgnorePatterns` (see Known Issues #2)
-2. **Dead code decision**: Delete `ReviewCard` + `CardGenerator` path or consciously build it out — currently orphaned in the store with no UI
+1. **Dead code decision**: Delete `ReviewCard` + `CardGenerator` path or consciously build it out — currently orphaned in the store with no UI
 
 ### Phase 1 — Complete Storage Migration
-3. Migrate `lineStats`, `reviewCards`, `gameReviewStatuses` to SQLite with per-row writes
-4. Make `deleteRepertoire` cascade in a single transaction across both stores
+2. Migrate `lineStats`, `reviewCards`, `gameReviewStatuses` to SQLite with per-row writes
+3. Make `deleteRepertoire` cascade in a single transaction across both stores
 
 ### Phase 2 — The Differentiator: Wire Review → Training
-5. When Game Review flags a repertoire deviation, reset/boost that line's SM2 interval in `lineStats` — this closes the loop between the two halves that already exist
+4. When Game Review flags a repertoire deviation, reset/boost that line's SM2 interval in `lineStats` — this closes the loop between the two halves that already exist
 
 ### Phase 3 — Cash In the FEN Index
-6. **Position Browser**: Add "Your games / Master games from this position" to Analysis Board (DB layer complete, just needs UI)
-7. **Decision Tree Visualization**: Render branching points in repertoire study
+5. ~~Position Browser: "Your games / Master games from this position" on Analysis Board~~ — done (Your Games / Master Games tabs); Find Position tab (repertoire chapters) added 2026-07-31
+6. **Decision Tree Visualization**: Render branching points in repertoire study
 
 ### Phase 4 — Long-Term
-8. **Move Categorization**: Tag moves as forced / main line / sideline / dubious / novelty
-9. **Linked Positions**: Connect similar pawn structures across different openings
-10. **Backup/Restore**: Export/restore DB file to Google Drive (90% of sync value, 5% of the effort vs. full backend)
+7. **Move Categorization**: Tag moves as forced / main line / sideline / dubious / novelty
+8. **Linked Positions**: Connect similar pawn structures across different openings
+9. **Backup/Restore**: Export/restore DB file to Google Drive (90% of sync value, 5% of the effort vs. full backend)
