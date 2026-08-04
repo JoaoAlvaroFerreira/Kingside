@@ -5,7 +5,7 @@
 
 import { Chess } from 'chess.js';
 import { Chapter, Repertoire, normalizeFen } from '@types';
-import { MoveTree } from '@utils/MoveTree';
+import { MoveTree, MoveNode } from '@utils/MoveTree';
 
 /** Map<moveCount, Map<normalizedFen, Set<nextMoveSAN>>> */
 export type PositionMap = Map<number, Map<string, Set<string>>>;
@@ -14,44 +14,46 @@ export type PositionMap = Map<number, Map<string, Set<string>>>;
  * Walk a chapter's move tree and extract every reachable position along with
  * the moves playable from it. The key insight: we record (preFen → nextMove)
  * so the game-review matcher can check whether the resulting FEN exists.
+ *
+ * Single DFS over the tree reusing one Chess instance (move/undo) — O(nodes).
+ * The previous implementation enumerated every root-to-leaf line separately
+ * and replayed each from scratch, which is combinatorial in branching factor
+ * and made this take a very long time on deep, branchy repertoires.
  */
 export function extractChapterPositions(chapter: Chapter): PositionMap {
   const result: PositionMap = new Map();
 
-  const addPosition = (moveCount: number, normalizedFen: string, nextMove: string) => {
+  const addPosition = (moveCount: number, normalizedFen: string, nextMove?: string) => {
     if (!result.has(moveCount)) result.set(moveCount, new Map());
     const atCount = result.get(moveCount)!;
     if (!atCount.has(normalizedFen)) atCount.set(normalizedFen, new Set());
-    atCount.get(normalizedFen)!.add(nextMove);
+    if (nextMove) atCount.get(normalizedFen)!.add(nextMove);
   };
 
   const moveTree = MoveTree.fromJSON(chapter.moveTree);
-  const allLines: string[][] = [];
+  const chess = new Chess();
 
-  const dfs = (node: any, line: string[]) => {
-    if (!node) return;
-    const next = [...line, node.san];
+  const visit = (node: MoveNode, moveCount: number) => {
+    addPosition(moveCount, normalizeFen(chess.fen()), node.san);
+
+    try {
+      chess.move(node.san);
+    } catch {
+      // Malformed move — matches prior behavior of stopping this branch early
+      return;
+    }
+
     if (!node.children || node.children.length === 0) {
-      allLines.push(next);
+      // Leaf: register the resulting position with no outgoing moves yet
+      addPosition(moveCount + 1, normalizeFen(chess.fen()));
     } else {
-      for (const child of node.children) dfs(child, next);
+      for (const child of node.children) visit(child, moveCount + 1);
     }
-  };
-  for (const root of moveTree.getRootMoves()) dfs(root, []);
 
-  for (const line of allLines) {
-    const chess = new Chess();
-    for (let i = 0; i < line.length; i++) {
-      addPosition(i, normalizeFen(chess.fen()), line[i]);
-      try { chess.move(line[i]); } catch { break; }
-    }
-    // Register the terminal position (line end — no next moves to add, but ensure the fen exists)
-    const terminalFen = normalizeFen(chess.fen());
-    if (!result.has(line.length)) result.set(line.length, new Map());
-    if (!result.get(line.length)!.has(terminalFen)) {
-      result.get(line.length)!.set(terminalFen, new Set());
-    }
-  }
+    chess.undo();
+  };
+
+  for (const root of moveTree.getRootMoves()) visit(root, 0);
 
   return result;
 }

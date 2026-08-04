@@ -20,6 +20,7 @@ import { UserGame, MasterGame, ScreenKey, normalizeFen } from '@types';
 import { useStore } from '@store';
 
 const WIDE_GAME_LIST_HEIGHT = 180;
+const EMPTY_FEN_INDEX = new Map<string, ChapterFenMatch[]>();
 
 type AnalysisTab = 'moves' | 'yourGames' | 'masterGames' | 'findPosition';
 
@@ -84,7 +85,10 @@ export function ChessAnalysisLayout({
   const [settingsVisible, setSettingsVisible] = useState(false);
 
   const visibleTabs = screenSettings[screenKey].visibleTabs;
-  const chapterFenIndex = useMemo(() => buildChapterFenIndex(repertoires), [repertoires]);
+  const chapterFenIndex = useMemo(
+    () => (visibleTabs.findPosition ? buildChapterFenIndex(repertoires) : EMPTY_FEN_INDEX),
+    [repertoires, visibleTabs.findPosition]
+  );
   const repertoireMatches = useMemo(
     () => chapterFenIndex.get(normalizeFen(currentFen)) ?? [],
     [chapterFenIndex, currentFen]
