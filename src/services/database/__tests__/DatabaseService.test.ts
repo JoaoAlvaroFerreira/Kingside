@@ -205,6 +205,34 @@ describe('DatabaseService', () => {
     });
   });
 
+  describe('findChaptersByFen', () => {
+    beforeEach(() => DatabaseService.initialize());
+
+    it('returns the (repertoire, chapter) pairs containing a position', async () => {
+      mockDb.getAllAsync.mockResolvedValueOnce([
+        { repertoire_id: 'rep-a', chapter_id: 'ch-1' },
+        { repertoire_id: 'rep-b', chapter_id: 'ch-9' },
+      ]);
+
+      const hits = await DatabaseService.findChaptersByFen('some-fen');
+
+      expect(hits).toEqual([
+        { repertoireId: 'rep-a', chapterId: 'ch-1' },
+        { repertoireId: 'rep-b', chapterId: 'ch-9' },
+      ]);
+      const calls = mockDb.getAllAsync.mock.calls;
+      const [sql, args] = calls[calls.length - 1];
+      expect(sql).toMatch(/FROM repertoire_positions/);
+      expect(sql).toMatch(/normalized_fen = \?/);
+      expect(args).toEqual(['some-fen']);
+    });
+
+    it('returns empty rather than throwing when the index is unavailable', async () => {
+      mockDb.getAllAsync.mockRejectedValueOnce(new Error('no such column: chapter_id'));
+      await expect(DatabaseService.findChaptersByFen('some-fen')).resolves.toEqual([]);
+    });
+  });
+
   describe('getAllRepertoires', () => {
     beforeEach(() => DatabaseService.initialize());
 
@@ -274,7 +302,10 @@ describe('DatabaseService', () => {
     it('addUserGames stores moves as JSON string', async () => {
       const game = makeGame({ moves: ['e4', 'e5', 'Nf3'] });
       await DatabaseService.addUserGames([game]);
-      const args = mockDb.runAsync.mock.calls[0][1];
+      const insert = mockDb.runAsync.mock.calls.find(
+        ([sql]: [string]) => sql.includes('INSERT OR REPLACE INTO user_games')
+      );
+      const args = insert[1];
       const movesArg = args.find((a: any) => {
         try { return Array.isArray(JSON.parse(a)); } catch { return false; }
       });

@@ -22,7 +22,7 @@ const DB_NAME = 'kingside.db';
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/;
 const REP_INDEXED_KEY_PREFIX = 'rep_pos_indexed:';
 const PAGE_SIZE = 25; // Games per page
-const SCHEMA_VERSION = 4; // Bump when schema changes
+const SCHEMA_VERSION = 5; // Bump when schema changes
 const INDEX_BATCH_SIZE = 10; // Games per batch during background indexing
 
 interface PaginatedResult<T> {
@@ -277,6 +277,23 @@ class DatabaseServiceClass {
       console.log('[DatabaseService] Migrated to schema v4 (game_analyses table)');
     }
 
+    // V5: chapter_id on repertoire_positions, so "Find Position" can resolve which chapters
+    // contain a FEN with an indexed query instead of walking every move tree in the UI.
+    const repPosCols = await this.db!.getAllAsync(
+      'PRAGMA table_info(repertoire_positions)'
+    ) as Array<{ name: string }>;
+    if (!repPosCols.some(c => c.name === 'chapter_id')) {
+      await this.db!.execAsync(`
+        ALTER TABLE repertoire_positions ADD COLUMN chapter_id TEXT;
+        CREATE INDEX IF NOT EXISTS idx_rep_pos_fen ON repertoire_positions(normalized_fen);
+      `);
+      // Existing rows predate chapter_id and were merged across chapters, so they can't be
+      // backfilled in place — drop them and clear the markers to force a clean re-index.
+      await this.db!.execAsync('DELETE FROM repertoire_positions');
+      await this.db!.runAsync('DELETE FROM settings WHERE key LIKE ?', [`${REP_INDEXED_KEY_PREFIX}%`]);
+      console.log('[DatabaseService] Migrated to schema v5 (repertoire_positions.chapter_id)');
+    }
+
     if (currentVersion < SCHEMA_VERSION) {
       await this.db!.execAsync(`PRAGMA user_version = ${SCHEMA_VERSION}`);
     }
@@ -341,21 +358,21 @@ class DatabaseServiceClass {
       [repertoire.id]
     );
 
-    const combined: PositionMap = new Map();
+    // Rows are kept per chapter (not merged across the repertoire) so Find Position can
+    // resolve which chapter a position came from without re-walking the move trees.
+    const rows: [string, string, string, number, string, string][] = [];
     for (const chapter of repertoire.chapters) {
+      let positions: PositionMap;
       try {
-        mergePositionMaps(combined, extractChapterPositions(chapter));
+        positions = extractChapterPositions(chapter);
       } catch {
         console.warn(`[DatabaseService] Skipping malformed chapter "${chapter.name}" during position indexing`);
+        continue;
       }
-    }
-
-    // Collect all rows first, then insert in batches to avoid a single
-    // long-running transaction that can time out on large repertoires.
-    const rows: [string, string, number, string, string][] = [];
-    for (const [moveCount, posAtCount] of combined) {
-      for (const [fen, moves] of posAtCount) {
-        rows.push([repertoire.id, repertoire.color, moveCount, fen, JSON.stringify([...moves])]);
+      for (const [moveCount, posAtCount] of positions) {
+        for (const [fen, moves] of posAtCount) {
+          rows.push([repertoire.id, chapter.id, repertoire.color, moveCount, fen, JSON.stringify([...moves])]);
+        }
       }
     }
 
@@ -366,8 +383,8 @@ class DatabaseServiceClass {
         for (const row of batch) {
           await this.db!.runAsync(
             `INSERT INTO repertoire_positions
-               (repertoire_id, color, move_count, normalized_fen, next_moves)
-             VALUES (?, ?, ?, ?, ?)`,
+               (repertoire_id, chapter_id, color, move_count, normalized_fen, next_moves)
+             VALUES (?, ?, ?, ?, ?, ?)`,
             row
           );
         }
@@ -1061,6 +1078,29 @@ class DatabaseServiceClass {
         }
       }
       return combined;
+    }
+  }
+
+  /**
+   * Which repertoire chapters contain this position, as (repertoireId, chapterId) pairs.
+   *
+   * Backs the "Find Position" tab. This is an indexed lookup on a single FEN — the UI
+   * previously built an in-memory index of every position in every chapter on each mount,
+   * which grew unusable on a large repertoire set.
+   */
+  async findChaptersByFen(normalizedFen: string): Promise<Array<{ repertoireId: string; chapterId: string }>> {
+    if (this.isWeb || !this.db) return [];
+
+    try {
+      const rows = await this.db.getAllAsync(
+        `SELECT DISTINCT repertoire_id, chapter_id FROM repertoire_positions
+         WHERE normalized_fen = ? AND chapter_id IS NOT NULL`,
+        [normalizedFen]
+      ) as Array<{ repertoire_id: string; chapter_id: string }>;
+      return rows.map(r => ({ repertoireId: r.repertoire_id, chapterId: r.chapter_id }));
+    } catch {
+      // Table or column not ready yet (e.g. Fast Refresh mid-migration)
+      return [];
     }
   }
 

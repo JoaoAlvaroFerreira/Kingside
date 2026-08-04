@@ -63,7 +63,7 @@ Kingside is a React Native/Expo chess training app. Personal tool for a 2000+ ra
 - **Orientation**: Full landscape/tablet support (`app.json "orientation": "default"`, `AndroidManifest screenOrientation="fullSensor"`)
 - **Training System**: `TrainingDashboardScreen` + `TrainingSessionScreen` (full drill UI), `TrainingService` (SM2-based scheduling), `SM2Service`, `LineGenerator` (lazy DFS batches), `BreadthFirstTrainer` (BFS queue for user-move positions)
 - **FEN Position Index**: `searchUserGamesByFEN` / `searchMasterGamesByFEN` — SQLite FEN index ready, UI not yet wired
-- **Find Position**: "Find Position" tab on Analysis Board / Repertoire Study lists which repertoire chapters contain the current FEN (in-memory chapter-level index via `buildChapterFenIndex`, `src/utils/extractRepertoirePositions.ts`), tap to jump to that chapter
+- **Find Position**: "Find Position" tab on Analysis Board / Repertoire Study lists which repertoire chapters contain the current FEN (indexed SQLite lookup via `DatabaseService.findChaptersByFen`), tap to jump to that chapter
 
 ### 🚧 In Progress
 - **Local Stockfish**: Rewritten 2026-02-16, verify works correctly on device
@@ -317,10 +317,12 @@ distinct causes, fixed across v1.4.0–v1.4.2. Regressing any one brings it back
 3. **No `JSON.parse` reviver on repertoire blobs.** A reviver fires per key across the whole
    move tree to catch a handful of dates. `reviveRepertoireDates()` touches only the known
    `createdAt`/`updatedAt`/`lastStudiedAt` fields.
-4. **`buildChapterFenIndex` runs off the render path** — async, yielding between chapters, via
-   `useState`+`useEffect` in `ChessAnalysisLayout` (never `useMemo`). `extractChapterPositions`
-   is a single DFS reusing one `Chess` instance (O(nodes)); `extractRepertoirePositions.bench.test.ts`
-   guards against the old O(lines × depth) shape.
+4. **Find Position queries SQLite; it never builds an in-memory index.**
+   `repertoire_positions` carries `chapter_id` (schema v5), so `findChaptersByFen()` is one
+   indexed lookup for the current position and names resolve from the store's repertoires.
+   Rows are written **per chapter** — do not merge chapters when indexing or chapter identity
+   is lost. `extractChapterPositions` is a single DFS reusing one `Chess` instance (O(nodes));
+   `extractRepertoirePositions.bench.test.ts` guards against the old O(lines × depth) shape.
 
 ## Known Issues
 

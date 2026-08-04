@@ -4,7 +4,7 @@
  */
 
 import { Chess } from 'chess.js';
-import { Chapter, Repertoire, normalizeFen } from '@types';
+import { Chapter, normalizeFen } from '@types';
 import { MoveTree, MoveNode } from '@utils/MoveTree';
 
 /** Map<moveCount, Map<normalizedFen, Set<nextMoveSAN>>> */
@@ -77,43 +77,5 @@ export interface ChapterFenMatch {
   chapterName: string;
 }
 
-/**
- * Build a chapter-level FEN index across all repertoires: for any normalized
- * FEN, which chapters contain that position anywhere in their move tree.
- *
- * Async and yields between chapters — this is called from a render-adjacent
- * useEffect (not useMemo) specifically so it never blocks the JS thread for
- * the entire duration on a large repertoire set. Blocking here previously
- * made the app look hung right as the startup loading screen handed off to
- * the first real screen.
- */
-export async function buildChapterFenIndex(repertoires: Repertoire[]): Promise<Map<string, ChapterFenMatch[]>> {
-  const index = new Map<string, ChapterFenMatch[]>();
-
-  for (const repertoire of repertoires) {
-    for (const chapter of repertoire.chapters) {
-      const positionMap = extractChapterPositions(chapter);
-      const chapterFens = new Set<string>();
-      for (const posAtCount of positionMap.values()) {
-        for (const fen of posAtCount.keys()) chapterFens.add(fen);
-      }
-
-      const match: ChapterFenMatch = {
-        repertoireId: repertoire.id,
-        repertoireName: repertoire.name,
-        chapterId: chapter.id,
-        chapterName: chapter.name,
-      };
-
-      for (const fen of chapterFens) {
-        if (!index.has(fen)) index.set(fen, []);
-        index.get(fen)!.push(match);
-      }
-
-      // Yield to the JS event loop between chapters so the UI thread stays responsive
-      await new Promise(resolve => setTimeout(resolve, 0));
-    }
-  }
-
-  return index;
-}
+// Note: Find Position resolves chapters through the SQLite FEN index
+// (DatabaseService.findChaptersByFen), not by building an in-memory index here.

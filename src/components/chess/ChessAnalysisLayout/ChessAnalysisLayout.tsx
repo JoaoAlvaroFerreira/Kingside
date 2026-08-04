@@ -15,12 +15,13 @@ import { SettingsModal } from '@components/chess/ChessWorkspace/SettingsModal';
 import { GameList } from '@components/repertoire/GameList';
 import { RepertoireMatchList } from '@components/repertoire/RepertoireMatchList';
 import { MoveTree } from '@utils/MoveTree';
-import { buildChapterFenIndex, ChapterFenMatch } from '@utils/extractRepertoirePositions';
+import { ChapterFenMatch } from '@utils/extractRepertoirePositions';
+import { DatabaseService } from '@services/database/DatabaseService';
 import { UserGame, MasterGame, ScreenKey, normalizeFen } from '@types';
 import { useStore } from '@store';
 
 const WIDE_GAME_LIST_HEIGHT = 180;
-const EMPTY_FEN_INDEX = new Map<string, ChapterFenMatch[]>();
+const EMPTY_MATCHES: ChapterFenMatch[] = [];
 
 type AnalysisTab = 'moves' | 'yourGames' | 'masterGames' | 'findPosition';
 
@@ -86,27 +87,35 @@ export function ChessAnalysisLayout({
 
   const visibleTabs = screenSettings[screenKey].visibleTabs;
 
-  // Computed asynchronously (not useMemo) so building this never blocks the render
-  // that follows app startup or a repertoire edit — it can take a while on a large
-  // repertoire set even at O(nodes), and blocking here made the app look hung right
-  // after the startup loading screen handed off to this one.
-  const [chapterFenIndex, setChapterFenIndex] = useState<Map<string, ChapterFenMatch[]>>(EMPTY_FEN_INDEX);
+  // Find Position resolves through the SQLite FEN index — one indexed lookup for the
+  // current position. Building an in-memory index of every position in every chapter
+  // here (the previous approach) cost O(all repertoire nodes) on every mount, which is
+  // unusable once the repertoire set gets large.
+  const [repertoireMatches, setRepertoireMatches] = useState<ChapterFenMatch[]>(EMPTY_MATCHES);
   useEffect(() => {
     if (!visibleTabs.findPosition) {
-      setChapterFenIndex(EMPTY_FEN_INDEX);
+      setRepertoireMatches(EMPTY_MATCHES);
       return;
     }
     let cancelled = false;
-    buildChapterFenIndex(repertoires).then(index => {
-      if (!cancelled) setChapterFenIndex(index);
+    DatabaseService.findChaptersByFen(normalizeFen(currentFen)).then(hits => {
+      if (cancelled) return;
+      const matches: ChapterFenMatch[] = [];
+      for (const hit of hits) {
+        const repertoire = repertoires.find(r => r.id === hit.repertoireId);
+        const chapter = repertoire?.chapters.find(c => c.id === hit.chapterId);
+        if (!repertoire || !chapter) continue;
+        matches.push({
+          repertoireId: repertoire.id,
+          repertoireName: repertoire.name,
+          chapterId: chapter.id,
+          chapterName: chapter.name,
+        });
+      }
+      setRepertoireMatches(matches);
     });
     return () => { cancelled = true; };
-  }, [repertoires, visibleTabs.findPosition]);
-
-  const repertoireMatches = useMemo(
-    () => chapterFenIndex.get(normalizeFen(currentFen)) ?? [],
-    [chapterFenIndex, currentFen]
-  );
+  }, [currentFen, repertoires, visibleTabs.findPosition]);
 
   // Flat moves for standalone MoveHistory (narrow/tabbed mode)
   const structureVersion = moveTree.structureVersion;
