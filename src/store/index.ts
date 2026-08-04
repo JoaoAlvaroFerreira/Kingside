@@ -154,6 +154,10 @@ export const useStore = create<AppState>((set, get) => ({
         gameReviewStatuses: gameReviewStatuses.length,
       });
       set({ repertoires, userGamesCount, masterGamesCount, reviewCards, lineStats, reviewSettings, screenSettings, gameReviewStatuses, isLoading: false, initStatus: null });
+
+      // Index any repertoires missing position rows — only after the app is usable, since
+      // it shares the SQLite connection with the load above and would otherwise stall startup.
+      void DatabaseService.backfillRepertoirePositionsIfNeeded();
     } catch (error) {
       console.error('Store: Initialization failed:', error);
       if (error instanceof DatabaseOpenError) {

@@ -19,7 +19,7 @@ export class DatabaseOpenError extends Error {
 }
 
 const DB_NAME = 'kingside.db';
-const REPERTOIRE_BACKFILL_COMPLETE_KEY = 'repertoire_positions_backfill_complete';
+const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/;
 const PAGE_SIZE = 25; // Games per page
 const SCHEMA_VERSION = 4; // Bump when schema changes
 const INDEX_BATCH_SIZE = 10; // Games per batch during background indexing
@@ -280,23 +280,36 @@ class DatabaseServiceClass {
       await this.db!.execAsync(`PRAGMA user_version = ${SCHEMA_VERSION}`);
     }
 
-    // Backfill existing repertoires' position index in the background — this walks every
-    // chapter's move tree and can take a while on a large repertoire, so it must not block
-    // app startup. Tracked by its own settings flag (independent of schema version) so that
-    // if the app is killed mid-backfill, it safely resumes on the next launch instead of
-    // being permanently skipped.
-    void this.backfillRepertoirePositionsIfNeeded();
   }
 
-  /** Run the one-time repertoire position backfill in the background, unless already completed. */
-  private async backfillRepertoirePositionsIfNeeded(): Promise<void> {
-    try {
-      const alreadyDone = await this.getSetting<boolean>(REPERTOIRE_BACKFILL_COMPLETE_KEY);
-      if (alreadyDone) return;
+  /**
+   * Index any repertoires that have no position rows yet.
+   *
+   * Deliberately NOT called from initialize(): it shares the single SQLite connection
+   * with the startup data load, so running it during init makes `getAllRepertoires()`
+   * queue behind hundreds of thousands of INSERTs and stalls the loading screen. The
+   * store calls this after startup has finished instead.
+   *
+   * Progress is tracked by the index rows themselves rather than a completion flag, so
+   * killing the app part-way keeps every repertoire already indexed — previously a
+   * single end-of-loop flag meant an interrupted backfill re-did *all* the work on the
+   * next launch, forever, on any repertoire set too large to finish in one sitting.
+   */
+  async backfillRepertoirePositionsIfNeeded(): Promise<void> {
+    if (this.isWeb || !this.db) return;
 
-      const rows = await this.db!.getAllAsync('SELECT data FROM repertoires') as any[];
-      console.log(`[DatabaseService] Backfilling position index for ${rows.length} repertoire(s)...`);
-      for (const row of rows) {
+    try {
+      const indexedRows = await this.db.getAllAsync(
+        'SELECT DISTINCT repertoire_id FROM repertoire_positions'
+      ) as Array<{ repertoire_id: string }>;
+      const indexed = new Set(indexedRows.map(r => r.repertoire_id));
+
+      const rows = await this.db.getAllAsync('SELECT id, data FROM repertoires') as any[];
+      const pending = rows.filter(row => !indexed.has(row.id));
+      if (pending.length === 0) return;
+
+      console.log(`[DatabaseService] Backfilling position index for ${pending.length} of ${rows.length} repertoire(s)...`);
+      for (const row of pending) {
         try {
           const rep = JSON.parse(row.data) as Repertoire;
           await this.indexRepertoirePositions(rep);
@@ -306,7 +319,6 @@ class DatabaseServiceClass {
         // Yield to the JS event loop between repertoires so the rest of the app stays responsive
         await new Promise(resolve => setTimeout(resolve, 0));
       }
-      await this.saveSetting(REPERTOIRE_BACKFILL_COMPLETE_KEY, true);
       console.log('[DatabaseService] Repertoire position backfill complete');
     } catch (error) {
       console.error('[DatabaseService] Repertoire position backfill failed:', error);
@@ -782,13 +794,29 @@ class DatabaseServiceClass {
   // ==================== REPERTOIRES ====================
 
   private dateReviver(_key: string, value: any): any {
-    if (typeof value === 'string') {
-      const datePattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/;
-      if (datePattern.test(value)) {
-        return new Date(value);
-      }
+    if (typeof value === 'string' && ISO_DATE_PATTERN.test(value)) {
+      return new Date(value);
     }
     return value;
+  }
+
+  /**
+   * Revive the known Date fields on a parsed repertoire in place.
+   *
+   * Used instead of a JSON.parse reviver: a reviver fires once per key across the
+   * *entire* blob, and a repertoire blob is dominated by move-tree nodes that contain
+   * no dates at all. On a large repertoire that is hundreds of thousands of wasted
+   * calls per parse — enough to stall startup for minutes on device.
+   */
+  private reviveRepertoireDates(rep: any): Repertoire {
+    rep.createdAt = new Date(rep.createdAt);
+    rep.updatedAt = new Date(rep.updatedAt);
+    for (const chapter of rep.chapters ?? []) {
+      chapter.createdAt = new Date(chapter.createdAt);
+      chapter.updatedAt = new Date(chapter.updatedAt);
+      if (chapter.lastStudiedAt) chapter.lastStudiedAt = new Date(chapter.lastStudiedAt);
+    }
+    return rep as Repertoire;
   }
 
   async addRepertoire(repertoire: Repertoire): Promise<void> {
@@ -831,9 +859,7 @@ class DatabaseServiceClass {
     if (!this.db) throw new Error('Database not initialized');
 
     const rows = await this.db.getAllAsync('SELECT data FROM repertoires ORDER BY created_at ASC');
-    return (rows as any[]).map((row: any) =>
-      JSON.parse(row.data, (key, value) => this.dateReviver(key, value)) as Repertoire
-    );
+    return (rows as any[]).map((row: any) => this.reviveRepertoireDates(JSON.parse(row.data)));
   }
 
   async getRepertoireById(id: string): Promise<Repertoire | null> {
@@ -842,7 +868,7 @@ class DatabaseServiceClass {
 
     const row = await this.db.getFirstAsync('SELECT data FROM repertoires WHERE id = ?', [id]) as any;
     if (!row) return null;
-    return JSON.parse(row.data, (key, value) => this.dateReviver(key, value)) as Repertoire;
+    return this.reviveRepertoireDates(JSON.parse(row.data));
   }
 
   async getRepertoiresCount(): Promise<number> {

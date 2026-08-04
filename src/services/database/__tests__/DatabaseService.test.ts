@@ -137,6 +137,105 @@ describe('DatabaseService', () => {
     });
   });
 
+  describe('backfillRepertoirePositionsIfNeeded', () => {
+    beforeEach(() => DatabaseService.initialize());
+
+    const repRow = (id: string) => ({
+      id,
+      data: JSON.stringify({
+        id,
+        name: id,
+        color: 'white',
+        openingType: 'other',
+        eco: '',
+        chapters: [{
+          id: `${id}-ch`,
+          name: 'Ch',
+          pgn: '',
+          moveTree: { rootMoves: [{ id: 'n1', san: 'e4', children: [] }] },
+          order: 0,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        }],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }),
+    });
+
+    it('skips repertoires that already have position rows', async () => {
+      // Regression guard: progress must be tracked by the index rows themselves. A prior
+      // implementation used one end-of-loop completion flag, so an interrupted backfill
+      // re-indexed every repertoire on every subsequent launch — indefinitely.
+      mockDb.getAllAsync
+        .mockResolvedValueOnce([{ repertoire_id: 'rep-a' }])   // already indexed
+        .mockResolvedValueOnce([repRow('rep-a'), repRow('rep-b')]);
+
+      await DatabaseService.backfillRepertoirePositionsIfNeeded();
+
+      const deleted = mockDb.runAsync.mock.calls
+        .filter(([sql]: [string]) => /DELETE FROM repertoire_positions/.test(sql))
+        .map(([, args]: [string, string[]]) => args[0]);
+      expect(deleted).toEqual(['rep-b']);
+    });
+
+    it('does no work when every repertoire is already indexed', async () => {
+      mockDb.getAllAsync
+        .mockResolvedValueOnce([{ repertoire_id: 'rep-a' }])
+        .mockResolvedValueOnce([repRow('rep-a')]);
+
+      await DatabaseService.backfillRepertoirePositionsIfNeeded();
+
+      expect(mockDb.withTransactionAsync).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getAllRepertoires', () => {
+    beforeEach(() => DatabaseService.initialize());
+
+    it('revives Date fields on the repertoire and its chapters', async () => {
+      const created = new Date('2025-01-04T10:00:00.000Z');
+      const studied = new Date('2025-06-01T08:30:00.000Z');
+      mockDb.getAllAsync.mockResolvedValueOnce([{
+        data: JSON.stringify({
+          id: 'r1', name: 'R', color: 'white', openingType: 'other', eco: '',
+          chapters: [{
+            id: 'c1', name: 'C', pgn: '', moveTree: { rootMoves: [] }, order: 0,
+            createdAt: created, updatedAt: created, lastStudiedAt: studied,
+          }],
+          createdAt: created, updatedAt: created,
+        }),
+      }]);
+
+      const [rep] = await DatabaseService.getAllRepertoires();
+
+      expect(rep.createdAt).toBeInstanceOf(Date);
+      expect(rep.createdAt.getTime()).toBe(created.getTime());
+      expect(rep.chapters[0].updatedAt).toBeInstanceOf(Date);
+      expect(rep.chapters[0].lastStudiedAt).toBeInstanceOf(Date);
+      expect(rep.chapters[0].lastStudiedAt!.getTime()).toBe(studied.getTime());
+    });
+
+    it('leaves move-tree contents untouched', async () => {
+      // The date revival must not walk the move tree — it is the bulk of the blob and
+      // holds no dates, so touching every node is what made startup take minutes.
+      mockDb.getAllAsync.mockResolvedValueOnce([{
+        data: JSON.stringify({
+          id: 'r1', name: 'R', color: 'white', openingType: 'other', eco: '',
+          chapters: [{
+            id: 'c1', name: 'C', pgn: '', order: 0,
+            moveTree: { rootMoves: [{ id: 'n1', san: 'e4', comment: '2025-01-04T10:00:00Z', children: [] }] },
+            createdAt: new Date(), updatedAt: new Date(),
+          }],
+          createdAt: new Date(), updatedAt: new Date(),
+        }),
+      }]);
+
+      const [rep] = await DatabaseService.getAllRepertoires();
+
+      expect(rep.chapters[0].moveTree.rootMoves[0].comment).toBe('2025-01-04T10:00:00Z');
+    });
+  });
+
   describe('user games CRUD', () => {
     beforeEach(() => DatabaseService.initialize());
 
