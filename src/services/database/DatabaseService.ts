@@ -20,6 +20,7 @@ export class DatabaseOpenError extends Error {
 
 const DB_NAME = 'kingside.db';
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/;
+const REP_INDEXED_KEY_PREFIX = 'rep_pos_indexed:';
 const PAGE_SIZE = 25; // Games per page
 const SCHEMA_VERSION = 4; // Bump when schema changes
 const INDEX_BATCH_SIZE = 10; // Games per batch during background indexing
@@ -290,19 +291,21 @@ class DatabaseServiceClass {
    * queue behind hundreds of thousands of INSERTs and stalls the loading screen. The
    * store calls this after startup has finished instead.
    *
-   * Progress is tracked by the index rows themselves rather than a completion flag, so
-   * killing the app part-way keeps every repertoire already indexed — previously a
-   * single end-of-loop flag meant an interrupted backfill re-did *all* the work on the
-   * next launch, forever, on any repertoire set too large to finish in one sitting.
+   * Progress is tracked per repertoire, written by indexRepertoirePositions once that
+   * repertoire's rows are fully committed. Killing the app part-way therefore keeps
+   * every repertoire already finished and redoes only the interrupted one — previously
+   * a single end-of-loop flag meant an interrupted backfill re-did *all* the work on
+   * the next launch, forever, on any repertoire set too large to finish in one sitting.
    */
   async backfillRepertoirePositionsIfNeeded(): Promise<void> {
     if (this.isWeb || !this.db) return;
 
     try {
-      const indexedRows = await this.db.getAllAsync(
-        'SELECT DISTINCT repertoire_id FROM repertoire_positions'
-      ) as Array<{ repertoire_id: string }>;
-      const indexed = new Set(indexedRows.map(r => r.repertoire_id));
+      const markers = await this.db.getAllAsync(
+        'SELECT key FROM settings WHERE key LIKE ?',
+        [`${REP_INDEXED_KEY_PREFIX}%`]
+      ) as Array<{ key: string }>;
+      const indexed = new Set(markers.map(r => r.key.slice(REP_INDEXED_KEY_PREFIX.length)));
 
       const rows = await this.db.getAllAsync('SELECT id, data FROM repertoires') as any[];
       const pending = rows.filter(row => !indexed.has(row.id));
@@ -327,6 +330,12 @@ class DatabaseServiceClass {
 
   /** Build and persist the FEN index for a repertoire (replaces any existing index). */
   private async indexRepertoirePositions(repertoire: Repertoire): Promise<void> {
+    // Clear the completion marker first: rows go in over several transactions, so if we
+    // are interrupted the partial index must not read as done. This is the single funnel
+    // for all repertoire indexing, so the marker means "fully indexed" wherever it's set.
+    const marker = REP_INDEXED_KEY_PREFIX + repertoire.id;
+    await this.db!.runAsync('DELETE FROM settings WHERE key = ?', [marker]);
+
     await this.db!.runAsync(
       'DELETE FROM repertoire_positions WHERE repertoire_id = ?',
       [repertoire.id]
@@ -368,6 +377,8 @@ class DatabaseServiceClass {
         await new Promise(resolve => setTimeout(resolve, 0));
       }
     }
+
+    await this.saveSetting(marker, true);
   }
 
   /**
@@ -848,6 +859,7 @@ class DatabaseServiceClass {
     if (!this.db) throw new Error('Database not initialized');
 
     await this.db.runAsync('DELETE FROM repertoires WHERE id = ?', [id]);
+    await this.db.runAsync('DELETE FROM settings WHERE key = ?', [REP_INDEXED_KEY_PREFIX + id]);
     // repertoire_positions may not exist if the V3 migration hasn't run yet (e.g. Fast Refresh)
     try {
       await this.db.runAsync('DELETE FROM repertoire_positions WHERE repertoire_id = ?', [id]);

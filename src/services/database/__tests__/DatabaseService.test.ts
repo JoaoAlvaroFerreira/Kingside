@@ -162,12 +162,12 @@ describe('DatabaseService', () => {
       }),
     });
 
-    it('skips repertoires that already have position rows', async () => {
-      // Regression guard: progress must be tracked by the index rows themselves. A prior
-      // implementation used one end-of-loop completion flag, so an interrupted backfill
-      // re-indexed every repertoire on every subsequent launch — indefinitely.
+    it('skips repertoires already marked as indexed', async () => {
+      // Regression guard: progress must be tracked per repertoire. A prior implementation
+      // used one end-of-loop completion flag, so an interrupted backfill re-indexed every
+      // repertoire on every subsequent launch — indefinitely.
       mockDb.getAllAsync
-        .mockResolvedValueOnce([{ repertoire_id: 'rep-a' }])   // already indexed
+        .mockResolvedValueOnce([{ key: 'rep_pos_indexed:rep-a' }])
         .mockResolvedValueOnce([repRow('rep-a'), repRow('rep-b')]);
 
       await DatabaseService.backfillRepertoirePositionsIfNeeded();
@@ -180,12 +180,28 @@ describe('DatabaseService', () => {
 
     it('does no work when every repertoire is already indexed', async () => {
       mockDb.getAllAsync
-        .mockResolvedValueOnce([{ repertoire_id: 'rep-a' }])
+        .mockResolvedValueOnce([{ key: 'rep_pos_indexed:rep-a' }])
         .mockResolvedValueOnce([repRow('rep-a')]);
 
       await DatabaseService.backfillRepertoirePositionsIfNeeded();
 
       expect(mockDb.withTransactionAsync).not.toHaveBeenCalled();
+    });
+
+    it('clears the marker before indexing and sets it only after rows are committed', async () => {
+      // An interrupted index leaves partial rows across several transactions, so the
+      // marker must not be readable as "done" until every batch has landed.
+      mockDb.getAllAsync
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([repRow('rep-b')]);
+
+      await DatabaseService.backfillRepertoirePositionsIfNeeded();
+
+      const markerOps = mockDb.runAsync.mock.calls
+        .filter(([, args]: [string, any[]]) => args?.[0] === 'rep_pos_indexed:rep-b')
+        .map(([sql]: [string]) => (/DELETE/.test(sql) ? 'clear' : 'set'));
+      expect(markerOps[0]).toBe('clear');
+      expect(markerOps).toContain('set');
     });
   });
 
