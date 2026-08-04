@@ -70,7 +70,6 @@ Kingside is a React Native/Expo chess training app. Personal tool for a 2000+ ra
 - **Mistake-Driven Training**: Game Review flags deviations; training hasn't been wired to boost those line priorities yet
 
 ### 📋 TODO
-- **Fix Find Position startup perf**: `buildChapterFenIndex` (`src/utils/extractRepertoirePositions.ts`) is called eagerly via `useMemo` in `ChessAnalysisLayout.tsx` on every app load (default home screen). `extractChapterPositions` enumerates every root-to-leaf line in a chapter's move tree separately (combinatorial in branching factor) and replays each line from scratch with a fresh `Chess()` instance — for repertoires with real depth/variations this can take a very long time and makes app startup look like it's hung. Fix: single incremental DFS reusing one `Chess` instance (push/undo moves, O(nodes) instead of O(lines × depth)), and/or make the index build lazy (only when the Find Position tab is opened) instead of eager on mount. Confirmed on-device 2026-07-31: app eventually loads, just very slowly with a large repertoire set.
 - **Wire Review → Training**: When Game Review flags a deviation, reset/boost that line's SM2 interval in `lineStats`
 - **Position Browser**: "Your games / Master games from this position" panel on Analysis Board (DB layer done, needs UI)
 - **Decision Tree Visualization**: Show branching points explicitly in repertoire study
@@ -302,6 +301,26 @@ release.bat v1.3.0                            # Build release APK + tag + push +
 - Generated assets in `assets/images/`: `icon.png`, `adaptive-icon.png`, `favicon.png` (full design), `splash-icon.png`/`.svg` (rook only, transparent, for splash).
 - Referenced from `app.json` (`icon`, `android.adaptiveIcon`, `web.favicon`, `expo-splash-screen` plugin).
 - Android native resources (`android/app/src/main/res/mipmap-*/ic_launcher*.webp`, `drawable-*/splashscreen_logo.png`, `values/colors.xml` splashscreen_background) are **manually generated** from the SVGs — this project does NOT use `expo prebuild` (would risk clobbering custom native Stockfish integration). To regenerate after changing `logo.svg`, re-run `rsvg-convert` at each density (mdpi 48/288, hdpi 72/432, xhdpi 96/576, xxhdpi 144/864, xxxhdpi 192/1152 for icon/splash respectively) and rebuild.
+
+## Startup Performance (fixed 2026-08-04 — keep these invariants)
+
+A multi-minute "infinite loading" stall on launch with large repertoires had four
+distinct causes, fixed across v1.4.0–v1.4.2. Regressing any one brings it back:
+
+1. **Never index during `initialize()`.** `DatabaseService.backfillRepertoirePositionsIfNeeded()`
+   is called by the store *after* startup data has loaded, not from `initialize()`. It shares the
+   single SQLite connection with `getAllRepertoires()`; "fire and forget" is not enough, because
+   the work still queues ahead of the startup reads on the same connection.
+2. **Index completion is tracked per repertoire**, via a `rep_pos_indexed:<id>` marker in
+   `settings`, cleared before writing and set only after all batches commit. A single
+   end-of-loop flag meant an interrupted backfill redid *everything* on every later launch.
+3. **No `JSON.parse` reviver on repertoire blobs.** A reviver fires per key across the whole
+   move tree to catch a handful of dates. `reviveRepertoireDates()` touches only the known
+   `createdAt`/`updatedAt`/`lastStudiedAt` fields.
+4. **`buildChapterFenIndex` runs off the render path** — async, yielding between chapters, via
+   `useState`+`useEffect` in `ChessAnalysisLayout` (never `useMemo`). `extractChapterPositions`
+   is a single DFS reusing one `Chess` instance (O(nodes)); `extractRepertoirePositions.bench.test.ts`
+   guards against the old O(lines × depth) shape.
 
 ## Known Issues
 
