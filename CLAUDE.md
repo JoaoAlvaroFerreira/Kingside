@@ -338,8 +338,12 @@ skips indexing — the index depends only on chapter ids and move trees.
 ### 1. Incomplete Storage Migration
 **Status:** ONGOING — `lineStats` and `gameReviewStatuses` still persist via `StorageService` (AsyncStorage), not SQLite. `DatabaseService` handles everything else. The `deleteRepertoire` action cascades across both stores with no transaction — a crash mid-delete can leave orphaned line stats. `updateLineStats` rewrites the full array to AsyncStorage on every training answer; fine now, painful at scale.
 
-### 2. MoveHistory floating nav arrows not persistent
-The floating prev/next arrows on the MoveHistory component disappear or lose state — ongoing issue, root cause not yet diagnosed.
+### 2. MoveHistory nav arrows — partially diagnosed
+**Status:** one trigger fixed 2026-08-04, not confirmed closed.
+
+The arrows aren't actually floating: they're a normal flex row after the ScrollView in `MoveHistory`, with `flexShrink: 0`. So **any** time MoveHistory's container is given less height than its content needs, the row is pushed out of view. One cause was the ChessWorkspace comment box not being reserved from the wide-mode board budget (fixed). Others may remain — check container height budgets first.
+
+The "lose state" half of the symptom is likely unrelated: `canGoBack`/`canGoForward` read `moveTree.isAtStart()/isAtEnd()` directly, and MoveTree is mutable, so a screen mutating it without forcing a re-render leaves the arrows stale. Unverified.
 
 ### 3. Console.log in production code
 131 `console.log` calls in non-test source files. Touch handlers are the critical ones (documented to cause lag). Consider `babel-plugin-transform-remove-console` for release builds.
