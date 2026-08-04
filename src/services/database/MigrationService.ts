@@ -12,25 +12,26 @@ const MIGRATION_REPERTOIRES_KEY = 'migration_asyncstorage_v1';
 const REVIEW_SETTINGS_KEY = '@kingside/review-settings';
 
 export const MigrationService = {
-  async migrateIfNeeded(): Promise<void> {
+  async migrateIfNeeded(onProgress?: (msg: string) => void): Promise<void> {
     try {
       // Check if migration already completed
       const migrationComplete = await AsyncStorage.getItem(MIGRATION_KEY);
       if (migrationComplete === 'true') {
         console.log('[Migration] Migration already completed');
       } else {
-        await this.migrateGames();
+        await this.migrateGames(onProgress);
       }
 
       // Migrate repertoires and settings to SQLite
-      await this.migrateRepertoiresAndSettings();
+      await this.migrateRepertoiresAndSettings(onProgress);
     } catch (error) {
       console.error('[Migration] Migration failed:', error);
     }
   },
 
-  async migrateGames(): Promise<void> {
+  async migrateGames(onProgress?: (msg: string) => void): Promise<void> {
     console.log('[Migration] Checking for games to migrate...');
+    onProgress?.('Checking for games to migrate…');
 
     const [userGames, masterGames] = await Promise.all([
       StorageService.loadUserGames(),
@@ -46,6 +47,7 @@ export const MigrationService = {
     }
 
     console.log(`[Migration] Migrating ${userGames.length} user games and ${masterGames.length} master games...`);
+    onProgress?.(`Migrating ${userGames.length + masterGames.length} games…`);
 
     if (userGames.length > 0) {
       await DatabaseService.addUserGames(userGames);
@@ -64,7 +66,7 @@ export const MigrationService = {
     console.log('[Migration] Games migration completed successfully!');
   },
 
-  async migrateRepertoiresAndSettings(): Promise<void> {
+  async migrateRepertoiresAndSettings(onProgress?: (msg: string) => void): Promise<void> {
     const alreadyRun = await DatabaseService.getSetting<boolean>(MIGRATION_REPERTOIRES_KEY);
     if (alreadyRun) {
       console.log('[Migration] Repertoire/settings migration already completed');
@@ -72,10 +74,12 @@ export const MigrationService = {
     }
 
     console.log('[Migration] Checking for repertoires and settings to migrate...');
+    onProgress?.('Checking for repertoires to migrate…');
 
     // Migrate repertoires
     const repertoires = await StorageService.loadRepertoires();
     if (repertoires.length > 0) {
+      onProgress?.(`Migrating ${repertoires.length} repertoires…`);
       for (const repertoire of repertoires) {
         await DatabaseService.addRepertoire(repertoire);
       }

@@ -8,6 +8,7 @@ import { ErrorBoundary } from '@components/ErrorBoundary';
 function AppContent() {
   const initialize = useStore(state => state.initialize);
   const isLoading = useStore(state => state.isLoading);
+  const initStatus = useStore(state => state.initStatus);
   const dbError = useStore(state => state.dbError);
   const resetDatabase = useStore(state => state.resetDatabase);
 
@@ -20,6 +21,7 @@ function AppContent() {
       <View style={loadingStyles.container}>
         <Text style={loadingStyles.title}>Kingside</Text>
         <ActivityIndicator size="large" color="#4a9eff" />
+        <Text style={loadingStyles.statusText}>{initStatus || 'Starting…'}</Text>
       </View>
     );
   }
@@ -67,6 +69,10 @@ const loadingStyles = StyleSheet.create({
     color: '#e0e0e0',
     fontSize: 24,
     fontWeight: '600',
+  },
+  statusText: {
+    color: '#888',
+    fontSize: 13,
   },
   errorText: {
     color: '#aaa',

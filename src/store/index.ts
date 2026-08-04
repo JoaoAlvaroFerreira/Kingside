@@ -41,6 +41,7 @@ interface AppState {
   gameReviewStatuses: GameReviewStatus[];
   currentReviewSession: GameReviewSession | null;
   isLoading: boolean;
+  initStatus: string | null;   // Human-readable progress text shown on the startup loading screen
   dbError: boolean;
   isAnalyzing: boolean;
   analysisProgress: AnalysisProgress | null;
@@ -105,20 +106,23 @@ export const useStore = create<AppState>((set, get) => ({
   gameReviewStatuses: [],
   currentReviewSession: null,
   isLoading: true,
+  initStatus: null,
   dbError: false,
   isAnalyzing: false,
   analysisProgress: null,
 
   initialize: async () => {
     console.log('Store: Initializing...');
+    const onProgress = (msg: string) => set({ initStatus: msg });
 
     try {
       // Initialize database first
-      await DatabaseService.initialize();
+      await DatabaseService.initialize(onProgress);
 
       // Migrate existing AsyncStorage data to SQLite if needed
-      await MigrationService.migrateIfNeeded();
+      await MigrationService.migrateIfNeeded(onProgress);
 
+      onProgress('Loading your data…');
       const [repertoires, userGamesCount, masterGamesCount, reviewCards, lineStats, storedReviewSettings, screenSettings, gameReviewStatuses] = await Promise.all([
         DatabaseService.getAllRepertoires(),
         DatabaseService.getUserGamesCount(),
@@ -149,14 +153,14 @@ export const useStore = create<AppState>((set, get) => ({
         lineStats: lineStats.length,
         gameReviewStatuses: gameReviewStatuses.length,
       });
-      set({ repertoires, userGamesCount, masterGamesCount, reviewCards, lineStats, reviewSettings, screenSettings, gameReviewStatuses, isLoading: false });
+      set({ repertoires, userGamesCount, masterGamesCount, reviewCards, lineStats, reviewSettings, screenSettings, gameReviewStatuses, isLoading: false, initStatus: null });
     } catch (error) {
       console.error('Store: Initialization failed:', error);
       if (error instanceof DatabaseOpenError) {
-        set({ isLoading: false, dbError: true });
+        set({ isLoading: false, dbError: true, initStatus: null });
       } else {
         // Non-fatal schema/migration error — still let the app start
-        set({ isLoading: false });
+        set({ isLoading: false, initStatus: null });
       }
     }
   },

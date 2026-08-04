@@ -19,6 +19,7 @@ export class DatabaseOpenError extends Error {
 }
 
 const DB_NAME = 'kingside.db';
+const REPERTOIRE_BACKFILL_COMPLETE_KEY = 'repertoire_positions_backfill_complete';
 const PAGE_SIZE = 25; // Games per page
 const SCHEMA_VERSION = 4; // Bump when schema changes
 const INDEX_BATCH_SIZE = 10; // Games per batch during background indexing
@@ -92,7 +93,7 @@ class DatabaseServiceClass {
   /**
    * Initialize database and create tables
    */
-  async initialize(): Promise<void> {
+  async initialize(onProgress?: (msg: string) => void): Promise<void> {
     // Use IndexedDB on web, SQLite on native
     if (this.isWeb) {
       console.log('[DatabaseService] Using IndexedDB for web platform');
@@ -100,6 +101,7 @@ class DatabaseServiceClass {
     }
 
     console.log('[DatabaseService] Using SQLite for native platform');
+    onProgress?.('Opening database…');
 
     if (!SQLite) {
       throw new Error('SQLite module not available on this platform');
@@ -124,6 +126,7 @@ class DatabaseServiceClass {
     }
 
     try {
+      onProgress?.('Creating tables…');
       // Create user_games table
       await this.db.execAsync(`
         CREATE TABLE IF NOT EXISTS user_games (
@@ -189,7 +192,7 @@ class DatabaseServiceClass {
       `);
 
       // Schema migration: FEN index table
-      await this.migrateSchema();
+      await this.migrateSchema(onProgress);
 
       console.log('[DatabaseService] Database initialized successfully');
     } catch (error) {
@@ -201,9 +204,13 @@ class DatabaseServiceClass {
   /**
    * Run schema migrations based on PRAGMA user_version
    */
-  private async migrateSchema(): Promise<void> {
+  private async migrateSchema(onProgress?: (msg: string) => void): Promise<void> {
     const versionRow = await this.db!.getFirstAsync('PRAGMA user_version') as any;
     const currentVersion = versionRow?.user_version ?? 0;
+
+    if (currentVersion < SCHEMA_VERSION) {
+      onProgress?.('Updating database schema…');
+    }
 
     if (currentVersion < 1) {
       // V1: Add game_positions FEN index table
@@ -252,9 +259,6 @@ class DatabaseServiceClass {
           ON repertoire_positions(repertoire_id);
       `);
       console.log('[DatabaseService] Migrated to schema v3 (repertoire_positions table)');
-
-      // Backfill existing repertoires
-      await this.backfillRepertoirePositions();
     }
 
     if (currentVersion < 4) {
@@ -275,21 +279,38 @@ class DatabaseServiceClass {
     if (currentVersion < SCHEMA_VERSION) {
       await this.db!.execAsync(`PRAGMA user_version = ${SCHEMA_VERSION}`);
     }
+
+    // Backfill existing repertoires' position index in the background — this walks every
+    // chapter's move tree and can take a while on a large repertoire, so it must not block
+    // app startup. Tracked by its own settings flag (independent of schema version) so that
+    // if the app is killed mid-backfill, it safely resumes on the next launch instead of
+    // being permanently skipped.
+    void this.backfillRepertoirePositionsIfNeeded();
   }
 
-  /** Index all already-stored repertoires (runs once on V3 migration). */
-  private async backfillRepertoirePositions(): Promise<void> {
-    const rows = await this.db!.getAllAsync('SELECT data FROM repertoires') as any[];
-    console.log(`[DatabaseService] Backfilling position index for ${rows.length} repertoire(s)...`);
-    for (const row of rows) {
-      try {
-        const rep = JSON.parse(row.data) as Repertoire;
-        await this.indexRepertoirePositions(rep);
-      } catch (e) {
-        console.warn('[DatabaseService] Failed to backfill repertoire:', e);
+  /** Run the one-time repertoire position backfill in the background, unless already completed. */
+  private async backfillRepertoirePositionsIfNeeded(): Promise<void> {
+    try {
+      const alreadyDone = await this.getSetting<boolean>(REPERTOIRE_BACKFILL_COMPLETE_KEY);
+      if (alreadyDone) return;
+
+      const rows = await this.db!.getAllAsync('SELECT data FROM repertoires') as any[];
+      console.log(`[DatabaseService] Backfilling position index for ${rows.length} repertoire(s)...`);
+      for (const row of rows) {
+        try {
+          const rep = JSON.parse(row.data) as Repertoire;
+          await this.indexRepertoirePositions(rep);
+        } catch (e) {
+          console.warn('[DatabaseService] Failed to backfill repertoire:', e);
+        }
+        // Yield to the JS event loop between repertoires so the rest of the app stays responsive
+        await new Promise(resolve => setTimeout(resolve, 0));
       }
+      await this.saveSetting(REPERTOIRE_BACKFILL_COMPLETE_KEY, true);
+      console.log('[DatabaseService] Repertoire position backfill complete');
+    } catch (error) {
+      console.error('[DatabaseService] Repertoire position backfill failed:', error);
     }
-    console.log('[DatabaseService] Repertoire position backfill complete');
   }
 
   /** Build and persist the FEN index for a repertoire (replaces any existing index). */
