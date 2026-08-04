@@ -80,8 +80,14 @@ export interface ChapterFenMatch {
 /**
  * Build a chapter-level FEN index across all repertoires: for any normalized
  * FEN, which chapters contain that position anywhere in their move tree.
+ *
+ * Async and yields between chapters — this is called from a render-adjacent
+ * useEffect (not useMemo) specifically so it never blocks the JS thread for
+ * the entire duration on a large repertoire set. Blocking here previously
+ * made the app look hung right as the startup loading screen handed off to
+ * the first real screen.
  */
-export function buildChapterFenIndex(repertoires: Repertoire[]): Map<string, ChapterFenMatch[]> {
+export async function buildChapterFenIndex(repertoires: Repertoire[]): Promise<Map<string, ChapterFenMatch[]>> {
   const index = new Map<string, ChapterFenMatch[]>();
 
   for (const repertoire of repertoires) {
@@ -103,6 +109,9 @@ export function buildChapterFenIndex(repertoires: Repertoire[]): Map<string, Cha
         if (!index.has(fen)) index.set(fen, []);
         index.get(fen)!.push(match);
       }
+
+      // Yield to the JS event loop between chapters so the UI thread stays responsive
+      await new Promise(resolve => setTimeout(resolve, 0));
     }
   }
 

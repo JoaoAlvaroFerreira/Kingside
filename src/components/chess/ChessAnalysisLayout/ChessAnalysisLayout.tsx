@@ -7,7 +7,7 @@
  * Used by: AnalysisBoardScreen, RepertoireStudyScreen
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, useWindowDimensions, ActivityIndicator } from 'react-native';
 import { ChessWorkspace } from '@components/chess/ChessWorkspace/ChessWorkspace';
 import { MoveHistory } from '@components/chess/MoveHistory/MoveHistory';
@@ -85,10 +85,24 @@ export function ChessAnalysisLayout({
   const [settingsVisible, setSettingsVisible] = useState(false);
 
   const visibleTabs = screenSettings[screenKey].visibleTabs;
-  const chapterFenIndex = useMemo(
-    () => (visibleTabs.findPosition ? buildChapterFenIndex(repertoires) : EMPTY_FEN_INDEX),
-    [repertoires, visibleTabs.findPosition]
-  );
+
+  // Computed asynchronously (not useMemo) so building this never blocks the render
+  // that follows app startup or a repertoire edit — it can take a while on a large
+  // repertoire set even at O(nodes), and blocking here made the app look hung right
+  // after the startup loading screen handed off to this one.
+  const [chapterFenIndex, setChapterFenIndex] = useState<Map<string, ChapterFenMatch[]>>(EMPTY_FEN_INDEX);
+  useEffect(() => {
+    if (!visibleTabs.findPosition) {
+      setChapterFenIndex(EMPTY_FEN_INDEX);
+      return;
+    }
+    let cancelled = false;
+    buildChapterFenIndex(repertoires).then(index => {
+      if (!cancelled) setChapterFenIndex(index);
+    });
+    return () => { cancelled = true; };
+  }, [repertoires, visibleTabs.findPosition]);
+
   const repertoireMatches = useMemo(
     () => chapterFenIndex.get(normalizeFen(currentFen)) ?? [],
     [chapterFenIndex, currentFen]
