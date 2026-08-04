@@ -1,6 +1,6 @@
 import { StorageService } from '../StorageService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { ReviewCard } from '@types';
+import { LineStats } from '@types';
 
 const mockAsync = AsyncStorage as any;
 
@@ -9,63 +9,57 @@ beforeEach(() => {
   jest.clearAllMocks();
 });
 
-function makeCard(): ReviewCard {
+function makeStats(): LineStats {
   return {
-    id: 'c1',
-    color: 'white',
-    openingId: 'op1',
-    subVariationId: 'sv1',
+    lineId: 'l1',
+    repertoireId: 'r1',
     chapterId: 'ch1',
-    fen: 'start',
-    correctMove: 'e4',
-    contextMoves: [],
-    isUserMove: true,
-    isCritical: false,
     easeFactor: 2.5,
     interval: 1,
     repetitions: 1,
     nextReviewDate: new Date('2025-06-01T00:00:00.000Z'),
     lastReviewDate: new Date('2025-05-25T00:00:00.000Z'),
-    totalReviews: 1,
+    totalDrills: 1,
     correctCount: 1,
+    mistakeCount: 0,
   };
 }
 
 describe('StorageService', () => {
   describe('save/load round-trip', () => {
-    it('saves and loads review cards', async () => {
-      const cards = [makeCard()];
-      await StorageService.saveCards(cards);
-      const loaded = await StorageService.loadCards();
+    it('saves and loads line stats', async () => {
+      const stats = [makeStats()];
+      await StorageService.saveLineStats(stats);
+      const loaded = await StorageService.loadLineStats();
       expect(loaded).toHaveLength(1);
-      expect(loaded[0].id).toBe('c1');
+      expect(loaded[0].lineId).toBe('l1');
     });
 
     it('returns empty array for missing key', async () => {
-      const cards = await StorageService.loadCards();
-      expect(cards).toEqual([]);
+      const stats = await StorageService.loadLineStats();
+      expect(stats).toEqual([]);
     });
 
     it('handles empty array', async () => {
-      await StorageService.saveCards([]);
-      const loaded = await StorageService.loadCards();
+      await StorageService.saveLineStats([]);
+      const loaded = await StorageService.loadLineStats();
       expect(loaded).toEqual([]);
     });
   });
 
   describe('date serialization', () => {
     it('Date objects survive JSON round-trip via dateReviver', async () => {
-      const card = makeCard();
-      await StorageService.saveCards([card]);
-      const loaded = await StorageService.loadCards();
+      const stat = makeStats();
+      await StorageService.saveLineStats([stat]);
+      const loaded = await StorageService.loadLineStats();
       expect(loaded[0].nextReviewDate).toBeInstanceOf(Date);
-      expect(loaded[0].nextReviewDate.toISOString()).toBe(card.nextReviewDate.toISOString());
+      expect(loaded[0].nextReviewDate.toISOString()).toBe(stat.nextReviewDate.toISOString());
     });
 
     it('lastReviewDate is restored as Date', async () => {
-      const card = makeCard();
-      await StorageService.saveCards([card]);
-      const loaded = await StorageService.loadCards();
+      const stat = makeStats();
+      await StorageService.saveLineStats([stat]);
+      const loaded = await StorageService.loadLineStats();
       expect(loaded[0].lastReviewDate).toBeInstanceOf(Date);
     });
 
@@ -91,10 +85,10 @@ describe('StorageService', () => {
 
   describe('clearAll', () => {
     it('removes all stored data', async () => {
-      await StorageService.saveCards([makeCard()]);
+      await StorageService.saveLineStats([makeStats()]);
       await StorageService.clearAll();
-      const cards = await StorageService.loadCards();
-      expect(cards).toEqual([]);
+      const stats = await StorageService.loadLineStats();
+      expect(stats).toEqual([]);
     });
   });
 });

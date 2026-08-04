@@ -7,7 +7,6 @@ import {
   Repertoire,
   UserGame,
   MasterGame,
-  ReviewCard,
   LineStats,
   TrainingSession,
   ReviewSettings,
@@ -33,7 +32,6 @@ interface AppState {
   repertoires: Repertoire[];
   userGamesCount: number;       // Count of user games (stored in SQLite)
   masterGamesCount: number;     // Count of master games (stored in SQLite)
-  reviewCards: ReviewCard[];
   lineStats: LineStats[];      // Training line statistics
   currentTrainingSession: TrainingSession | null;
   reviewSettings: ReviewSettings;
@@ -68,11 +66,6 @@ interface AppState {
   getMasterGameById: (id: string) => Promise<MasterGame | null>;
   refreshMasterGamesCount: () => Promise<void>;
 
-  // Review card actions
-  addCards: (cards: ReviewCard[]) => Promise<void>;
-  updateCard: (card: ReviewCard) => Promise<void>;
-  getDueCards: () => ReviewCard[];
-
   // Training actions
   loadLineStats: () => Promise<void>;
   saveLineStats: (stats: LineStats[]) => Promise<void>;
@@ -99,7 +92,6 @@ export const useStore = create<AppState>((set, get) => ({
   repertoires: [],
   userGamesCount: 0,
   masterGamesCount: 0,
-  reviewCards: [],
   lineStats: [],
   currentTrainingSession: null,
   reviewSettings: SettingsService.getDefaults(),
@@ -124,11 +116,10 @@ export const useStore = create<AppState>((set, get) => ({
       await MigrationService.migrateIfNeeded(onProgress);
 
       onProgress('Loading your data…');
-      const [repertoires, userGamesCount, masterGamesCount, reviewCards, lineStats, storedReviewSettings, screenSettings, gameReviewStatuses] = await Promise.all([
+      const [repertoires, userGamesCount, masterGamesCount, lineStats, storedReviewSettings, screenSettings, gameReviewStatuses] = await Promise.all([
         DatabaseService.getAllRepertoires(),
         DatabaseService.getUserGamesCount(),
         DatabaseService.getMasterGamesCount(),
-        StorageService.loadCards(),
         StorageService.loadLineStats(),
         DatabaseService.getSetting<ReviewSettings>('reviewSettings'),
         ScreenSettingsService.loadSettings(),
@@ -150,11 +141,10 @@ export const useStore = create<AppState>((set, get) => ({
         repertoires: repertoires.length,
         userGamesCount,
         masterGamesCount,
-        reviewCards: reviewCards.length,
         lineStats: lineStats.length,
         gameReviewStatuses: gameReviewStatuses.length,
       });
-      set({ repertoires, userGamesCount, masterGamesCount, reviewCards, lineStats, reviewSettings, screenSettings, gameReviewStatuses, isLoading: false, initStatus: null });
+      set({ repertoires, userGamesCount, masterGamesCount, lineStats, reviewSettings, screenSettings, gameReviewStatuses, isLoading: false, initStatus: null });
 
       // Index any repertoires missing position rows — only after the app is usable, since
       // it shares the SQLite connection with the load above and would otherwise stall startup.
@@ -219,13 +209,6 @@ export const useStore = create<AppState>((set, get) => ({
     const repertoires = currentRepertoires.filter(r => r.id !== id);
     console.log('Store: Repertoires after filter:', repertoires.length, 'was:', currentRepertoires.length);
 
-    // Delete associated review cards
-    const currentReviewCards = get().reviewCards;
-    const reviewCards = currentReviewCards.filter(card => {
-      return !repertoireToDelete.chapters.some(ch => ch.id === card.chapterId);
-    });
-    console.log('Store: Review cards after filter:', reviewCards.length, 'was:', currentReviewCards.length);
-
     // Delete associated line stats
     const currentLineStats = get().lineStats;
     const lineStats = currentLineStats.filter(stat => stat.repertoireId !== id);
@@ -233,10 +216,9 @@ export const useStore = create<AppState>((set, get) => ({
 
     await Promise.all([
       DatabaseService.deleteRepertoire(id),
-      StorageService.saveCards(reviewCards),
       StorageService.saveLineStats(lineStats),
     ]);
-    set({ repertoires, reviewCards, lineStats });
+    set({ repertoires, lineStats });
     console.log('Store: Repertoire deleted successfully');
   },
 
@@ -298,25 +280,6 @@ export const useStore = create<AppState>((set, get) => ({
   refreshMasterGamesCount: async () => {
     const masterGamesCount = await DatabaseService.getMasterGamesCount();
     set({ masterGamesCount });
-  },
-
-  addCards: async (newCards) => {
-    const reviewCards = [...get().reviewCards, ...newCards];
-    await StorageService.saveCards(reviewCards);
-    set({ reviewCards });
-  },
-
-  updateCard: async (updatedCard) => {
-    const reviewCards = get().reviewCards.map(c =>
-      c.id === updatedCard.id ? updatedCard : c
-    );
-    await StorageService.saveCards(reviewCards);
-    set({ reviewCards });
-  },
-
-  getDueCards: () => {
-    const now = new Date();
-    return get().reviewCards.filter(c => new Date(c.nextReviewDate) <= now);
   },
 
   // Training actions

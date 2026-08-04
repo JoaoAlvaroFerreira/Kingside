@@ -1,11 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Repertoire, UserGame, MasterGame, ReviewCard, LineStats, GameReviewStatus } from '@types';
+import { Repertoire, UserGame, MasterGame, LineStats, GameReviewStatus } from '@types';
 
 const KEYS = {
   REPERTOIRES: '@kingside/repertoires',
   USER_GAMES: '@kingside/user-games',
   MASTER_GAMES: '@kingside/master-games',
-  REVIEW_CARDS: '@kingside/cards',
   LINE_STATS: '@kingside/line-stats',
   SETTINGS: '@kingside/settings',
   REVIEW_SETTINGS: '@kingside/review-settings',
@@ -53,17 +52,6 @@ export const StorageService = {
 
   async loadMasterGames(): Promise<MasterGame[]> {
     const data = await AsyncStorage.getItem(KEYS.MASTER_GAMES);
-    if (!data) return [];
-    return JSON.parse(data, dateReviver);
-  },
-
-  // Review Cards
-  async saveCards(cards: ReviewCard[]): Promise<void> {
-    await AsyncStorage.setItem(KEYS.REVIEW_CARDS, JSON.stringify(cards));
-  },
-
-  async loadCards(): Promise<ReviewCard[]> {
-    const data = await AsyncStorage.getItem(KEYS.REVIEW_CARDS);
     if (!data) return [];
     return JSON.parse(data, dateReviver);
   },

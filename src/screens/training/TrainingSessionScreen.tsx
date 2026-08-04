@@ -24,7 +24,12 @@ interface TrainingSessionScreenProps {
 }
 
 export default function TrainingSessionScreen({ navigation, route }: TrainingSessionScreenProps) {
-  const { repertoires, lineStats, setTrainingSession, updateLineStats, removeLineStats, reviewSettings } = useStore();
+  const repertoires = useStore(s => s.repertoires);
+  const lineStats = useStore(s => s.lineStats);
+  const setTrainingSession = useStore(s => s.setTrainingSession);
+  const updateLineStats = useStore(s => s.updateLineStats);
+  const removeLineStats = useStore(s => s.removeLineStats);
+  const reviewSettings = useStore(s => s.reviewSettings);
   const timing: TrainingTimingSettings = reviewSettings.training;
   const { width, height } = useWindowDimensions();
 

@@ -17,10 +17,6 @@ export type {
   UserGame,
   MasterGame,
 
-  // Review types
-  ReviewCard,
-  ReviewAttempt,
-
   // Legacy types (for existing screens)
   ChessMove,
   ChessVariation,

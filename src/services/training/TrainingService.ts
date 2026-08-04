@@ -355,7 +355,7 @@ export const TrainingService = {
     }
 
     // Apply SM-2 algorithm
-    const sm2Result = SM2Service.calculateNext(lineStats as any, quality);
+    const sm2Result = SM2Service.calculateNext(lineStats, quality);
 
     // Update stats
     const updatedStats: LineStats = {

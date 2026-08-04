@@ -26,7 +26,11 @@ interface GameReviewDashboardScreenProps {
 type FilterTab = 'all' | 'reviewed' | 'unreviewed';
 
 export default function GameReviewDashboardScreen({ navigation }: GameReviewDashboardScreenProps) {
-  const { userGamesCount, gameReviewStatuses, startGameReview, isAnalyzing, analysisProgress } = useStore();
+  const userGamesCount = useStore(s => s.userGamesCount);
+  const gameReviewStatuses = useStore(s => s.gameReviewStatuses);
+  const startGameReview = useStore(s => s.startGameReview);
+  const isAnalyzing = useStore(s => s.isAnalyzing);
+  const analysisProgress = useStore(s => s.analysisProgress);
   const [filterTab, setFilterTab] = useState<FilterTab>('all');
   const [startingReview, setStartingReview] = useState(false);
   const [colorPromptGameId, setColorPromptGameId] = useState<string | null>(null);

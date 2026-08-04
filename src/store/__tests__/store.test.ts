@@ -3,8 +3,6 @@ jest.mock('@services/storage/StorageService', () => ({
   StorageService: {
     loadRepertoires: jest.fn().mockResolvedValue([]),
     saveRepertoires: jest.fn().mockResolvedValue(undefined),
-    loadCards: jest.fn().mockResolvedValue([]),
-    saveCards: jest.fn().mockResolvedValue(undefined),
     loadLineStats: jest.fn().mockResolvedValue([]),
     saveLineStats: jest.fn().mockResolvedValue(undefined),
     loadGameReviewStatuses: jest.fn().mockResolvedValue([]),
@@ -90,7 +88,7 @@ jest.mock('@services/engine/EngineAnalyzer', () => ({
 import { useStore } from '../index';
 import { StorageService } from '@services/storage/StorageService';
 import { DatabaseService } from '@services/database/DatabaseService';
-import { Repertoire, ReviewCard, UserGame } from '@types';
+import { LineStats, Repertoire, UserGame } from '@types';
 import { MoveTree } from '@utils/MoveTree';
 
 // Helpers
@@ -108,24 +106,18 @@ function makeRepertoire(overrides: Partial<Repertoire> = {}): Repertoire {
   };
 }
 
-function makeCard(chapterId = 'ch1'): ReviewCard {
+function makeStats(repertoireId: string, chapterId = 'ch1'): LineStats {
   return {
-    id: `card-${Math.random().toString(36).slice(2)}`,
-    color: 'white',
-    openingId: 'opening-1',
-    subVariationId: 'sub-1',
+    lineId: `line-${Math.random().toString(36).slice(2)}`,
+    repertoireId,
     chapterId,
-    fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
-    correctMove: 'e4',
-    contextMoves: [],
-    isUserMove: true,
-    isCritical: false,
     easeFactor: 2.5,
     interval: 1,
     repetitions: 0,
     nextReviewDate: new Date(),
-    totalReviews: 0,
+    totalDrills: 0,
     correctCount: 0,
+    mistakeCount: 0,
   };
 }
 
@@ -160,7 +152,6 @@ beforeEach(() => {
   (DatabaseService.getMasterGamesCount as jest.Mock).mockResolvedValue(0);
   (DatabaseService.getAllRepertoires as jest.Mock).mockResolvedValue([]);
   (DatabaseService.getSetting as jest.Mock).mockResolvedValue(null);
-  (StorageService.loadCards as jest.Mock).mockResolvedValue([]);
   (StorageService.loadLineStats as jest.Mock).mockResolvedValue([]);
   (StorageService.loadGameReviewStatuses as jest.Mock).mockResolvedValue([]);
 });
@@ -237,7 +228,7 @@ describe('useStore', () => {
       expect(DatabaseService.deleteRepertoire).toHaveBeenCalledWith(rep.id);
     });
 
-    it('deleteRepertoire removes associated review cards', async () => {
+    it('deleteRepertoire removes only that repertoire line stats', async () => {
       const tree = new MoveTree();
       const rep = makeRepertoire({
         chapters: [{
@@ -252,15 +243,15 @@ describe('useStore', () => {
       });
       await useStore.getState().addRepertoire(rep);
 
-      const cardToDelete = makeCard('ch-x');
-      const cardToKeep = makeCard('other-ch');
-      await useStore.getState().addCards([cardToDelete, cardToKeep]);
-      expect(useStore.getState().reviewCards).toHaveLength(2);
+      const statToDelete = makeStats(rep.id, 'ch-x');
+      const statToKeep = makeStats('other-rep');
+      await useStore.getState().saveLineStats([statToDelete, statToKeep]);
 
       await useStore.getState().deleteRepertoire(rep.id);
-      const remaining = useStore.getState().reviewCards;
+
+      const remaining = useStore.getState().lineStats;
       expect(remaining).toHaveLength(1);
-      expect(remaining[0].id).toBe(cardToKeep.id);
+      expect(remaining[0].lineId).toBe(statToKeep.lineId);
     });
 
     it('deleteRepertoire is no-op for unknown id', async () => {
@@ -312,31 +303,4 @@ describe('useStore', () => {
     });
   });
 
-  describe('review card actions', () => {
-    it('addCards appends to store and persists', async () => {
-      const cards = [makeCard(), makeCard()];
-      await useStore.getState().addCards(cards);
-      expect(useStore.getState().reviewCards).toHaveLength(2);
-      expect(StorageService.saveCards).toHaveBeenCalled();
-    });
-
-    it('updateCard modifies in place', async () => {
-      const card = makeCard();
-      await useStore.getState().addCards([card]);
-      const updated = { ...card, easeFactor: 1.8 };
-      await useStore.getState().updateCard(updated);
-      expect(useStore.getState().reviewCards[0].easeFactor).toBe(1.8);
-    });
-
-    it('getDueCards returns cards with nextReviewDate in past', () => {
-      const pastCard = makeCard();
-      pastCard.nextReviewDate = new Date('2020-01-01');
-      const futureCard = makeCard();
-      futureCard.nextReviewDate = new Date('2099-01-01');
-      useStore.setState({ reviewCards: [pastCard, futureCard] });
-      const due = useStore.getState().getDueCards();
-      expect(due).toHaveLength(1);
-      expect(due[0].id).toBe(pastCard.id);
-    });
-  });
 });

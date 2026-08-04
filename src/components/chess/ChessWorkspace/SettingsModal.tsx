@@ -28,7 +28,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   screenKey,
   currentSettings,
 }) => {
-  const { updateScreenSettings } = useStore();
+  const updateScreenSettings = useStore(s => s.updateScreenSettings);
 
   const [orientation, setOrientation] = useState(currentSettings.orientation);
   const [engineEnabled, setEngineEnabled] = useState(currentSettings.engineEnabled);

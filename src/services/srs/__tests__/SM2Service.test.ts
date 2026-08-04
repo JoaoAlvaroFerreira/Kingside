@@ -1,24 +1,10 @@
-import { SM2Service } from '../SM2Service';
-import { ReviewCard } from '@types';
+import { SM2Service, SM2Progress } from '../SM2Service';
 
-function makeCard(overrides: Partial<ReviewCard> = {}): ReviewCard {
+function makeCard(overrides: Partial<SM2Progress> = {}): SM2Progress {
   return {
-    id: 'test-card',
-    color: 'white',
-    openingId: 'op1',
-    subVariationId: 'sv1',
-    chapterId: 'ch1',
-    fen: 'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1',
-    correctMove: 'e5',
-    contextMoves: ['e4'],
-    isUserMove: true,
-    isCritical: false,
     easeFactor: 2.5,
     interval: 0,
     repetitions: 0,
-    nextReviewDate: new Date(),
-    totalReviews: 0,
-    correctCount: 0,
     ...overrides,
   };
 }
@@ -119,20 +105,5 @@ describe('SM2Service', () => {
     });
   });
 
-  describe('createCard', () => {
-    it('creates card with default SM2 values', () => {
-      const card = SM2Service.createCard('white', 'op1', 'sv1', 'ch1', 'fen', 'e4', [], true);
-      expect(card.easeFactor).toBe(2.5);
-      expect(card.interval).toBe(0);
-      expect(card.repetitions).toBe(0);
-      expect(card.totalReviews).toBe(0);
-      expect(card.correctCount).toBe(0);
-    });
 
-    it('generates unique IDs', () => {
-      const c1 = SM2Service.createCard('white', 'op1', 'sv1', 'ch1', 'fen', 'e4', [], true);
-      const c2 = SM2Service.createCard('white', 'op1', 'sv1', 'ch1', 'fen', 'e4', [], true);
-      expect(c1.id).not.toBe(c2.id);
-    });
-  });
 });

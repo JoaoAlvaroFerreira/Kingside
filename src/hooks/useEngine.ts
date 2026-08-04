@@ -12,7 +12,7 @@ const PARTIAL_THROTTLE_MS = 250;
 
 export function useEngine(fen: string, enabled: boolean) {
   const isReady = useStockfishReady();
-  const { reviewSettings } = useStore();
+  const reviewSettings = useStore(s => s.reviewSettings);
   const { moveTime, depth, threads, multiPV } = reviewSettings.engine;
 
   const [evaluation, setEvaluation] = useState<EngineEvaluation | null>(null);

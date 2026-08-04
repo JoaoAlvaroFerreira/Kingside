@@ -79,7 +79,8 @@ export function ChessAnalysisLayout({
   narrowHeader,
 }: ChessAnalysisLayoutProps) {
   const { width, height } = useWindowDimensions();
-  const { screenSettings, repertoires } = useStore();
+  const screenSettings = useStore(s => s.screenSettings);
+  const repertoires = useStore(s => s.repertoires);
   const isWide = width > 700 && width > height;
 
   const [activeTab, setActiveTab] = useState<AnalysisTab>('moves');

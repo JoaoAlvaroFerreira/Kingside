@@ -18,7 +18,8 @@ interface TrainingDashboardScreenProps {
 }
 
 export default function TrainingDashboardScreen({ navigation }: TrainingDashboardScreenProps) {
-  const { repertoires, lineStats } = useStore();
+  const repertoires = useStore(s => s.repertoires);
+  const lineStats = useStore(s => s.lineStats);
 
   const [selectedRepertoireId, setSelectedRepertoireId] = useState<string | null>(null);
   const [selectedChapterIds, setSelectedChapterIds] = useState<string[]>([]);

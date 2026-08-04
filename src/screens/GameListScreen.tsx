@@ -22,18 +22,16 @@ export default function GameListScreen({ navigation }: GameListScreenProps) {
   const [isLoadingGames, setIsLoadingGames] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const {
-    userGamesCount,
-    masterGamesCount,
-    deleteUserGame,
-    deleteMasterGame,
-    deleteAllUserGames,
-    deleteAllMasterGames,
-    addUserGames,
-    refreshUserGamesCount,
-    refreshMasterGamesCount,
-    reviewSettings
-  } = useStore();
+  const userGamesCount = useStore(s => s.userGamesCount);
+  const masterGamesCount = useStore(s => s.masterGamesCount);
+  const deleteUserGame = useStore(s => s.deleteUserGame);
+  const deleteMasterGame = useStore(s => s.deleteMasterGame);
+  const deleteAllUserGames = useStore(s => s.deleteAllUserGames);
+  const deleteAllMasterGames = useStore(s => s.deleteAllMasterGames);
+  const addUserGames = useStore(s => s.addUserGames);
+  const refreshUserGamesCount = useStore(s => s.refreshUserGamesCount);
+  const refreshMasterGamesCount = useStore(s => s.refreshMasterGamesCount);
+  const reviewSettings = useStore(s => s.reviewSettings);
 
   const totalCount = activeTab === 'my-games' ? userGamesCount : masterGamesCount;
 

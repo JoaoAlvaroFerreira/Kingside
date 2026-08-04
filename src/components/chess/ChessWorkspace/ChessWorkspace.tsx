@@ -100,7 +100,7 @@ export const ChessWorkspace: React.FC<ChessWorkspaceProps> = ({
   maxBoardSize,
 }) => {
   const { width, height } = useWindowDimensions();
-  const { screenSettings } = useStore();
+  const screenSettings = useStore(s => s.screenSettings);
   const settings = screenSettings[screenKey];
 
   const [settingsVisible, setSettingsVisible] = useState(false);

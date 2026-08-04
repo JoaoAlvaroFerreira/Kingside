@@ -32,7 +32,9 @@ interface GameReviewScreenProps {
 }
 
 export default function GameReviewScreen({ navigation, route: _route }: GameReviewScreenProps) {
-  const { currentReviewSession, advanceReviewMove, completeGameReview } = useStore();
+  const currentReviewSession = useStore(s => s.currentReviewSession);
+  const advanceReviewMove = useStore(s => s.advanceReviewMove);
+  const completeGameReview = useStore(s => s.completeGameReview);
   const { width } = useWindowDimensions();
   const [completing, setCompleting] = useState(false);
   const [activeTab, setActiveTab] = useState<ReviewTab>('keyMoves');

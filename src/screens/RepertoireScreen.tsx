@@ -9,7 +9,9 @@ interface RepertoireScreenProps {
 }
 
 export default function RepertoireScreen({ navigation }: RepertoireScreenProps) {
-  const { repertoires, updateRepertoireMetadata, deleteRepertoire } = useStore();
+  const repertoires = useStore(s => s.repertoires);
+  const updateRepertoireMetadata = useStore(s => s.updateRepertoireMetadata);
+  const deleteRepertoire = useStore(s => s.deleteRepertoire);
   const [selectedColor, setSelectedColor] = useState<RepertoireColor>('white');
   const [selectedType, setSelectedType] = useState<OpeningType | null>(null);
   const [expandedRepertoire, setExpandedRepertoire] = useState<string | null>(null);

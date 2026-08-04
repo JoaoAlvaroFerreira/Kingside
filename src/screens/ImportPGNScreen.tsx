@@ -40,7 +40,10 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
   const [lichessStudyUrl, setLichessStudyUrl] = useState('');
   const [chessableMode, setChessableMode] = useState(false);
   const [chessableDirectMode, setChessableDirectMode] = useState(false);
-  const { addRepertoire, addUserGames, addMasterGames, reviewSettings } = useStore();
+  const addRepertoire = useStore(s => s.addRepertoire);
+  const addUserGames = useStore(s => s.addUserGames);
+  const addMasterGames = useStore(s => s.addMasterGames);
+  const reviewSettings = useStore(s => s.reviewSettings);
 
   const readFileWithTimeout = async (uri: string, timeoutMs: number = 15000): Promise<string> => {
     const fileReadPromise = Platform.OS === 'web'

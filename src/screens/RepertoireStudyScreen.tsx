@@ -29,7 +29,7 @@ interface RepertoireStudyScreenProps {
 
 export default function RepertoireStudyScreen({ navigation, route }: RepertoireStudyScreenProps) {
   const { repertoireId, chapterId } = route.params;
-  const { repertoires } = useStore();
+  const repertoires = useStore(s => s.repertoires);
   const { width, height } = useWindowDimensions();
   const isWide = width > 700 && width > height;
 

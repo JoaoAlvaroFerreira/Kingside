@@ -99,45 +99,6 @@ export function normalizeFen(fen: string): string {
   return fen.split(' ').slice(0, 4).join(' ');
 }
 
-// ============================================
-// SPACED REPETITION
-// ============================================
-
-export interface ReviewCard {
-  id: string;
-
-  // Location in hierarchy
-  color: RepertoireColor;
-  openingId: string;
-  subVariationId: string;
-  chapterId: string;
-
-  // Position data
-  fen: string;
-  correctMove: string;
-  contextMoves: string[];         // Path leading to position (last 5 moves)
-
-  // Training metadata
-  isUserMove: boolean;            // Is this testing the user's color?
-  isCritical: boolean;            // User-marked important
-
-  // SM-2 fields
-  easeFactor: number;             // 2.5 default
-  interval: number;               // Days
-  repetitions: number;
-  nextReviewDate: Date;
-  lastReviewDate?: Date;
-
-  // Stats
-  totalReviews: number;
-  correctCount: number;
-}
-
-export interface ReviewAttempt {
-  date: Date;
-  quality: number; // 0-5 (SM-2 quality rating)
-  timeTaken: number; // milliseconds
-}
 
 // Legacy types (kept for compatibility with existing screens)
 export interface ChessMove {

@@ -22,7 +22,8 @@ interface SettingsScreenProps {
 }
 
 export default function SettingsScreen({ navigation }: SettingsScreenProps) {
-  const { reviewSettings, saveReviewSettings } = useStore();
+  const reviewSettings = useStore(s => s.reviewSettings);
+  const saveReviewSettings = useStore(s => s.saveReviewSettings);
   const [saving, setSaving] = useState(false);
 
   // Engine settings
