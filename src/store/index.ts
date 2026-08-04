@@ -53,6 +53,7 @@ interface AppState {
   // Repertoire actions
   addRepertoire: (r: Repertoire) => Promise<void>;
   updateRepertoire: (r: Repertoire) => Promise<void>;
+  updateRepertoireMetadata: (r: Repertoire) => Promise<void>;  // renames etc. — skips re-indexing
   deleteRepertoire: (id: string) => Promise<void>;
 
   // Game actions (use database, not in-memory arrays)
@@ -194,6 +195,14 @@ export const useStore = create<AppState>((set, get) => ({
     await DatabaseService.updateRepertoire(updatedRepertoire);
     set({ repertoires });
     console.log('Store: Repertoire updated and saved');
+  },
+
+  updateRepertoireMetadata: async (updatedRepertoire) => {
+    const repertoires = get().repertoires.map(r =>
+      r.id === updatedRepertoire.id ? updatedRepertoire : r
+    );
+    await DatabaseService.updateRepertoireMetadata(updatedRepertoire);
+    set({ repertoires });
   },
 
   deleteRepertoire: async (id) => {

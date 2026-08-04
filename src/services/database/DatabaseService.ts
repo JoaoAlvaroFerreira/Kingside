@@ -864,11 +864,29 @@ class DatabaseServiceClass {
     if (this.isWeb) return WebDatabaseService.updateRepertoire(repertoire);
     if (!this.db) throw new Error('Database not initialized');
 
-    await this.db.runAsync(
+    await this.writeRepertoireRow(repertoire);
+    try { await this.indexRepertoirePositions(repertoire); } catch { /* table not ready yet */ }
+  }
+
+  /**
+   * Persist a repertoire whose move trees are unchanged (renames, reordering, metadata).
+   *
+   * Skips position re-indexing, which depends only on chapter ids and move trees — a full
+   * re-index of a large repertoire just to change its name is pure waste. Use
+   * `updateRepertoire` for anything that touches a move tree.
+   */
+  async updateRepertoireMetadata(repertoire: Repertoire): Promise<void> {
+    if (this.isWeb) return WebDatabaseService.updateRepertoire(repertoire);
+    if (!this.db) throw new Error('Database not initialized');
+
+    await this.writeRepertoireRow(repertoire);
+  }
+
+  private async writeRepertoireRow(repertoire: Repertoire): Promise<void> {
+    await this.db!.runAsync(
       `UPDATE repertoires SET name = ?, color = ?, data = ?, updated_at = ? WHERE id = ?`,
       [repertoire.name, repertoire.color, JSON.stringify(repertoire), Date.now(), repertoire.id]
     );
-    try { await this.indexRepertoirePositions(repertoire); } catch { /* table not ready yet */ }
   }
 
   async deleteRepertoire(id: string): Promise<void> {

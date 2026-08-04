@@ -9,7 +9,7 @@ interface RepertoireScreenProps {
 }
 
 export default function RepertoireScreen({ navigation }: RepertoireScreenProps) {
-  const { repertoires, updateRepertoire, deleteRepertoire } = useStore();
+  const { repertoires, updateRepertoireMetadata, deleteRepertoire } = useStore();
   const [selectedColor, setSelectedColor] = useState<RepertoireColor>('white');
   const [selectedType, setSelectedType] = useState<OpeningType | null>(null);
   const [expandedRepertoire, setExpandedRepertoire] = useState<string | null>(null);
@@ -57,7 +57,7 @@ export default function RepertoireScreen({ navigation }: RepertoireScreenProps) 
       updatedAt: new Date(),
     };
 
-    await updateRepertoire(updated);
+    await updateRepertoireMetadata(updated);
     setEditingRepertoire(null);
     setEditedName('');
   };
@@ -156,7 +156,7 @@ export default function RepertoireScreen({ navigation }: RepertoireScreenProps) 
       updatedAt: new Date(),
     };
 
-    await updateRepertoire(updatedRepertoire);
+    await updateRepertoireMetadata(updatedRepertoire);
     setEditingChapter(null);
     setEditedChapterName('');
   };

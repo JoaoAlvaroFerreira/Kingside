@@ -5,7 +5,9 @@
 
 import { Chess } from 'chess.js';
 import { Chapter, normalizeFen } from '@types';
-import { MoveTree, MoveNode } from '@utils/MoveTree';
+import { MoveNode } from '@utils/MoveTree';
+
+const DEFAULT_START_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 
 /** Map<moveCount, Map<normalizedFen, Set<nextMoveSAN>>> */
 export type PositionMap = Map<number, Map<string, Set<string>>>;
@@ -15,10 +17,13 @@ export type PositionMap = Map<number, Map<string, Set<string>>>;
  * the moves playable from it. The key insight: we record (preFen → nextMove)
  * so the game-review matcher can check whether the resulting FEN exists.
  *
- * Single DFS over the tree reusing one Chess instance (move/undo) — O(nodes).
- * The previous implementation enumerated every root-to-leaf line separately
- * and replayed each from scratch, which is combinatorial in branching factor
- * and made this take a very long time on deep, branchy repertoires.
+ * Every MoveNode already stores the FEN it leads to (written when the tree was
+ * built from PGN), so a node's pre-move position is simply its parent's FEN.
+ * This walk therefore needs no chess.js replay at all — earlier versions
+ * regenerated and re-validated every move to recompute FENs that were already
+ * on disk, which dominated indexing time on large repertoires.
+ *
+ * chess.js is used only as a fallback for nodes with no stored FEN.
  */
 export function extractChapterPositions(chapter: Chapter): PositionMap {
   const result: PositionMap = new Map();
@@ -30,30 +35,33 @@ export function extractChapterPositions(chapter: Chapter): PositionMap {
     if (nextMove) atCount.get(normalizedFen)!.add(nextMove);
   };
 
-  const moveTree = MoveTree.fromJSON(chapter.moveTree);
-  const chess = new Chess();
+  const visit = (node: MoveNode, parentFen: string, moveCount: number) => {
+    addPosition(moveCount, normalizeFen(parentFen), node.san);
 
-  const visit = (node: MoveNode, moveCount: number) => {
-    addPosition(moveCount, normalizeFen(chess.fen()), node.san);
-
-    try {
-      chess.move(node.san);
-    } catch {
-      // Malformed move — matches prior behavior of stopping this branch early
-      return;
+    let fen = node.fen;
+    if (!fen) {
+      // Legacy or hand-built node without a stored FEN — derive just this one
+      try {
+        const chess = new Chess(parentFen);
+        chess.move(node.san);
+        fen = chess.fen();
+      } catch {
+        // Malformed move — matches prior behavior of stopping this branch early
+        return;
+      }
     }
 
     if (!node.children || node.children.length === 0) {
       // Leaf: register the resulting position with no outgoing moves yet
-      addPosition(moveCount + 1, normalizeFen(chess.fen()));
+      addPosition(moveCount + 1, normalizeFen(fen));
     } else {
-      for (const child of node.children) visit(child, moveCount + 1);
+      for (const child of node.children) visit(child, fen, moveCount + 1);
     }
-
-    chess.undo();
   };
 
-  for (const root of moveTree.getRootMoves()) visit(root, 0);
+  const rootMoves: MoveNode[] = chapter.moveTree?.rootMoves ?? [];
+  const startFen: string = chapter.moveTree?.startFen || DEFAULT_START_FEN;
+  for (const root of rootMoves) visit(root, startFen, 0);
 
   return result;
 }

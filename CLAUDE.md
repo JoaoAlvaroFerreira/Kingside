@@ -321,8 +321,17 @@ distinct causes, fixed across v1.4.0–v1.4.2. Regressing any one brings it back
    `repertoire_positions` carries `chapter_id` (schema v5), so `findChaptersByFen()` is one
    indexed lookup for the current position and names resolve from the store's repertoires.
    Rows are written **per chapter** — do not merge chapters when indexing or chapter identity
-   is lost. `extractChapterPositions` is a single DFS reusing one `Chess` instance (O(nodes));
-   `extractRepertoirePositions.bench.test.ts` guards against the old O(lines × depth) shape.
+   is lost.
+5. **`extractChapterPositions` reads each node's stored `fen`; it does not replay moves.**
+   A node's pre-move position is its parent's FEN, so no `Chess` instance is needed except as
+   a per-node fallback when `fen` is absent. Replaying through chess.js to recompute FENs
+   already on disk was ~50x slower and was what made indexing noticeable on import.
+   `extractRepertoirePositions.bench.test.ts` guards the cost and checks the stored-FEN path
+   agrees with the replay fallback.
+
+Indexing is cheap enough to stay inline: `addRepertoire`/`updateRepertoire` await it so the
+index is never out of sync with the data. Renames go through `updateRepertoireMetadata`, which
+skips indexing — the index depends only on chapter ids and move trees.
 
 ## Known Issues
 

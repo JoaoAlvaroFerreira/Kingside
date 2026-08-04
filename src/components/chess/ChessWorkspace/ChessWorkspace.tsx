@@ -19,6 +19,9 @@ import { SettingsModal } from './SettingsModal';
 import { useStore } from '@store';
 import { useEngine } from '@hooks/useEngine';
 
+/** Cap on the comment box's scroll area; also reserved from the board budget in wide mode. */
+const COMMENT_BOX_MAX_HEIGHT = 100;
+
 interface ChessWorkspaceProps {
   // Board control
   fen: string;
@@ -126,8 +129,19 @@ export const ChessWorkspace: React.FC<ChessWorkspaceProps> = ({
   const evalBarReserved = evalBarVisible ? EVAL_BAR_WIDTH : 0;
   const boardBorder = 4; // 2px border each side
 
+  const currentComment = moveTree?.isAtStart()
+    ? moveTree.getRootComment()
+    : moveTree?.getCurrentNode()?.comment;
+
+  // In wide mode the comment box sits below the board+history row inside the same fixed-height
+  // column, so its height has to come out of the board's budget. Without this the board eats the
+  // whole column at large board sizes and a long comment pushes the history's nav arrows off
+  // screen. Narrow mode stacks into a flexible tab area, so it absorbs the comment on its own.
+  const COMMENT_BOX_RESERVED = COMMENT_BOX_MAX_HEIGHT + 4; // maxHeight + marginTop
+  const commentReserved = isWideScreen && currentComment ? COMMENT_BOX_RESERVED : 0;
+
   const availableForBoard = isWideScreen
-    ? Math.min(width * 0.5 - evalBarReserved - boardBorder, height - 80 - verticalOffset)
+    ? Math.min(width * 0.5 - evalBarReserved - boardBorder, height - 80 - verticalOffset - commentReserved)
     : Math.min(width - evalBarReserved - boardBorder, height - 80 - verticalOffset);
 
   // Board size setting scales the board down from max available.
@@ -158,10 +172,6 @@ export const ChessWorkspace: React.FC<ChessWorkspaceProps> = ({
   const handleGoForward = () => { if (onGoForward) onGoForward(); else moveTree?.goForward(); };
   const handleGoToStart = () => { if (onGoToStart) onGoToStart(); else moveTree?.goToStart(); };
   const handleGoToEnd = () => { if (onGoToEnd) onGoToEnd(); else moveTree?.goToEnd(); };
-
-  const currentComment = moveTree?.isAtStart()
-    ? moveTree.getRootComment()
-    : moveTree?.getCurrentNode()?.comment;
 
   const currentNode = moveTree?.getCurrentNode();
   const pgnarrows = currentNode?.arrows;
@@ -354,7 +364,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 8,
   },
   commentScroll: {
-    maxHeight: 100,
+    maxHeight: COMMENT_BOX_MAX_HEIGHT,
     padding: 6,
   },
   commentText: {
