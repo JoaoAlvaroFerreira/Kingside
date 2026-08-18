@@ -77,6 +77,32 @@ class DatabaseServiceClass {
     console.log('[DatabaseService] WAL/SHM files deleted');
   }
 
+  /** Absolute path of the SQLite file, for backup and restore. */
+  get databaseFilePath(): string {
+    return `${this.sqliteDir}${DB_NAME}`;
+  }
+
+  /**
+   * Fold the write-ahead log back into the main database file.
+   *
+   * Required before copying kingside.db for a backup: with WAL enabled the most
+   * recent commits can still be sitting in the -wal sidecar, so a copy of the
+   * .db on its own would silently omit them.
+   */
+  async checkpoint(): Promise<void> {
+    if (this.isWeb || !this.db) return;
+    await this.db.execAsync('PRAGMA wal_checkpoint(TRUNCATE)');
+  }
+
+  /** Close the connection so the underlying file can be replaced on disk. */
+  async close(): Promise<void> {
+    if (this.isWeb || !this.db) return;
+    try {
+      await this.db.closeAsync();
+    } catch { /* already closed */ }
+    this.db = null;
+  }
+
   /**
    * Delete the entire database file (and its sidecars).
    * All data will be lost. Call only as a last-resort recovery step.

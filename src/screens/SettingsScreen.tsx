@@ -16,6 +16,7 @@ import {
   Platform,
 } from 'react-native';
 import { useStore } from '@store';
+import { BackupService } from '@services/backup/BackupService';
 
 interface SettingsScreenProps {
   navigation: any;
@@ -25,6 +26,8 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
   const reviewSettings = useStore(s => s.reviewSettings);
   const saveReviewSettings = useStore(s => s.saveReviewSettings);
   const [saving, setSaving] = useState(false);
+  const reloadDatabase = useStore(s => s.reloadDatabase);
+  const [backupBusy, setBackupBusy] = useState(false);
 
   // Engine settings
   const [moveTime, setMoveTime] = useState(reviewSettings.engine.moveTime.toString());
@@ -107,6 +110,58 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
     }
 
     return null;
+  };
+
+  const notify = (title: string, message: string) => {
+    if (Platform.OS === 'web') {
+      window.alert(`${title}
+
+${message}`);
+    } else {
+      Alert.alert(title, message);
+    }
+  };
+
+  const handleExport = async () => {
+    setBackupBusy(true);
+    try {
+      const result = await BackupService.exportDatabase();
+      if (result.status !== 'cancelled') {
+        notify(result.status === 'ok' ? 'Backup Saved' : 'Export Failed', result.message);
+      }
+    } finally {
+      setBackupBusy(false);
+    }
+  };
+
+  const runRestore = async () => {
+    setBackupBusy(true);
+    try {
+      const result = await BackupService.importDatabase();
+      if (result.status === 'ok') {
+        // The file on disk changed underneath the store, so re-read all of it.
+        await reloadDatabase();
+        notify('Backup Restored', result.message);
+      } else if (result.status === 'error') {
+        notify('Restore Failed', result.message);
+      }
+    } finally {
+      setBackupBusy(false);
+    }
+  };
+
+  const handleRestore = () => {
+    const msg = 'This replaces every repertoire, game and setting currently in the app. Export a backup first if you want to keep them.';
+    if (Platform.OS === 'web') {
+      if (window.confirm(`Restore from backup?
+
+${msg}`)) void runRestore();
+    } else {
+      Alert.alert('Restore From Backup?', msg, [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Restore', style: 'destructive', onPress: () => void runRestore() },
+      ]);
+    }
   };
 
   const handleSave = async () => {
@@ -455,6 +510,34 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
           </View>
         </View>
 
+        {/* Backup & Restore */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Backup & Restore</Text>
+          <Text style={styles.sectionDescription}>
+            Save a copy of your repertoires, games and settings, or restore one.
+          </Text>
+
+          <TouchableOpacity
+            style={[styles.backupButton, backupBusy && styles.saveButtonDisabled]}
+            onPress={handleExport}
+            disabled={backupBusy}
+          >
+            <Text style={styles.backupButtonText}>Export Backup</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.restoreButton, backupBusy && styles.saveButtonDisabled]}
+            onPress={handleRestore}
+            disabled={backupBusy}
+          >
+            <Text style={styles.backupButtonText}>Restore From Backup</Text>
+          </TouchableOpacity>
+
+          <Text style={styles.hint}>
+            Restoring replaces everything currently in the app.
+          </Text>
+        </View>
+
         {/* Save Button */}
         <TouchableOpacity
           style={[styles.saveButton, saving && styles.saveButtonDisabled]}
@@ -594,6 +677,25 @@ const styles = StyleSheet.create({
   switchLabel: {
     flex: 1,
     marginRight: 10,
+  },
+  backupButton: {
+    backgroundColor: '#2c5aa0',
+    paddingVertical: 12,
+    borderRadius: 6,
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  restoreButton: {
+    backgroundColor: '#7a4a1e',
+    paddingVertical: 12,
+    borderRadius: 6,
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  backupButtonText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '600',
   },
   saveButton: {
     backgroundColor: '#4caf50',

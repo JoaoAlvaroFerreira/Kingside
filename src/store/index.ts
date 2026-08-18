@@ -47,6 +47,7 @@ interface AppState {
   // Actions
   initialize: () => Promise<void>;
   resetDatabase: () => Promise<void>;
+  reloadDatabase: () => Promise<void>;
 
   // Repertoire actions
   addRepertoire: (r: Repertoire) => Promise<void>;
@@ -164,6 +165,14 @@ export const useStore = create<AppState>((set, get) => ({
     await DatabaseService.deleteDatabase();
     set({ dbError: false, isLoading: true });
     // Re-run full initialization against the now-empty database
+    const { initialize } = get();
+    await initialize();
+  },
+
+  // Re-read everything from a database file that changed underneath us, as
+  // happens after a backup is restored. initialize() is safe to re-run.
+  reloadDatabase: async () => {
+    set({ dbError: false, isLoading: true });
     const { initialize } = get();
     await initialize();
   },

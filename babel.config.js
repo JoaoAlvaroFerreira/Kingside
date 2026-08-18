@@ -22,6 +22,16 @@ module.exports = function(api) {
         }
       ],
       'react-native-reanimated/plugin',
-    ]
+    ],
+    env: {
+      // Release builds only. console.log in touch handlers measurably lags the
+      // board, and there are ~130 calls across src. error/warn are kept so a
+      // tester's logcat still explains a crash.
+      production: {
+        plugins: [
+          ['transform-remove-console', { exclude: ['error', 'warn'] }],
+        ],
+      },
+    },
   };
 };
