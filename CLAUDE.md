@@ -59,6 +59,7 @@ Kingside is a React Native/Expo chess training app. Personal tool for a 2000+ ra
 - **Game Review**: Engine analysis integration (local Stockfish), FEN-based repertoire matching with complete transposition detection, Lichess win-probability classification (blunder ≥30%, mistake ≥20%, inaccuracy ≥10%), eval graph, 4-tab UI (Key Moves / Graph / Your Games / Master Games)
 - **Interactive Chess Board**: Full variation support, comment display (💬 indicators), touch handling optimized for mobile
 - **Screen Settings**: Per-screen UI preferences (orientation, engine, eval bar, coordinates, move history, per-tab visibility for Your Games / Master Games / Find Position)
+- **Backup/Restore**: Settings screen exports the SQLite file to a user-picked folder (Storage Access Framework) and restores one back. The WAL is checkpointed before copying, and a restore verifies the SQLite header before deleting anything. Android only.
 - **Database**: SQLite storage for games, repertoires, settings, and FEN position indexes. `lineStats` and `gameReviewStatuses` still in AsyncStorage — pending migration.
 - **ChessWorkspace**: Centralized board+engine+movehistory layout. Engine runs internally via `useEngine` — **do not call `useEngine` in screens that use ChessWorkspace**. Percentage-based board sizing. Wide/narrow responsive layout.
 - **Orientation**: Full landscape/tablet support (`app.json "orientation": "default"`, `AndroidManifest screenOrientation="fullSensor"`)
@@ -256,6 +257,7 @@ src/
 │   │   ├── DatabaseService.ts          # SQLite (games + repertoires + settings)
 │   │   ├── WebDatabaseService.ts       # Web stub
 │   │   └── MigrationService.ts         # Schema migrations + AsyncStorage→SQLite
+│   ├── backup/BackupService.ts         # Export/restore the SQLite file (SAF + document picker)
 │   └── training/
 │       ├── LineGenerator.ts            # Lazy DFS line batches from MoveTree
 │       └── BreadthFirstTrainer.ts      # BFS queue of user-decision positions
@@ -290,7 +292,7 @@ adb install -r android/app/build/outputs/apk/debug/app-debug.apk
 # Quick Scripts (in project root)
 quick-rebuild.bat                             # Fast debug rebuild + install
 build-release-apk.bat                         # Generate standalone release APK
-release.bat v1.3.0                            # Build release APK + tag + push + GitHub release (gh CLI)
+release.bat v1.3.0                            # Bump version + build APK + commit + tag + push + GitHub release (gh CLI)
 ```
 
 **Batch script gotcha (Claude Code / git-bash):** these `.bat` files call sibling scripts (`build-release-apk.bat`, `gradlew`) by bare filename. Some shells that hand off `.bat` execution to `cmd.exe` — including git-bash's sandboxed invocation used by Claude Code's Bash tool — don't replicate cmd's implicit "search current directory first" behavior for bare command names, so `call gradlew ...` fails with "not recognized" even though the file is right there. All three scripts now use explicit paths (`%~dp0` for sibling scripts, `.\` for `gradlew`) to work around this; a normal Windows terminal was never affected. If you add a new `call` to another script/binary in one of these files, qualify the path the same way.
@@ -346,7 +348,10 @@ The arrows aren't actually floating: they're a normal flex row after the ScrollV
 The "lose state" half of the symptom is likely unrelated: `canGoBack`/`canGoForward` read `moveTree.isAtStart()/isAtEnd()` directly, and MoveTree is mutable, so a screen mutating it without forcing a re-render leaves the arrows stale. Unverified.
 
 ### 3. Console.log in production code
-131 `console.log` calls in non-test source files. Touch handlers are the critical ones (documented to cause lag). Consider `babel-plugin-transform-remove-console` for release builds.
+**Status:** RESOLVED 2026-08-18. `babel-plugin-transform-remove-console` strips `console.log` from
+release builds only (`env.production` in `babel.config.js`); `error` and `warn` are kept so a
+tester's logcat still explains a crash. The ~130 calls remain in source and are fine in dev — but
+still avoid adding them to touch handlers, which is where they measurably lag the board.
 
 ## Important Notes
 
