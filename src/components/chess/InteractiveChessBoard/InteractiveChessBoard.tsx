@@ -2,7 +2,8 @@
  * Interactive Chess Board Component - Tap or drag pieces to move
  *
  * Performance optimizations:
- * - MemoizedPiece prevents SvgUri re-fetch on unrelated re-renders
+ * - Piece artwork is bundled and parsed synchronously, so a piece is painted
+ *   in the same frame its square mounts (see pieceAssets.ts)
  * - MemoizedSquare skips re-render when piece/highlight state unchanged
  * - Drag state stored in refs so PanResponder isn't recreated mid-drag
  * - Move animation smooths piece transitions between squares
@@ -20,8 +21,9 @@ import {
   GestureResponderEvent,
   PanResponderGestureState,
 } from 'react-native';
-import { SvgUri, Svg, Path } from 'react-native-svg';
+import { SvgXml, Svg, Path } from 'react-native-svg';
 import { Chess } from 'chess.js';
+import { PIECE_SVGS } from './pieceAssets';
 
 interface InteractiveChessBoardProps {
   fen: string;
@@ -79,21 +81,6 @@ const getArrowPath = (x1: number, y1: number, x2: number, y2: number, squareSize
     pts.slice(1).map(p => `L ${p[0]} ${p[1]}`).join(' ') + ' Z';
 };
 
-const PIECE_IMAGES: Record<string, string> = {
-  wK: 'https://lichess1.org/assets/_DYoVny/piece/cburnett/wK.svg',
-  wQ: 'https://lichess1.org/assets/_DYoVny/piece/cburnett/wQ.svg',
-  wR: 'https://lichess1.org/assets/_DYoVny/piece/cburnett/wR.svg',
-  wB: 'https://lichess1.org/assets/_DYoVny/piece/cburnett/wB.svg',
-  wN: 'https://lichess1.org/assets/_DYoVny/piece/cburnett/wN.svg',
-  wP: 'https://lichess1.org/assets/_DYoVny/piece/cburnett/wP.svg',
-  bK: 'https://lichess1.org/assets/_DYoVny/piece/cburnett/bK.svg',
-  bQ: 'https://lichess1.org/assets/_DYoVny/piece/cburnett/bQ.svg',
-  bR: 'https://lichess1.org/assets/_DYoVny/piece/cburnett/bR.svg',
-  bB: 'https://lichess1.org/assets/_DYoVny/piece/cburnett/bB.svg',
-  bN: 'https://lichess1.org/assets/_DYoVny/piece/cburnett/bN.svg',
-  bP: 'https://lichess1.org/assets/_DYoVny/piece/cburnett/bP.svg',
-};
-
 const getPieceKey = (color: string, type: string): string => {
   return `${color}${type.toUpperCase()}`;
 };
@@ -104,7 +91,7 @@ const RANKS = ['8', '7', '6', '5', '4', '3', '2', '1'];
 // --- Memoized sub-components ---
 
 const MemoizedPiece = React.memo(({ pieceKey, size }: { pieceKey: string; size: number }) => (
-  <SvgUri uri={PIECE_IMAGES[pieceKey]} width={size} height={size} />
+  <SvgXml xml={PIECE_SVGS[pieceKey]} width={size} height={size} />
 ), (prev, next) => prev.pieceKey === next.pieceKey && prev.size === next.size);
 MemoizedPiece.displayName = 'MemoizedPiece';
 

@@ -1,5 +1,11 @@
 import { DrawerContentScrollView, DrawerItemList } from '@react-navigation/drawer';
 import { View, Text, StyleSheet } from 'react-native';
+import Constants from 'expo-constants';
+
+// Read from the build rather than a literal, so the drawer cannot drift from
+// the APK a tester is actually running. scripts/bump-version.js keeps
+// app.json, package.json and build.gradle in step.
+const APP_VERSION = Constants.expoConfig?.version ?? 'dev';
 
 export default function DrawerContent(props: any) {
   return (
@@ -10,7 +16,8 @@ export default function DrawerContent(props: any) {
       </View>
       <DrawerItemList {...props} />
       <View style={styles.footer}>
-        <Text style={styles.version}>v1.0.0</Text>
+        <Text style={styles.version}>v{APP_VERSION}</Text>
+        <Text style={styles.credit}>Pieces: cburnett by Colin M.L. Burnett, CC BY-SA 3.0</Text>
       </View>
     </DrawerContentScrollView>
   );
@@ -23,4 +30,5 @@ const styles = StyleSheet.create({
   subtitle: { color: '#888', fontSize: 14 },
   footer: { padding: 20, marginTop: 'auto' },
   version: { color: '#666', fontSize: 12 },
+  credit: { color: '#4a4a4a', fontSize: 10, marginTop: 6 },
 });
