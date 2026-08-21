@@ -17,6 +17,11 @@ REM Strip a leading "v" to get the bare semver the bump script expects.
 set VERSION=%TAG%
 if "%TAG:~0,1%"=="v" set VERSION=%TAG:~1%
 
+REM A version with a prerelease suffix (1.0.0-beta.1) must be published as a
+REM GitHub prerelease, or it shows up as the latest stable download.
+set PRERELEASE_FLAG=
+echo %VERSION% | findstr /C:"-" >nul && set PRERELEASE_FLAG=--prerelease
+
 echo ========================================
 echo Releasing %TAG%
 echo ========================================
@@ -90,7 +95,7 @@ if %ERRORLEVEL% NEQ 0 (
 )
 
 echo Creating GitHub release...
-gh release create %TAG% "%APK_OUT%" --title "%TAG%" --generate-notes
+gh release create %TAG% "%APK_OUT%" --title "%TAG%" --generate-notes %PRERELEASE_FLAG%
 if %ERRORLEVEL% NEQ 0 (
     echo ERROR: Failed to create GitHub release.
     exit /b 1
