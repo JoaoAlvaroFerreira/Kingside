@@ -76,6 +76,7 @@ Kingside is a React Native/Expo chess training app. Personal tool for a 2000+ ra
 - **Position Browser**: "Your games / Master games from this position" panel on Analysis Board (DB layer done, needs UI)
 - **Decision Tree Visualization**: Show branching points explicitly in repertoire study
 - **Linked Positions**: Connect similar structures across different openings
+- **Further Lichess integration for position look-up**: Query Lichess for the current position (opening explorer / masters + player databases, and the tablebase at low piece counts) so the board's tabs can show moves played from here beyond what is imported locally. Online-only, so it must degrade cleanly when offline - the local FEN index stays the source of truth.
 - **Backend & Sync**: Export/restore DB file to Google Drive as a low-cost alternative to full cloud sync
 
 ## Key Implementation Patterns
@@ -298,6 +299,24 @@ release.bat v1.0.0-beta.1                     # Prereleases work too (see Versio
 
 **Batch script gotcha (Claude Code / git-bash):** these `.bat` files call sibling scripts (`build-release-apk.bat`, `gradlew`) by bare filename. Some shells that hand off `.bat` execution to `cmd.exe` — including git-bash's sandboxed invocation used by Claude Code's Bash tool — don't replicate cmd's implicit "search current directory first" behavior for bare command names, so `call gradlew ...` fails with "not recognized" even though the file is right there. All three scripts now use explicit paths (`%~dp0` for sibling scripts, `.\` for `gradlew`) to work around this; a normal Windows terminal was never affected. If you add a new `call` to another script/binary in one of these files, qualify the path the same way.
 
+## APK Size
+
+The release APK is dominated by Stockfish. `libstockfish.so` is ~48MB **per ABI**, and
+that is not debug symbols - AGP already strips it (54MB -> 48MB). `.rodata` is ~47MB
+against ~740KB of `.text`, because the NNUE evaluation network is compiled into the
+binary (`gEmbeddedNNUEData`). It is functional data: stripping cannot remove it, and
+removing it would break the engine. Don't go looking for a strip flag that fixes this.
+
+The only real lever is shipping fewer ABIs. Release builds are limited to
+`arm64-v8a` + `armeabi-v7a` via `ndk.abiFilters` in the `release` buildType; **debug
+builds deliberately keep all four** so the x86_64 emulator still runs. Re-adding x86
+to release adds ~55MB each.
+
+Further options, if size still matters:
+- Drop `armeabi-v7a` (32-bit ARM, pre-~2017 devices) - roughly halves what is left.
+- ABI splits (`splits.abi`) to publish one APK per ABI instead of a fat one; this
+  changes `release.bat`, which assumes a single `app-release.apk`.
+
 ## Versioning
 
 The app is pre-1.0 on purpose: **1.0.0 is reserved for the Play Store release.**
@@ -476,3 +495,4 @@ npm test -- --coverage            # Generate coverage report
 7. **Move Categorization**: Tag moves as forced / main line / sideline / dubious / novelty
 8. **Linked Positions**: Connect similar pawn structures across different openings
 9. **Backup/Restore**: Export/restore DB file to Google Drive (90% of sync value, 5% of the effort vs. full backend)
+10. **Further Lichess integration for position look-up**: Opening explorer / masters / tablebase queries for the current position, alongside the local FEN index
