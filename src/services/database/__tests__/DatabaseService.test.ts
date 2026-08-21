@@ -224,7 +224,9 @@ describe('DatabaseService', () => {
       const [sql, args] = calls[calls.length - 1];
       expect(sql).toMatch(/FROM repertoire_positions/);
       expect(sql).toMatch(/normalized_fen = \?/);
-      expect(args).toEqual(['some-fen']);
+      // Bounded: an early position matches most of the index.
+      expect(sql).toMatch(/LIMIT \?/);
+      expect(args).toEqual(['some-fen', 100]);
     });
 
     it('returns empty rather than throwing when the index is unavailable', async () => {

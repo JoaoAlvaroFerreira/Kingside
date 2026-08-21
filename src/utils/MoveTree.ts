@@ -375,6 +375,7 @@ export class MoveTree {
     if (rootIndex > 0) {
       // Swap with first root move
       [this.rootMoves[0], this.rootMoves[rootIndex]] = [this.rootMoves[rootIndex], this.rootMoves[0]];
+      this._structureVersion++;
       return true;
     }
 

@@ -2,7 +2,7 @@
   "expo": {
     "name": "Kingside",
     "slug": "kingside",
-    "version": "1.0.0",
+    "version": "1.0.0-beta.1",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "jsEngine": "hermes",

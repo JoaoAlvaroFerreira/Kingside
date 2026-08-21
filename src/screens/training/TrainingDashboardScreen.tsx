@@ -219,6 +219,9 @@ export default function TrainingDashboardScreen({ navigation }: TrainingDashboar
           </View>
           <Text style={styles.checkboxLabel}>Only drill lines due for review</Text>
         </TouchableOpacity>
+        <Text style={styles.checkboxHint}>
+          Skip lines the scheduler is not asking for yet. Off means you drill everything, due or not.
+        </Text>
         <TouchableOpacity
           style={[styles.checkboxRow, { marginTop: 12 }]}
           onPress={() => setLearnMode(!learnMode)}
@@ -228,6 +231,10 @@ export default function TrainingDashboardScreen({ navigation }: TrainingDashboar
           </View>
           <Text style={styles.checkboxLabel}>Learn mode (show arrows + comments)</Text>
         </TouchableOpacity>
+        <Text style={styles.checkboxHint}>
+          Shows the answer instead of testing you: the move arrow and any chapter comment are visible
+          before you play. Use it on a new line; turn it off to actually test recall.
+        </Text>
         <TouchableOpacity
           style={[styles.checkboxRow, { marginTop: 12 }]}
           onPress={() => setOpponentBranchingOnly(!opponentBranchingOnly)}
@@ -237,6 +244,10 @@ export default function TrainingDashboardScreen({ navigation }: TrainingDashboar
           </View>
           <Text style={styles.checkboxLabel}>Main line only for my moves</Text>
         </TouchableOpacity>
+        <Text style={styles.checkboxHint}>
+          When it is your turn, drill only the main line — you are not quizzed on every alternative you
+          could have chosen. Opponent moves still branch into all their tries. Fewer, more focused lines.
+        </Text>
       </View>
 
       {/* Stats */}
@@ -411,6 +422,14 @@ const styles = StyleSheet.create({
   checkboxLabel: {
     color: '#fff',
     fontSize: 16,
+    flexShrink: 1,
+  },
+  checkboxHint: {
+    color: '#9aa4b2',
+    fontSize: 13,
+    lineHeight: 18,
+    marginLeft: 34,
+    marginTop: 4,
   },
   statsContainer: {
     backgroundColor: '#2a2a2a',

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Alert, Platform, ActivityIndicator } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system';
@@ -25,6 +25,19 @@ function generateId(): string {
   return Math.random().toString(36).substr(2, 9);
 }
 
+const IMPORT_TIMEOUT_MS = 600000; // 10 minutes for the whole import
+
+/**
+ * Thrown to unwind an import that the user cancelled or that outran its
+ * deadline. Both cases must leave the database untouched, so this is raised
+ * before any write and never treated as a parse failure.
+ */
+class ImportAbortedError extends Error {
+  constructor(public reason: 'cancelled' | 'timeout') {
+    super(reason === 'cancelled' ? 'Import cancelled' : 'Import timed out');
+  }
+}
+
 export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenProps) {
   const { target } = route.params;
   const [pgnText, setPgnText] = useState('');
@@ -44,6 +57,17 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
   const addUserGames = useStore(s => s.addUserGames);
   const addMasterGames = useStore(s => s.addMasterGames);
   const reviewSettings = useStore(s => s.reviewSettings);
+  const cancelRequestedRef = useRef(false);
+  const deadlineRef = useRef(0);
+
+  // Import work is synchronous between batch yields, so an abort can only be
+  // observed at a yield point. Every loop that yields calls this first.
+  const throwIfAborted = () => {
+    if (cancelRequestedRef.current) throw new ImportAbortedError('cancelled');
+    if (deadlineRef.current && Date.now() > deadlineRef.current) {
+      throw new ImportAbortedError('timeout');
+    }
+  };
 
   const readFileWithTimeout = async (uri: string, timeoutMs: number = 15000): Promise<string> => {
     const fileReadPromise = Platform.OS === 'web'
@@ -71,6 +95,7 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
         const file = result.assets[0];
         console.log('Reading file:', file.uri);
 
+        cancelRequestedRef.current = false;
         setFileSelected(true);
         setProgress({ current: 0, total: 0, phase: 'Reading file...' });
 
@@ -80,7 +105,19 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
           content = await readFileWithTimeout(file.uri, 15000);
         } catch (timeoutError) {
           setFileSelected(false);
-          Alert.alert('Error', 'File read timed out. File may be too large or corrupted.');
+          Alert.alert(
+            'File Read Timed Out',
+            'The file could not be read within 15 seconds. It may be too large or corrupted. Nothing was saved.'
+          );
+          return;
+        }
+
+        // The read itself can't be interrupted, so a cancel pressed during it
+        // is honoured here - before any parsing or writing begins.
+        if (cancelRequestedRef.current) {
+          cancelRequestedRef.current = false;
+          setFileSelected(false);
+          Alert.alert('Import Cancelled', 'The import was cancelled. Nothing was saved.');
           return;
         }
 
@@ -124,6 +161,7 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
     const _totalBatches = Math.ceil(items.length / batchSize);
 
     for (let i = 0; i < items.length; i += batchSize) {
+      throwIfAborted();
       const batch = items.slice(i, i + batchSize);
       const batchResults = batch.map((item, localIndex) => processor(item, i + localIndex));
       results.push(...batchResults);
@@ -181,7 +219,8 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
       const combinedPgn = pgns.join('\n\n');
 
       setIsImporting(true);
-      await handleImport(combinedPgn);
+      const imported = await handleImport(combinedPgn);
+      if (!imported) return;
 
       Alert.alert('Success', `Imported ${pgns.length} games from ${username}`);
       if (mode === 'master') setLichessUsername('');
@@ -208,7 +247,8 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
       const pgn = await LichessService.fetchStudyPGN(studyId);
 
       setIsImporting(true);
-      await handleImport(pgn);
+      const imported = await handleImport(pgn);
+      if (!imported) return;
 
       setLichessStudyUrl('');
     } catch (error: any) {
@@ -220,23 +260,24 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
     }
   };
 
-  const handleImport = async (textOverride?: string) => {
+  const handleCancelImport = () => {
+    cancelRequestedRef.current = true;
+    setProgress(p => ({ ...p, phase: 'Cancelling...' }));
+  };
+
+  const handleImport = async (textOverride?: string): Promise<boolean> => {
     // Ensure textOverride is a string (not an event object from button press)
     const text = (typeof textOverride === 'string' ? textOverride : pgnText);
     if (!text || !text.trim()) {
       Alert.alert('Error', 'Please enter or select a PGN');
-      return;
+      return false;
     }
 
     setIsImporting(true);
     setProgress({ current: 0, total: 0, phase: 'Parsing PGN...' });
 
-    // Set timeout for entire import process
-    const importTimeout = setTimeout(() => {
-      setIsImporting(false);
-      setFileSelected(false);
-      Alert.alert('Import Timeout', 'Import took too long. Try importing smaller batches.');
-    }, 600000); // 10 minute max for entire import
+    cancelRequestedRef.current = false;
+    deadlineRef.current = Date.now() + IMPORT_TIMEOUT_MS;
 
     try {
       console.log('Starting PGN import, target:', target);
@@ -250,7 +291,7 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
       if (games.length === 0) {
         Alert.alert('Error', 'No valid games found in PGN');
         setIsImporting(false);
-        return;
+        return false;
       }
 
       if (target === 'repertoire') {
@@ -258,7 +299,7 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
           Alert.alert('Error', 'Please enter a repertoire name');
           setIsImporting(false);
           setFileSelected(false);
-          return;
+          return false;
         }
 
         if (chessableMode) {
@@ -266,16 +307,14 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
           setProgress({ current: 0, total: 0, phase: 'Grouping chapters...' });
           const { chapters: grouped, modelGames } = PGNService.processChessableRepertoire(games);
 
-          // Save model games as master games
-          if (modelGames.length > 0) {
-            const masterGames = modelGames.map(g => ({
-              id: generateId(),
-              ...PGNService.toUserGame(g),
-              pgn: PGNService.toPGNString(g),
-              importedAt: new Date(),
-            }));
-            await addMasterGames(masterGames);
-          }
+          // Built now, written only once the chapter loop below has finished:
+          // an abort partway through must not leave these behind.
+          const modelMasterGames = modelGames.map(g => ({
+            id: generateId(),
+            ...PGNService.toUserGame(g),
+            pgn: PGNService.toPGNString(g),
+            importedAt: new Date(),
+          }));
 
           const groupEntries = Array.from(grouped.entries());
           const chapters = [];
@@ -292,6 +331,7 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
                 phase: `Processing group ${gi + 1} of ${groupEntries.length}...`,
               });
 
+              throwIfAborted();
               const standardGames = groupGames.filter(g => !g.headers.FEN);
               const customFenGames = groupGames.filter(g => g.headers.FEN);
 
@@ -347,6 +387,7 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
                 phase: `Merging chapter ${gi + 1} of ${groupEntries.length}...`,
               });
 
+              throwIfAborted();
               // Split into standard-start games and custom-FEN games
               const standardGames = groupGames.filter(g => !g.headers.FEN);
               const customFenGames = groupGames.filter(g => g.headers.FEN);
@@ -413,10 +454,11 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
             updatedAt: new Date(),
           };
 
+          throwIfAborted();
           setProgress({ current: chapters.length, total: chapters.length, phase: 'Saving repertoire...' });
+          if (modelMasterGames.length > 0) await addMasterGames(modelMasterGames);
           await addRepertoire(repertoire);
 
-          clearTimeout(importTimeout);
           setIsImporting(false);
           setFileSelected(false);
           navigation.goBack();
@@ -458,10 +500,10 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
             updatedAt: new Date(),
           };
 
+          throwIfAborted();
           setProgress({ current: chapters.length, total: chapters.length, phase: 'Saving repertoire...' });
           await addRepertoire(repertoire);
 
-          clearTimeout(importTimeout);
           setIsImporting(false);
           setFileSelected(false);
           navigation.goBack();
@@ -476,10 +518,10 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
           importedAt: new Date(),
         }), 'Processing user games');
 
+        throwIfAborted();
         setProgress({ current: userGames.length, total: userGames.length, phase: 'Saving games...' });
         await addUserGames(userGames);
 
-        clearTimeout(importTimeout);
         setIsImporting(false);
         setFileSelected(false);
 
@@ -495,10 +537,10 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
           importedAt: new Date(),
         }), 'Processing master games');
 
+        throwIfAborted();
         setProgress({ current: masterGames.length, total: masterGames.length, phase: 'Saving games...' });
         await addMasterGames(masterGames);
 
-        clearTimeout(importTimeout);
         setIsImporting(false);
         setFileSelected(false);
 
@@ -506,16 +548,32 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
         navigation.goBack();
       }
     } catch (error: any) {
-      console.error('Import error:', error);
-      clearTimeout(importTimeout);
       setIsImporting(false);
       setFileSelected(false);
+
+      if (error instanceof ImportAbortedError) {
+        console.log('[ImportPGN] Import aborted:', error.reason);
+        Alert.alert(
+          error.reason === 'cancelled' ? 'Import Cancelled' : 'Import Timed Out',
+          error.reason === 'cancelled'
+            ? 'The import was cancelled. Nothing was saved.'
+            : `The import ran longer than ${IMPORT_TIMEOUT_MS / 60000} minutes and was stopped. Nothing was saved - try importing a smaller file.`
+        );
+        return false;
+      }
+
+      console.error('Import error:', error);
       const errorMessage = error?.message || String(error);
       Alert.alert(
         'Import Failed',
-        `Failed to parse PGN. Please ensure the file contains valid chess notation.\n\nError: ${errorMessage}`
+        `Failed to parse PGN. Please ensure the file contains valid chess notation. Nothing was saved.\n\nError: ${errorMessage}`
       );
+      return false;
+    } finally {
+      cancelRequestedRef.current = false;
+      deadlineRef.current = 0;
     }
+    return true;
   };
 
   const getTitle = () => {
@@ -548,6 +606,14 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
               </Text>
             </>
           )}
+          <TouchableOpacity
+            style={styles.cancelImportButton}
+            onPress={handleCancelImport}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.cancelImportText}>Cancel Import</Text>
+          </TouchableOpacity>
+          <Text style={styles.cancelImportHint}>Cancelling discards the import - nothing is saved.</Text>
         </View>
       )}
 
@@ -760,6 +826,25 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
 }
 
 const styles = StyleSheet.create({
+  cancelImportButton: {
+    marginTop: 18,
+    paddingVertical: 10,
+    paddingHorizontal: 24,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#a33',
+  },
+  cancelImportText: {
+    color: '#e06666',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  cancelImportHint: {
+    color: '#888',
+    fontSize: 12,
+    marginTop: 8,
+    textAlign: 'center',
+  },
   container: {
     flex: 1,
     padding: 10,

@@ -8,6 +8,8 @@ interface RepertoireScreenProps {
   navigation: any;
 }
 
+const CHAPTER_PAGE_SIZE = 50;
+
 export default function RepertoireScreen({ navigation }: RepertoireScreenProps) {
   const repertoires = useStore(s => s.repertoires);
   const updateRepertoireMetadata = useStore(s => s.updateRepertoireMetadata);
@@ -19,6 +21,9 @@ export default function RepertoireScreen({ navigation }: RepertoireScreenProps) 
   const [editedName, setEditedName] = useState('');
   const [editingChapter, setEditingChapter] = useState<string | null>(null);
   const [editedChapterName, setEditedChapterName] = useState('');
+  // Chapters render in pages: each row walks its move tree for stats, so a
+  // 1200-chapter repertoire is unusable if we lay all of them out at once.
+  const [visibleChapters, setVisibleChapters] = useState(CHAPTER_PAGE_SIZE);
 
   useEffect(() => {
     console.log('RepertoireScreen: Repertoires count:', repertoires.length);
@@ -275,9 +280,12 @@ export default function RepertoireScreen({ navigation }: RepertoireScreenProps) 
                   <View style={styles.cardHeader}>
                     <TouchableOpacity
                       style={styles.cardHeaderMain}
-                      onPress={() => setExpandedRepertoire(
-                        expandedRepertoire === repertoire.id ? null : repertoire.id
-                      )}
+                      onPress={() => {
+                        setVisibleChapters(CHAPTER_PAGE_SIZE);
+                        setExpandedRepertoire(
+                          expandedRepertoire === repertoire.id ? null : repertoire.id
+                        );
+                      }}
                       activeOpacity={0.7}
                     >
                       <View style={styles.cardTitleRow}>
@@ -340,7 +348,7 @@ export default function RepertoireScreen({ navigation }: RepertoireScreenProps) 
 
                   {expandedRepertoire === repertoire.id && (
                     <View style={styles.chaptersContainer}>
-                      {repertoire.chapters.map((chapter) => (
+                      {repertoire.chapters.slice(0, visibleChapters).map((chapter) => (
                         <View key={chapter.id} style={styles.chapterItem}>
                           {editingChapter === chapter.id ? (
                             <View style={styles.chapterEditContainer}>
@@ -397,6 +405,17 @@ export default function RepertoireScreen({ navigation }: RepertoireScreenProps) 
                         </View>
                       ))}
 
+                      {repertoire.chapters.length > visibleChapters && (
+                        <TouchableOpacity
+                          style={styles.showMoreButton}
+                          onPress={() => setVisibleChapters(n => n + CHAPTER_PAGE_SIZE)}
+                          activeOpacity={0.7}
+                        >
+                          <Text style={styles.showMoreText}>
+                            Show more ({repertoire.chapters.length - visibleChapters} left)
+                          </Text>
+                        </TouchableOpacity>
+                      )}
                     </View>
                   )}
                 </View>
@@ -410,6 +429,18 @@ export default function RepertoireScreen({ navigation }: RepertoireScreenProps) 
 }
 
 const styles = StyleSheet.create({
+  showMoreButton: {
+    paddingVertical: 10,
+    alignItems: 'center',
+    backgroundColor: '#2c2c2c',
+    borderRadius: 6,
+    marginTop: 4,
+  },
+  showMoreText: {
+    color: '#4a9eff',
+    fontSize: 13,
+    fontWeight: '600',
+  },
   container: {
     flex: 1,
     backgroundColor: '#2c2c2c',

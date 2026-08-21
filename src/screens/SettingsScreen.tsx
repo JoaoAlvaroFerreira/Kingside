@@ -317,7 +317,7 @@ ${msg}`)) void runRestore();
                 keyboardType="numeric"
                 placeholderTextColor="#666"
               />
-              <Text style={styles.hint}>100-10000 (default: 1000)</Text>
+              <Text style={styles.hint}>How long the engine thinks about each position. 100-10000 (default: 1000)</Text>
             </View>
 
             <View style={[styles.field, styles.fieldHalf]}>
@@ -330,7 +330,7 @@ ${msg}`)) void runRestore();
                 keyboardType="numeric"
                 placeholderTextColor="#666"
               />
-              <Text style={styles.hint}>1-30 (default: 16)</Text>
+              <Text style={styles.hint}>How many plies deep to search. Search stops at whichever it reaches first, this or the time. 1-30 (default: 16)</Text>
             </View>
           </View>
 
@@ -345,7 +345,7 @@ ${msg}`)) void runRestore();
                 keyboardType="numeric"
                 placeholderTextColor="#666"
               />
-              <Text style={styles.hint}>1-4 (default: 1)</Text>
+              <Text style={styles.hint}>CPU cores Stockfish may use. Higher is stronger but drains battery. 1-4 (default: 1)</Text>
             </View>
 
             <View style={[styles.field, styles.fieldHalf]}>
@@ -358,7 +358,7 @@ ${msg}`)) void runRestore();
                 keyboardType="numeric"
                 placeholderTextColor="#666"
               />
-              <Text style={styles.hint}>1-5 lines (default: 3)</Text>
+              <Text style={styles.hint}>How many candidate lines the engine reports at once. 1-5 lines (default: 3)</Text>
             </View>
           </View>
 
@@ -409,7 +409,7 @@ ${msg}`)) void runRestore();
               keyboardType="numeric"
               placeholderTextColor="#666"
             />
-            <Text style={styles.hint}>0 = manual navigation (default: 0)</Text>
+            <Text style={styles.hint}>Auto-step to the next move during review. 0 = manual navigation (default: 0)</Text>
           </View>
         </View>
 

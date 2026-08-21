@@ -311,6 +311,31 @@ describe('MoveTree', () => {
       tree.promoteToMainLine(c5Id);
       expect(tree.getRootMoves()[0].children[0].san).toBe('c5');
     });
+
+    it('promotes an alternative first move', () => {
+      const tree = new MoveTree();
+      tree.addMove('e4');
+      tree.goToStart();
+      tree.addMove('d4');
+      const d4Id = tree.getCurrentNode()!.id;
+
+      expect(tree.promoteToMainLine(d4Id)).toBe(true);
+      expect(tree.getRootMoves()[0].san).toBe('d4');
+    });
+
+    it('bumps structureVersion when promoting a first move', () => {
+      // The move list is memoised on structureVersion, so a promotion that
+      // does not bump it reorders the tree without ever re-rendering.
+      const tree = new MoveTree();
+      tree.addMove('e4');
+      tree.goToStart();
+      tree.addMove('d4');
+      const d4Id = tree.getCurrentNode()!.id;
+
+      const before = tree.structureVersion;
+      tree.promoteToMainLine(d4Id);
+      expect(tree.structureVersion).toBeGreaterThan(before);
+    });
   });
 
   describe('markAsCritical', () => {

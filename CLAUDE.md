@@ -63,7 +63,7 @@ Kingside is a React Native/Expo chess training app. Personal tool for a 2000+ ra
 - **Database**: SQLite storage for games, repertoires, settings, and FEN position indexes. `lineStats` and `gameReviewStatuses` still in AsyncStorage — pending migration.
 - **ChessWorkspace**: Centralized board+engine+movehistory layout. Engine runs internally via `useEngine` — **do not call `useEngine` in screens that use ChessWorkspace**. Percentage-based board sizing. Wide/narrow responsive layout.
 - **Orientation**: Full landscape/tablet support (`app.json "orientation": "default"`, `AndroidManifest screenOrientation="fullSensor"`)
-- **Training System**: `TrainingDashboardScreen` + `TrainingSessionScreen` (full drill UI), `TrainingService` (SM2-based scheduling), `SM2Service`, `LineGenerator` (lazy DFS batches), `BreadthFirstTrainer` (BFS queue for user-move positions)
+- **Training System**: `TrainingDashboardScreen` + `TrainingSessionScreen` (full drill UI), `TrainingService` (SM2-based scheduling), `SM2Service`, `LineGenerator` (lazy DFS batches), `BreadthFirstTrainer` (BFS queue for user-move positions). At end of line, "Analyse on Board" pushes the `LineAnalysis` stack route (AnalysisBoardScreen with a `line` param) **on top of** the session — navigating to the drawer's Analysis screen instead would pop the session, which is rebuilt from route params on mount and would lose the drill.
 - **FEN Position Index**: `searchUserGamesByFEN` / `searchMasterGamesByFEN` — SQLite FEN index ready, UI not yet wired
 - **Find Position**: "Find Position" tab on Analysis Board / Repertoire Study lists which repertoire chapters contain the current FEN (indexed SQLite lookup via `DatabaseService.findChaptersByFen`), tap to jump to that chapter
 
@@ -293,9 +293,29 @@ adb install -r android/app/build/outputs/apk/debug/app-debug.apk
 quick-rebuild.bat                             # Fast debug rebuild + install
 build-release-apk.bat                         # Generate standalone release APK
 release.bat v1.3.0                            # Bump version + build APK + commit + tag + push + GitHub release (gh CLI)
+release.bat v1.0.0-beta.1                     # Prereleases work too (see Versioning below)
 ```
 
 **Batch script gotcha (Claude Code / git-bash):** these `.bat` files call sibling scripts (`build-release-apk.bat`, `gradlew`) by bare filename. Some shells that hand off `.bat` execution to `cmd.exe` — including git-bash's sandboxed invocation used by Claude Code's Bash tool — don't replicate cmd's implicit "search current directory first" behavior for bare command names, so `call gradlew ...` fails with "not recognized" even though the file is right there. All three scripts now use explicit paths (`%~dp0` for sibling scripts, `.\` for `gradlew`) to work around this; a normal Windows terminal was never affected. If you add a new `call` to another script/binary in one of these files, qualify the path the same way.
+
+## Versioning
+
+The app is pre-1.0 on purpose: **1.0.0 is reserved for the Play Store release.**
+Ship betas as `1.0.0-beta.N`.
+
+`scripts/bump-version.js` accepts `X.Y.Z` or `X.Y.Z-(alpha|beta|rc).N` and stamps
+package.json, app.json and `android/app/build.gradle`. Android `versionCode` is derived:
+
+```
+versionCode = major*1000000 + minor*10000 + patch*100 + slot
+slot: alpha.N -> N,  beta.N -> 30+N,  rc.N -> 60+N,  final release -> 99
+```
+
+Each patch level owns a block of 100 codes, so a prerelease always sorts *below* the
+release it precedes while still rising monotonically. The scheme deliberately sits far
+above the old `major*10000` codes (v1.0.0 shipped as `10000`) — otherwise Android
+refuses the upgrade as a downgrade and the tester has to uninstall first. Don't
+renumber downwards.
 
 ## App Icon / Splash
 
@@ -356,6 +376,14 @@ still avoid adding them to touch handlers, which is where they measurably lag th
 ## Important Notes
 
 ### General
+- **Long lists must not render whole.** Repertoires reach 1000+ chapters and the master DB
+  holds ~24k games, so every list is either a `FlatList` (`ChapterList`, `GameList`,
+  `RepertoireMatchList`, `ChapterSelectModal`) or paged behind a "Show more"
+  (`RepertoireScreen` chapters — it is inside a `ScrollView`, so it cannot virtualize).
+  `RepertoireScreen` rows call `getChapterStats`, which walks the chapter's move tree, so
+  row count is real work, not just layout. Position lookups
+  (`searchUserGamesByFEN`/`searchMasterGamesByFEN`/`findChaptersByFen`) are capped at
+  `POSITION_MATCH_LIMIT` — an early position otherwise matches most of the database.
 - **Path aliases required**: Use `@components/*` not `../../components`
 - **MoveTree is mutable**: Always force-update React after mutations
 - **chess.js is beta**: v1.0.0-beta.8 API may differ from docs
@@ -364,6 +392,14 @@ still avoid adding them to touch handlers, which is where they measurably lag th
 - **Engine disabled by default**: All screens start with engine OFF
 
 ### PGN Import
+- **Aborts must not write.** Cancel and timeout both raise `ImportAbortedError`, which
+  unwinds *before* any `addRepertoire`/`addUserGames`/`addMasterGames` call, and the user
+  is told nothing was saved. The old code set a `setTimeout` that only flipped a flag, so
+  a "timed out" import still finished and saved. Any new write in the import path must sit
+  after a `throwIfAborted()` — including chessable model games, which are built early but
+  written only once the chapter loop completes.
+- **Aborts are only observed at yield points** (`processBatch` batches, the chessable group
+  loops). A new long synchronous loop needs its own `throwIfAborted()`.
 - **BOM handling**: Files starting with ﻿ are cleaned automatically
 - **Moves-only accepted**: Simple move lists like "1. e4 e5 2. Nf3" work
 - **Multi-game support**: Single file can contain multiple PGNs

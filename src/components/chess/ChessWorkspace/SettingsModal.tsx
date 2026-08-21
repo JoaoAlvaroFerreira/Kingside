@@ -265,6 +265,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <View style={styles.switchRow}>
                   <View style={styles.switchLabel}>
                     <Text style={styles.label}>Your Games</Text>
+                    <Text style={styles.hint}>Your imported games that reached this position</Text>
                   </View>
                   <Switch
                     value={visibleTabs.yourGames}
@@ -277,6 +278,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <View style={[styles.switchRow, styles.switchRowSpacing]}>
                   <View style={styles.switchLabel}>
                     <Text style={styles.label}>Master Games</Text>
+                    <Text style={styles.hint}>Master games that reached this position</Text>
                   </View>
                   <Switch
                     value={visibleTabs.masterGames}
@@ -289,6 +291,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <View style={[styles.switchRow, styles.switchRowSpacing]}>
                   <View style={styles.switchLabel}>
                     <Text style={styles.label}>Find Position</Text>
+                    <Text style={styles.hint}>Repertoire chapters containing this position — tap to jump there</Text>
                   </View>
                   <Switch
                     value={visibleTabs.findPosition}

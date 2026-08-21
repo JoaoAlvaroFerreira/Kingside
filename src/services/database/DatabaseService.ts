@@ -22,6 +22,9 @@ const DB_NAME = 'kingside.db';
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/;
 const REP_INDEXED_KEY_PREFIX = 'rep_pos_indexed:';
 const PAGE_SIZE = 25; // Games per page
+// Position lookups are unbounded by nature - an early position matches most of
+// the database. Cap what we hand back so the board's tabs stay responsive.
+const POSITION_MATCH_LIMIT = 100;
 const SCHEMA_VERSION = 5; // Bump when schema changes
 const INDEX_BATCH_SIZE = 10; // Games per batch during background indexing
 
@@ -1138,8 +1141,9 @@ class DatabaseServiceClass {
     try {
       const rows = await this.db.getAllAsync(
         `SELECT DISTINCT repertoire_id, chapter_id FROM repertoire_positions
-         WHERE normalized_fen = ? AND chapter_id IS NOT NULL`,
-        [normalizedFen]
+         WHERE normalized_fen = ? AND chapter_id IS NOT NULL
+         LIMIT ?`,
+        [normalizedFen, POSITION_MATCH_LIMIT]
       ) as Array<{ repertoire_id: string; chapter_id: string }>;
       return rows.map(r => ({ repertoireId: r.repertoire_id, chapterId: r.chapter_id }));
     } catch {
@@ -1195,14 +1199,17 @@ class DatabaseServiceClass {
     // If still indexing, fall back to brute-force
     if (this.isIndexing) {
       const allGames = await this.getAllUserGames();
-      return allGames.filter(game => this.gameContainsFen(game.pgn, normalized));
+      return allGames
+        .filter(game => this.gameContainsFen(game.pgn, normalized))
+        .slice(0, POSITION_MATCH_LIMIT);
     }
 
     const rows = await this.db.getAllAsync(
       `SELECT DISTINCT ug.* FROM user_games ug
        INNER JOIN game_positions gp ON ug.id = gp.game_id AND gp.game_type = 'user'
-       WHERE gp.normalized_fen = ?`,
-      [normalized]
+       WHERE gp.normalized_fen = ?
+       LIMIT ?`,
+      [normalized, POSITION_MATCH_LIMIT]
     );
     return (rows as any[]).map((row: any) => this.rowToUserGame(row));
   }
@@ -1218,14 +1225,17 @@ class DatabaseServiceClass {
 
     if (this.isIndexing) {
       const allGames = await this.getAllMasterGames();
-      return allGames.filter(game => this.gameContainsFen(game.pgn, normalized));
+      return allGames
+        .filter(game => this.gameContainsFen(game.pgn, normalized))
+        .slice(0, POSITION_MATCH_LIMIT);
     }
 
     const rows = await this.db.getAllAsync(
       `SELECT DISTINCT mg.* FROM master_games mg
        INNER JOIN game_positions gp ON mg.id = gp.game_id AND gp.game_type = 'master'
-       WHERE gp.normalized_fen = ?`,
-      [normalized]
+       WHERE gp.normalized_fen = ?
+       LIMIT ?`,
+      [normalized, POSITION_MATCH_LIMIT]
     );
     return (rows as any[]).map((row: any) => this.rowToMasterGame(row));
   }

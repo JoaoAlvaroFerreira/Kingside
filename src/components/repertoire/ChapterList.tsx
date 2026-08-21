@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { Text, TouchableOpacity, StyleSheet, FlatList } from 'react-native';
 import { CollapsiblePanel } from './CollapsiblePanel';
 import { Chapter } from '@types';
 
@@ -26,10 +26,17 @@ export function ChapterList({ chapters, selectedId, onSelect, defaultCollapsed }
 
   return (
     <CollapsiblePanel title={`Chapters (${chapters.length})`} defaultCollapsed={defaultCollapsed}>
-      <ScrollView style={styles.list} nestedScrollEnabled>
-        {chapters.map((chapter) => (
+      <FlatList
+        style={styles.list}
+        data={chapters}
+        keyExtractor={(chapter) => chapter.id}
+        nestedScrollEnabled
+        initialNumToRender={15}
+        maxToRenderPerBatch={15}
+        windowSize={5}
+        removeClippedSubviews
+        renderItem={({ item: chapter }) => (
           <TouchableOpacity
-            key={chapter.id}
             style={[
               styles.chapterItem,
               selectedId === chapter.id && styles.selectedChapter,
@@ -50,8 +57,8 @@ export function ChapterList({ chapters, selectedId, onSelect, defaultCollapsed }
               {new Date(chapter.createdAt).toLocaleDateString()}
             </Text>
           </TouchableOpacity>
-        ))}
-      </ScrollView>
+        )}
+      />
     </CollapsiblePanel>
   );
 }

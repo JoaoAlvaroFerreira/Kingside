@@ -34,6 +34,7 @@ export type RootStackParamList = {
     learnMode?: boolean;
   };
   GameReview: { gameId: string };
+  LineAnalysis: { line: { moves: string[]; startFen?: string } };
   RepertoireLibrary?: undefined;
   Library?: undefined;
   RepertoireViewer?: { repertoireId: string };
@@ -125,6 +126,16 @@ export default function AppNavigator() {
           options={{
             headerShown: false,
             presentation: 'modal',
+          }}
+        />
+        <Stack.Screen
+          name="LineAnalysis"
+          component={AnalysisBoardScreen}
+          options={{
+            headerShown: true,
+            headerStyle: { backgroundColor: '#2c2c2c' },
+            headerTintColor: '#e0e0e0',
+            title: 'Analyse Line',
           }}
         />
         <Stack.Screen

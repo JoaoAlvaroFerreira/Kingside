@@ -12,6 +12,8 @@ interface AnalysisBoardScreenProps {
   route?: {
     params?: {
       game?: UserGame | MasterGame;
+      /** A bare move sequence to load, e.g. a line just drilled in training. */
+      line?: { moves: string[]; startFen?: string };
     };
   };
   navigation?: any;
@@ -55,6 +57,18 @@ export default function AnalysisBoardScreen({ route, navigation }: AnalysisBoard
       navigation?.setParams?.({ game: undefined });
     }
   }, [route?.params?.game, navigation]);
+
+  useEffect(() => {
+    const line = route?.params?.line;
+    if (!line?.moves?.length) return;
+    const newTree = new MoveTree(line.startFen);
+    for (const san of line.moves) newTree.addMove(san);
+    newTree.goToStart();
+    setMoveTree(newTree);
+    forceUpdate(n => n + 1);
+    justLoadedRef.current = true;
+    navigation?.setParams?.({ line: undefined });
+  }, [route?.params?.line, navigation]);
 
   // Reset board when returning to Analysis tab (unless we just loaded a game)
   useFocusEffect(

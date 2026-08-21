@@ -300,6 +300,20 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
     }
   };
 
+  const handleAnalyseLine = () => {
+    const currentLine = session?.lines[session.currentLineIndex];
+    if (!currentLine?.moves.length) return;
+    // Pushed on top of the session rather than navigating to the drawer's
+    // Analysis screen: that would pop this screen and the session is rebuilt
+    // from route params on mount, so the drill progress would be lost.
+    navigation.push('LineAnalysis', {
+      line: {
+        moves: currentLine.moves.map(m => m.san),
+        startFen: currentLine.moves[0].preFen,
+      },
+    });
+  };
+
   const handleRepeatVariation = () => {
     if (!session) return;
     session.currentMoveIndex = 0;
@@ -590,12 +604,20 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
                 </View>
               </>
             )}
-            <TouchableOpacity
-              style={styles.deleteLineButton}
-              onPress={() => handleLongPressLine(session.currentLineIndex)}
-            >
-              <Text style={styles.deleteLineText}>Delete Line</Text>
-            </TouchableOpacity>
+            <View style={styles.lineActionsRow}>
+              <TouchableOpacity
+                style={styles.analyseLineButton}
+                onPress={handleAnalyseLine}
+              >
+                <Text style={styles.analyseLineText}>Analyse on Board</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.deleteLineButton}
+                onPress={() => handleLongPressLine(session.currentLineIndex)}
+              >
+                <Text style={styles.deleteLineText}>Delete Line</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         )}
 
@@ -805,6 +827,21 @@ const styles = StyleSheet.create({
     fontSize: 10,
     marginTop: 1,
     opacity: 0.8,
+  },
+  lineActionsRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 20,
+  },
+  analyseLineButton: {
+    marginTop: 8,
+    alignItems: 'center',
+    paddingVertical: 6,
+  },
+  analyseLineText: {
+    color: '#4a9eff',
+    fontSize: 12,
   },
   deleteLineButton: {
     marginTop: 8,

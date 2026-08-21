@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { Text, TouchableOpacity, StyleSheet, FlatList } from 'react-native';
 import { CollapsiblePanel } from './CollapsiblePanel';
 import { ChapterFenMatch } from '@utils/extractRepertoirePositions';
 
@@ -20,10 +20,17 @@ export function RepertoireMatchList({ matches, onSelect, defaultCollapsed }: Rep
       {matches.length === 0 ? (
         <Text style={styles.empty}>No repertoire chapters at this position</Text>
       ) : (
-        <ScrollView style={styles.list} nestedScrollEnabled>
-          {matches.map((match) => (
+        <FlatList
+          style={styles.list}
+          data={matches}
+          keyExtractor={(match) => `${match.repertoireId}-${match.chapterId}`}
+          nestedScrollEnabled
+          initialNumToRender={15}
+          maxToRenderPerBatch={15}
+          windowSize={5}
+          removeClippedSubviews
+          renderItem={({ item: match }) => (
             <TouchableOpacity
-              key={`${match.repertoireId}-${match.chapterId}`}
               style={styles.matchItem}
               onPress={() => onSelect(match)}
               activeOpacity={0.7}
@@ -35,8 +42,8 @@ export function RepertoireMatchList({ matches, onSelect, defaultCollapsed }: Rep
                 {match.chapterName}
               </Text>
             </TouchableOpacity>
-          ))}
-        </ScrollView>
+          )}
+        />
       )}
     </CollapsiblePanel>
   );

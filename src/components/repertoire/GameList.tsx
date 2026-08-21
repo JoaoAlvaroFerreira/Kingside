@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
 import { CollapsiblePanel } from './CollapsiblePanel';
 import { UserGame, MasterGame } from '@types';
 
@@ -26,10 +26,17 @@ export function GameList({ title, games, onSelect, defaultCollapsed, loading }: 
       ) : games.length === 0 ? (
         <Text style={styles.empty}>No games at this position</Text>
       ) : (
-        <ScrollView style={styles.list} nestedScrollEnabled>
-          {games.map((game) => (
+        <FlatList
+          style={styles.list}
+          data={games}
+          keyExtractor={(game) => game.id}
+          nestedScrollEnabled
+          initialNumToRender={15}
+          maxToRenderPerBatch={15}
+          windowSize={5}
+          removeClippedSubviews
+          renderItem={({ item: game }) => (
             <TouchableOpacity
-              key={game.id}
               style={styles.gameItem}
               onPress={() => onSelect(game)}
               activeOpacity={0.7}
@@ -54,8 +61,8 @@ export function GameList({ title, games, onSelect, defaultCollapsed, loading }: 
                 <Text style={styles.eco}>{game.eco}</Text>
               )}
             </TouchableOpacity>
-          ))}
-        </ScrollView>
+          )}
+        />
       )}
     </CollapsiblePanel>
   );
