@@ -124,6 +124,11 @@ export default function AnalysisBoardScreen({ route, navigation }: AnalysisBoard
   const handleGoToStart = useCallback(() => { moveTree.goToStart(); triggerUpdate(); }, [moveTree, triggerUpdate]);
   const handleGoToEnd = useCallback(() => { moveTree.goToEnd(); triggerUpdate(); }, [moveTree, triggerUpdate]);
 
+  // The dashboard still picks the repertoire — a position usually sits in several.
+  const handleDrillFromPosition = useCallback(() => {
+    navigation?.navigate('Training', { fromFen: currentFen });
+  }, [navigation, currentFen]);
+
   return (
     <ChessAnalysisLayout
       moveTree={moveTree}
@@ -143,6 +148,7 @@ export default function AnalysisBoardScreen({ route, navigation }: AnalysisBoard
       loadingGames={loadingGames}
       onSelectGame={handleSelectGame}
       onSelectRepertoireMatch={handleSelectRepertoireMatch}
+      onDrillFromPosition={handleDrillFromPosition}
     />
   );
 }

@@ -413,9 +413,9 @@ matters is which chapters contain the position, not which side's repertoire they
 
 A drill is three independent choices, and `TrainingConfig` keeps them apart:
 
-- **`selection`** — which lines go in the pool (`{kind: 'all'}`, `{kind: 'due'}`)
-- **`order`** — how the pool is walked (`'depth-first'`, `'width-first'`)
-- **`guidance`** — whether the board shows the answer (`'none'`, `'learn'`)
+- **`selection`** — which lines go in the pool (`all`, `due`, `recommended`, `from-position`)
+- **`order`** — how the pool is walked (`depth-first`, `width-first`, `random`)
+- **`guidance`** — whether the board shows the answer (`none`, `learn`, `semi-learn`)
 
 `maxDepth` and `opponentBranchingOnly` are pool filters and sit outside the three.
 
@@ -428,6 +428,26 @@ others. **Add a new drilling idea by extending one of the three, never by adding
 already done its work by the time the pool exists. Route params for the `TrainingSession`
 screen are the `TrainingConfig` itself — the session is rebuilt from them on mount, so the
 params and the config must stay the same shape.
+
+Things worth knowing about the individual values:
+
+- **`random` shuffles before the active/holdback split**, not after. Shuffling the active
+  batch alone just reorders the same first hundred lines and never reaches the rest of a
+  large repertoire. The exception is `recommended`, where priority order is the point: there
+  the batch is still the highest-priority lines and `random` shuffles only within it.
+- **`recommended` scores by mistake rate**, with a never-drilled line pinned at
+  `UNSEEN_LINE_SCORE` (0.5) so new material ranks above lines you mostly get right and below
+  ones you are actively failing. Ties break on how overdue. The dashboard surfaces the same
+  signal as "Struggling With" / "Never Drilled".
+- **`from-position` trims each line** to start at the given FEN (`trimLineToPosition`) and
+  drops lines that never reach it. The line keeps its id, so the scheduler still treats the
+  drill as evidence about that same line. Seeded from the Analysis Board's "Drill from this
+  position", which hands the FEN to the dashboard — the repertoire is still chosen there,
+  because a position usually sits in several.
+- **`semi-learn` reads and writes `seen_moves`.** A move is marked seen on the first
+  *correct* answer and the row is deleted on a mistake, so the arrow comes back. Full `learn`
+  skips the SM2 rating; `semi-learn` does not — it is still a test, and its ratings are what
+  feed `recommended`.
 
 ## Known Issues
 

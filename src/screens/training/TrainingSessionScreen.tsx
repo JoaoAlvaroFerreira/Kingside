@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,8 +10,9 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { useStore } from '@store';
-import { TrainingSession, TrainingConfig, TrainingTimingSettings } from '@types';
+import { TrainingSession, TrainingConfig, TrainingTimingSettings, normalizeFen } from '@types';
 import { TrainingService } from '@services/training/TrainingService';
+import { DatabaseService } from '@services/database/DatabaseService';
 import { ChessWorkspace } from '@components/chess/ChessWorkspace/ChessWorkspace';
 import { VariationSelector } from '@components/training/VariationSelector';
 import { Chess } from 'chess.js';
@@ -42,27 +43,43 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
   const [currentComment, setCurrentComment] = useState<string | undefined>(undefined);
   const [opponentComment, setOpponentComment] = useState<string | undefined>(undefined);
 
-  const isLearnMode = session?.guidance === 'learn';
+  // Semi-learn: the teaching arrow shows until you have played the move correctly once,
+  // and comes back if you later get it wrong. Keyed on position + move, per repertoire.
+  const [seenMoves, setSeenMoves] = useState<Set<string>>(() => new Set());
+  const guidance = session?.guidance ?? 'none';
+  const showsComments = guidance !== 'none';
+
+  const seenKey = (fen: string, san: string) => `${normalizeFen(fen)}|${san}`;
+
+  const isMoveTaught = useCallback(
+    (fen: string, san: string) => {
+      if (guidance === 'learn') return true;
+      if (guidance === 'semi-learn') return !seenMoves.has(seenKey(fen, san));
+      return false;
+    },
+    [guidance, seenMoves]
+  );
 
   // Compute learn mode hint arrow for current user move
   const learnArrowUci = useMemo(() => {
-    if (!session || !isLearnMode || isAnimating || session.awaitingRating) return undefined;
+    if (!session || guidance === 'none' || isAnimating || session.awaitingRating) return undefined;
     const currentLine = session.lines[session.currentLineIndex];
     if (!currentLine) return undefined;
     const userMoves = currentLine.moves.filter(m => m.isUserMove);
     const currentUserMove = userMoves[session.currentMoveIndex];
     if (!currentUserMove) return undefined;
+    if (!isMoveTaught(currentUserMove.preFen, currentUserMove.san)) return undefined;
     try {
       const chess = new Chess(currentUserMove.preFen);
       const move = chess.move(currentUserMove.san);
       if (move) return `${move.from}${move.to}`;
     } catch { /* ignore */ }
     return undefined;
-  }, [session, isLearnMode, isAnimating]);
+  }, [session, guidance, isAnimating, isMoveTaught]);
 
   // Update comment when position changes
   const updateComment = (sess: TrainingSession) => {
-    if (sess.guidance === 'none') {
+    if (sess.guidance === 'none') {  // semi-learn keeps comments; only the arrow is conditional
       setCurrentComment(undefined);
       setOpponentComment(undefined);
       return;
@@ -113,6 +130,10 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
     setSession(newSession);
     setTrainingSession(newSession);
 
+    if (newSession.guidance === 'semi-learn') {
+      DatabaseService.getSeenMoves(repertoire.id).then(setSeenMoves);
+    }
+
     // Set initial position
     const position = TrainingService.getCurrentPosition(newSession);
     if (position) {
@@ -135,6 +156,14 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
 
     if (!result.isCorrect) {
       // Wrong move (or alternative) — show feedback and hint arrow for expected move
+      // Getting it wrong un-teaches the move, so semi-learn puts the arrow back next time.
+      if (session.guidance === 'semi-learn' && result.feedback !== 'alternative') {
+        const key = seenKey(currentFen, result.expectedMove);
+        if (seenMoves.has(key)) {
+          setSeenMoves(prev => { const next = new Set(prev); next.delete(key); return next; });
+          void DatabaseService.unmarkMoveSeen(session.repertoireId, currentFen, result.expectedMove);
+        }
+      }
       setFeedback(result.feedback === 'alternative' ? 'alternative' : 'incorrect');
       try {
         const hint = new Chess(currentFen);
@@ -149,6 +178,14 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
     }
 
     // Correct move
+    if (session.guidance === 'semi-learn') {
+      const key = seenKey(currentFen, result.expectedMove);
+      if (!seenMoves.has(key)) {
+        setSeenMoves(prev => new Set(prev).add(key));
+        void DatabaseService.markMoveSeen(session.repertoireId, currentFen, result.expectedMove);
+      }
+    }
+
     setFeedback('correct');
     setHintArrowUci(undefined);
 
@@ -162,8 +199,8 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
     if (result.opponentMove && result.opponentFen) {
       setIsAnimating(true);
 
-      // Show opponent's comment if in learn mode
-      if (isLearnMode) {
+      // Show opponent's comment if guidance is on
+      if (showsComments) {
         const currentLine = session.lines[session.currentLineIndex];
         const userMoves = currentLine.moves.filter(m => m.isUserMove);
         const currentUserMove = userMoves[session.currentMoveIndex];
@@ -444,8 +481,10 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
       {/* Progress Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <View style={[styles.modeBadge, isLearnMode && styles.modeBadgeLearn]}>
-            <Text style={styles.modeBadgeText}>{isLearnMode ? 'Learn' : 'Drill'}</Text>
+          <View style={[styles.modeBadge, showsComments && styles.modeBadgeLearn]}>
+            <Text style={styles.modeBadgeText}>
+              {guidance === 'learn' ? 'Learn' : guidance === 'semi-learn' ? 'Semi' : 'Drill'}
+            </Text>
           </View>
           <View>
             <Text style={styles.progressText}>
@@ -479,8 +518,8 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
               showMoveHistory={false}
               showSettingsGear={false}
               orientationOverride={session.color}
-              hintArrow={isLearnMode ? learnArrowUci : hintArrowUci}
-              hintArrowColor={isLearnMode ? 'rgba(156, 39, 176, 0.7)' : undefined}
+              hintArrow={learnArrowUci ?? hintArrowUci}
+              hintArrowColor={learnArrowUci ? 'rgba(156, 39, 176, 0.7)' : undefined}
               verticalOffset={HEADER_HEIGHT}
               maxBoardSize={maxBoardSize}
             />
@@ -501,8 +540,8 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
           )}
         </View>
 
-        {/* Comment Boxes (learn mode) */}
-        {isLearnMode && (opponentComment || currentComment) && (
+        {/* Comment Boxes (learn and semi-learn) */}
+        {showsComments && (opponentComment || currentComment) && (
           <View>
             {opponentComment && (
               <ScrollView
@@ -552,7 +591,7 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
         {/* Rating Buttons — directly below board so it's always visible */}
         {session.awaitingRating && (
           <View style={styles.ratingContainer}>
-            {isLearnMode ? (
+            {guidance === 'learn' ? (
               <>
                 <View style={styles.ratingButtons}>
                   <TouchableOpacity

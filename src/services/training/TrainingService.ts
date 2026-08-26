@@ -10,7 +10,7 @@ import {
   LineStats,
   DrillResult,
 } from '@types';
-import { Repertoire } from '@types';
+import { Repertoire, normalizeFen } from '@types';
 import { LineExtractor } from './LineExtractor';
 import { SM2Service } from '@services/srs/SM2Service';
 
@@ -60,6 +60,15 @@ export const TrainingService = {
           .map(stat => stat.lineId)
       );
       allLines = allLines.filter(line => dueLineIds.has(line.id));
+    }
+
+    if (config.selection.kind === 'from-position') {
+      const target = normalizeFen(config.selection.fen);
+      allLines = allLines
+        .map(line => this.trimLineToPosition(line, target))
+        .filter((line): line is Line => line !== null);
+      // Trimming can leave a tail with nothing for the user to play
+      allLines = LineExtractor.filterLinesWithUserMoves(allLines);
     }
 
     if (config.selection.kind === 'recommended') {
@@ -518,6 +527,22 @@ export const TrainingService = {
   /**
    * Generate unique session ID
    */
+  /**
+   * Cut a line down to the part that starts at `normalizedTargetFen`.
+   *
+   * Drilling "from here" should begin at the position, not replay the line from move one.
+   * Returns null when the line never reaches the position. The line keeps its id, so the
+   * scheduler still treats this as evidence about the same line.
+   */
+  trimLineToPosition(line: Line, normalizedTargetFen: string): Line | null {
+    const index = line.moves.findIndex(m => normalizeFen(m.preFen) === normalizedTargetFen);
+    if (index === -1) return null;
+    if (index === 0) return line;
+
+    const moves = line.moves.slice(index);
+    return { ...line, moves, depth: moves.length };
+  },
+
   /**
    * How badly a line needs drilling. Higher comes first.
    *

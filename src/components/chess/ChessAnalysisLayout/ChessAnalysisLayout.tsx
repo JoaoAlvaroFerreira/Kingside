@@ -50,6 +50,8 @@ interface ChessAnalysisLayoutProps {
   loadingGames: boolean;
   onSelectGame: (game: UserGame | MasterGame) => void;
   onSelectRepertoireMatch: (match: ChapterFenMatch) => void;
+  /** Hand the current position to the training dashboard. Omit to hide the action. */
+  onDrillFromPosition?: () => void;
 
   // Optional content injected into the wide layout (e.g. left panel for repertoire)
   wideLeftPanel?: React.ReactNode;
@@ -76,6 +78,7 @@ export function ChessAnalysisLayout({
   loadingGames,
   onSelectGame,
   onSelectRepertoireMatch,
+  onDrillFromPosition,
   wideLeftPanel,
   narrowHeader,
 }: ChessAnalysisLayoutProps) {
@@ -299,6 +302,11 @@ export function ChessAnalysisLayout({
 
         {effectiveActiveTab === 'findPosition' && (
           <View style={styles.tabGameList}>
+            {onDrillFromPosition && repertoireMatches.length > 0 && (
+              <TouchableOpacity style={styles.drillButton} onPress={onDrillFromPosition}>
+                <Text style={styles.drillButtonText}>Drill from this position</Text>
+              </TouchableOpacity>
+            )}
             <RepertoireMatchList
               matches={repertoireMatches}
               onSelect={onSelectRepertoireMatch}
@@ -380,6 +388,18 @@ const styles = StyleSheet.create({
   },
   tabGameList: {
     flex: 1,
+  },
+  drillButton: {
+    backgroundColor: '#4a9eff',
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  drillButtonText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '600',
   },
   tabLoading: {
     alignItems: 'center',

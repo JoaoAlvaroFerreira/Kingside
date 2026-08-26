@@ -777,4 +777,62 @@ describe('DatabaseService', () => {
       expect(moves).toEqual(['e4', 'e5', 'Nf3', null]);
     });
   });
+
+  describe('seen moves (semi-learn)', () => {
+    beforeEach(() => DatabaseService.initialize());
+
+    it('creates the table', async () => {
+      const sql = mockDb.execAsync.mock.calls.map(([s]: [string]) => s).join('\n');
+      expect(sql).toMatch(/CREATE TABLE IF NOT EXISTS seen_moves/);
+      // Position+move, scoped per repertoire — not per line
+      expect(sql).toMatch(/PRIMARY KEY \(repertoire_id, normalized_fen, move\)/);
+    });
+
+    it('returns the seen set keyed as fen|move', async () => {
+      mockDb.getAllAsync.mockResolvedValueOnce([
+        { normalized_fen: 'fen-a', move: 'Nf3' },
+        { normalized_fen: 'fen-b', move: 'e4' },
+      ]);
+      const seen = await DatabaseService.getSeenMoves('rep-1');
+      expect(seen.has('fen-a|Nf3')).toBe(true);
+      expect(seen.has('fen-b|e4')).toBe(true);
+      expect(seen.size).toBe(2);
+    });
+
+    it('returns an empty set rather than throwing when the table is missing', async () => {
+      mockDb.getAllAsync.mockRejectedValueOnce(new Error('no such table'));
+      await expect(DatabaseService.getSeenMoves('rep-1')).resolves.toEqual(new Set());
+    });
+
+    it('marking normalizes the FEN so a move is recognised however it was reached', async () => {
+      const fen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+      await DatabaseService.markMoveSeen('rep-1', fen, 'e4');
+      const call = mockDb.runAsync.mock.calls.find(([sql]: [string]) =>
+        /INSERT OR REPLACE INTO seen_moves/.test(sql)
+      );
+      expect(call).toBeDefined();
+      expect(call![1][0]).toBe('rep-1');
+      expect(call![1][2]).toBe('e4');
+      // Normalized, so the halfmove/fullmove counters can't fragment the key
+      expect(call![1][1]).not.toContain(' 0 1');
+    });
+
+    it('unmarking deletes exactly that repertoire/position/move row', async () => {
+      await DatabaseService.unmarkMoveSeen('rep-1', 'somefen', 'Nf3');
+      const call = mockDb.runAsync.mock.calls.find(([sql]: [string]) =>
+        /DELETE FROM seen_moves WHERE repertoire_id = \?/.test(sql)
+      );
+      expect(call).toBeDefined();
+      expect(call![1][0]).toBe('rep-1');
+      expect(call![1][2]).toBe('Nf3');
+    });
+
+    it('deleting a repertoire drops its seen moves too', async () => {
+      await DatabaseService.deleteRepertoire('rep-1');
+      const statements = mockDb.runAsync.mock.calls.map(([sql]: [string]) => sql);
+      expect(statements).toEqual(expect.arrayContaining([
+        expect.stringMatching(/DELETE FROM seen_moves WHERE repertoire_id = \?/),
+      ]));
+    });
+  });
 });

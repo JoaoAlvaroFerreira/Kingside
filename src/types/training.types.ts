@@ -78,13 +78,20 @@ export interface LineStats {
 export type LineSelection =
   | { kind: 'all' }
   | { kind: 'due' }
-  | { kind: 'recommended' };
+  | { kind: 'recommended' }
+  /** Only lines passing through this position, each trimmed to start there. */
+  | { kind: 'from-position'; fen: string };
 
 /** HOW the pool is walked. */
 export type LineOrder = 'depth-first' | 'width-first' | 'random';
 
-/** Whether the board shows the answer. */
-export type Guidance = 'none' | 'learn';
+/**
+ * Whether the board shows the answer.
+ *
+ * `semi-learn` teaches each (position, move) until you have played it correctly once,
+ * then stops — and starts again if you later get it wrong.
+ */
+export type Guidance = 'none' | 'learn' | 'semi-learn';
 
 /**
  * Configuration for starting a training session

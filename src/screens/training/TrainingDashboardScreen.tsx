@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
@@ -34,6 +34,13 @@ const SELECTION_OPTIONS: Array<{ value: LineSelection['kind']; label: string; hi
   },
 ];
 
+/** Only offered once the Analysis Board has handed over a position. */
+const FROM_POSITION_OPTION = {
+  value: 'from-position' as const,
+  label: 'From position',
+  hint: 'Only lines that reach the position you came from, each starting there.',
+};
+
 const ORDER_OPTIONS: Array<{ value: LineOrder; label: string; hint: string }> = [
   {
     value: 'depth-first',
@@ -63,30 +70,47 @@ const GUIDANCE_OPTIONS: Array<{ value: Guidance; label: string; hint: string }> 
     label: 'Learn',
     hint: 'Shows the move arrow and any chapter comment before you play.',
   },
+  {
+    value: 'semi-learn',
+    label: 'Semi-learn',
+    hint: 'Teaches each move once. The arrow stops after you play it correctly, and comes back if you later get it wrong.',
+  },
 ];
 
 interface TrainingDashboardScreenProps {
   navigation: any;
+  route?: { params?: { fromFen?: string } };
 }
 
-export default function TrainingDashboardScreen({ navigation }: TrainingDashboardScreenProps) {
+export default function TrainingDashboardScreen({ navigation, route }: TrainingDashboardScreenProps) {
+  // Handed over by "Drill from here" on the Analysis Board. The repertoire is still picked
+  // here, because a position usually appears in several of them.
+  const fromFen = route?.params?.fromFen;
   const repertoires = useStore(s => s.repertoires);
   const lineStats = useStore(s => s.lineStats);
 
   const [selectedColor, setSelectedColor] = useState<RepertoireColor | null>(null);
   const [selectedRepertoireId, setSelectedRepertoireId] = useState<string | null>(null);
   const [selectedChapterIds, setSelectedChapterIds] = useState<string[]>([]);
-  const [selectionKind, setSelectionKind] = useState<LineSelection['kind']>('all');
+  const [selectionKind, setSelectionKind] = useState<LineSelection['kind']>(fromFen ? 'from-position' : 'all');
   const [order, setOrder] = useState<LineOrder>('depth-first');
   const [guidance, setGuidance] = useState<Guidance>('none');
   const [maxDepth, setMaxDepth] = useState<string>('');
   const [opponentBranchingOnly, setOpponentBranchingOnly] = useState(false);
+
+  useEffect(() => {
+    if (fromFen) setSelectionKind('from-position');
+  }, [fromFen]);
 
   // Colour first, then the repertoires of that colour. A flat horizontal strip of every
   // repertoire meant sideways-scrolling past ten of them to reach the one you wanted.
   const repertoiresOfColor = useMemo(
     () => (selectedColor ? repertoires.filter(r => r.color === selectedColor) : []),
     [repertoires, selectedColor]
+  );
+  const selectionOptions = useMemo(
+    () => (fromFen ? [...SELECTION_OPTIONS, FROM_POSITION_OPTION] : SELECTION_OPTIONS),
+    [fromFen]
   );
   const colorCounts = useMemo(() => ({
     white: repertoires.filter(r => r.color === 'white').length,
@@ -169,7 +193,9 @@ export default function TrainingDashboardScreen({ navigation }: TrainingDashboar
     navigation.navigate('TrainingSession', {
       repertoireId: selectedRepertoire.id,
       chapterIds: selectedChapterIds.length > 0 ? selectedChapterIds : undefined,
-      selection: { kind: selectionKind } as LineSelection,
+      selection: (selectionKind === 'from-position' && fromFen
+        ? { kind: 'from-position', fen: fromFen }
+        : { kind: selectionKind }) as LineSelection,
       order,
       guidance,
       maxDepth: maxDepth ? parseInt(maxDepth, 10) * 2 : undefined,
@@ -269,7 +295,7 @@ export default function TrainingDashboardScreen({ navigation }: TrainingDashboar
       <View style={styles.section}>
         <Text style={styles.label}>What to drill</Text>
         <View style={styles.radioGroup}>
-          {SELECTION_OPTIONS.map(opt => (
+          {selectionOptions.map(opt => (
             <TouchableOpacity
               key={opt.value}
               style={styles.radioOption}
@@ -281,7 +307,7 @@ export default function TrainingDashboardScreen({ navigation }: TrainingDashboar
           ))}
         </View>
         <Text style={styles.checkboxHint}>
-          {SELECTION_OPTIONS.find(o => o.value === selectionKind)?.hint}
+          {selectionOptions.find(o => o.value === selectionKind)?.hint}
         </Text>
       </View>
 
@@ -540,7 +566,10 @@ const styles = StyleSheet.create({
   },
   radioGroup: {
     flexDirection: 'row',
-    gap: 20,
+    // Wraps because these groups grow: four selections already overflow one row on a phone.
+    flexWrap: 'wrap',
+    rowGap: 10,
+    columnGap: 20,
   },
   radioOption: {
     flexDirection: 'row',

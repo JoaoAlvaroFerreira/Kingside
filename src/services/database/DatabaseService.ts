@@ -261,6 +261,19 @@ class DatabaseServiceClass {
           key_moves_count INTEGER NOT NULL,
           followed_repertoire INTEGER NOT NULL
         );
+
+        -- Moves you have demonstrated at least once, for semi-learn guidance.
+        -- Keyed on position + move rather than on a line, so learning a move in one line
+        -- silences its teaching arrow everywhere that position comes up. Scoped per
+        -- repertoire on purpose: knowing a move in your Sicilian should not silently stop
+        -- the app teaching it inside a repertoire you are still learning.
+        CREATE TABLE IF NOT EXISTS seen_moves (
+          repertoire_id TEXT NOT NULL,
+          normalized_fen TEXT NOT NULL,
+          move TEXT NOT NULL,
+          first_seen_at INTEGER NOT NULL,
+          PRIMARY KEY (repertoire_id, normalized_fen, move)
+        );
       `);
 
       // Schema migration: FEN index table
@@ -1001,6 +1014,7 @@ class DatabaseServiceClass {
       await this.db!.runAsync('DELETE FROM repertoires WHERE id = ?', [id]);
       await this.db!.runAsync('DELETE FROM settings WHERE key = ?', [REP_INDEXED_KEY_PREFIX + id]);
       await this.db!.runAsync('DELETE FROM line_stats WHERE repertoire_id = ?', [id]);
+      await this.db!.runAsync('DELETE FROM seen_moves WHERE repertoire_id = ?', [id]);
       // repertoire_moves may not exist if the V6 migration hasn't run yet (e.g. Fast Refresh)
       try {
         await this.db!.runAsync('DELETE FROM repertoire_moves WHERE repertoire_id = ?', [id]);
@@ -1136,6 +1150,43 @@ class DatabaseServiceClass {
         );
       }
     });
+  }
+
+  // ==================== SEEN MOVES (semi-learn) ====================
+
+  /** Every (position, move) you have answered correctly in this repertoire, as `fen|move`. */
+  async getSeenMoves(repertoireId: string): Promise<Set<string>> {
+    if (this.isWeb || !this.db) return new Set();
+
+    try {
+      const rows = await this.db.getAllAsync(
+        'SELECT normalized_fen, move FROM seen_moves WHERE repertoire_id = ?',
+        [repertoireId]
+      ) as Array<{ normalized_fen: string; move: string }>;
+      return new Set(rows.map(r => `${r.normalized_fen}|${r.move}`));
+    } catch {
+      return new Set();
+    }
+  }
+
+  async markMoveSeen(repertoireId: string, fen: string, move: string): Promise<void> {
+    if (this.isWeb || !this.db) return;
+
+    await this.db.runAsync(
+      `INSERT OR REPLACE INTO seen_moves (repertoire_id, normalized_fen, move, first_seen_at)
+       VALUES (?, ?, ?, ?)`,
+      [repertoireId, normalizeFen(fen), move, Date.now()]
+    );
+  }
+
+  /** Forget a move, so semi-learn teaches it again. Called when you get it wrong. */
+  async unmarkMoveSeen(repertoireId: string, fen: string, move: string): Promise<void> {
+    if (this.isWeb || !this.db) return;
+
+    await this.db.runAsync(
+      'DELETE FROM seen_moves WHERE repertoire_id = ? AND normalized_fen = ? AND move = ?',
+      [repertoireId, normalizeFen(fen), move]
+    );
   }
 
   // ==================== GAME REVIEW STATUS ====================

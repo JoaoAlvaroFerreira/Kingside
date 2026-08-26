@@ -19,7 +19,8 @@ export type RootStackParamList = {
   Main: undefined;
   Analysis: undefined;
   Repertoire: undefined;
-  Training: undefined;
+  /** `fromFen` preselects "drill from this position", handed over from the Analysis Board. */
+  Training: { fromFen?: string } | undefined;
   Games: undefined;
   GameReviewDashboard: undefined;
   Settings: undefined;

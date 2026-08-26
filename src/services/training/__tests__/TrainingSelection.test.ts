@@ -1,16 +1,24 @@
 import { TrainingService } from '../TrainingService';
-import { Line, LineStats } from '@types';
+import { Line, LineStats, LineMove, normalizeFen } from '@types';
 
-function makeLine(id: string): Line {
+function makeLine(id: string, moves: LineMove[] = []): Line {
   return {
     id,
     repertoireId: 'rep1',
     chapterId: 'ch1',
-    moves: [],
-    depth: 2,
+    moves,
+    depth: moves.length,
     isMainLine: true,
     branchPoint: null,
   } as Line;
+}
+
+const START = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+const AFTER_E4 = 'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1';
+const AFTER_E5 = 'rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq e6 0 2';
+
+function makeMove(san: string, preFen: string, isUserMove = true): LineMove {
+  return { san, preFen, isUserMove, nodeId: san } as LineMove;
 }
 
 function makeStats(lineId: string, over: Partial<LineStats> = {}): LineStats {
@@ -98,5 +106,41 @@ describe('shuffle', () => {
     const items = [1, 2, 3, 4, 5];
     TrainingService.shuffle(items);
     expect(items).toEqual([1, 2, 3, 4, 5]);
+  });
+});
+
+
+describe('trimLineToPosition', () => {
+  const line = makeLine('l1', [
+    makeMove('e4', START),
+    makeMove('e5', AFTER_E4, false),
+    makeMove('Nf3', AFTER_E5),
+  ]);
+
+  it('drops the moves before the position so the drill starts there', () => {
+    const trimmed = TrainingService.trimLineToPosition(line, normalizeFen(AFTER_E5));
+    expect(trimmed).not.toBeNull();
+    expect(trimmed!.moves.map(m => m.san)).toEqual(['Nf3']);
+    expect(trimmed!.depth).toBe(1);
+  });
+
+  it('returns the line untouched when the position is its start', () => {
+    const trimmed = TrainingService.trimLineToPosition(line, normalizeFen(START));
+    expect(trimmed).toBe(line);
+  });
+
+  it('returns null when the line never reaches the position', () => {
+    const other = 'rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq d3 0 1';
+    expect(TrainingService.trimLineToPosition(line, normalizeFen(other))).toBeNull();
+  });
+
+  it('keeps the line id, so the scheduler still sees the same line', () => {
+    const trimmed = TrainingService.trimLineToPosition(line, normalizeFen(AFTER_E5));
+    expect(trimmed!.id).toBe('l1');
+  });
+
+  it('does not mutate the original line', () => {
+    TrainingService.trimLineToPosition(line, normalizeFen(AFTER_E5));
+    expect(line.moves).toHaveLength(3);
   });
 });
