@@ -10,8 +10,60 @@ import {
   Alert,
 } from 'react-native';
 import { useStore } from '@store';
-import { TrainingMode } from '@types';
+import { LineSelection, LineOrder, Guidance, RepertoireColor } from '@types';
 import { LineExtractor } from '@services/training/LineExtractor';
+
+/** Mistake rate at or above which a line is reported as one you are struggling with. */
+const WEAK_LINE_THRESHOLD = 0.3;
+
+const SELECTION_OPTIONS: Array<{ value: LineSelection['kind']; label: string; hint: string }> = [
+  {
+    value: 'all',
+    label: 'Everything',
+    hint: 'Every line in the selected chapters, due or not.',
+  },
+  {
+    value: 'due',
+    label: 'Due for review',
+    hint: 'Only what the scheduler is asking for today.',
+  },
+  {
+    value: 'recommended',
+    label: 'Recommended',
+    hint: 'Lines you get wrong most often first, then material you have never drilled.',
+  },
+];
+
+const ORDER_OPTIONS: Array<{ value: LineOrder; label: string; hint: string }> = [
+  {
+    value: 'depth-first',
+    label: 'Depth-first',
+    hint: 'Finish one line to its end before starting the next.',
+  },
+  {
+    value: 'width-first',
+    label: 'Width-first',
+    hint: 'Drill every line a few moves deep, then go deeper on all of them.',
+  },
+  {
+    value: 'random',
+    label: 'Random',
+    hint: 'Shuffle the whole pool, then drill each line to its end.',
+  },
+];
+
+const GUIDANCE_OPTIONS: Array<{ value: Guidance; label: string; hint: string }> = [
+  {
+    value: 'none',
+    label: 'None',
+    hint: 'No help. This is the one that actually tests recall.',
+  },
+  {
+    value: 'learn',
+    label: 'Learn',
+    hint: 'Shows the move arrow and any chapter comment before you play.',
+  },
+];
 
 interface TrainingDashboardScreenProps {
   navigation: any;
@@ -21,13 +73,25 @@ export default function TrainingDashboardScreen({ navigation }: TrainingDashboar
   const repertoires = useStore(s => s.repertoires);
   const lineStats = useStore(s => s.lineStats);
 
+  const [selectedColor, setSelectedColor] = useState<RepertoireColor | null>(null);
   const [selectedRepertoireId, setSelectedRepertoireId] = useState<string | null>(null);
   const [selectedChapterIds, setSelectedChapterIds] = useState<string[]>([]);
-  const [mode, setMode] = useState<TrainingMode>('depth-first');
+  const [selectionKind, setSelectionKind] = useState<LineSelection['kind']>('all');
+  const [order, setOrder] = useState<LineOrder>('depth-first');
+  const [guidance, setGuidance] = useState<Guidance>('none');
   const [maxDepth, setMaxDepth] = useState<string>('');
-  const [includeOnlyDue, setIncludeOnlyDue] = useState(false);
-  const [learnMode, setLearnMode] = useState(false);
   const [opponentBranchingOnly, setOpponentBranchingOnly] = useState(false);
+
+  // Colour first, then the repertoires of that colour. A flat horizontal strip of every
+  // repertoire meant sideways-scrolling past ten of them to reach the one you wanted.
+  const repertoiresOfColor = useMemo(
+    () => (selectedColor ? repertoires.filter(r => r.color === selectedColor) : []),
+    [repertoires, selectedColor]
+  );
+  const colorCounts = useMemo(() => ({
+    white: repertoires.filter(r => r.color === 'white').length,
+    black: repertoires.filter(r => r.color === 'black').length,
+  }), [repertoires]);
 
   // Get selected repertoire
   const selectedRepertoire = useMemo(
@@ -38,7 +102,7 @@ export default function TrainingDashboardScreen({ navigation }: TrainingDashboar
   // Calculate stats for selected repertoire
   const stats = useMemo(() => {
     if (!selectedRepertoire) {
-      return { totalLines: 0, linesDue: 0, linesLearned: 0, completionPercent: 0 };
+      return { totalLines: 0, linesDue: 0, linesLearned: 0, completionPercent: 0, weakLines: 0, unseenLines: 0 };
     }
 
     // Extract all lines from selected chapters
@@ -71,7 +135,14 @@ export default function TrainingDashboardScreen({ navigation }: TrainingDashboar
     const linesLearned = relevantStats.filter(stat => stat.totalDrills > 0).length;
     const completionPercent = allLines > 0 ? Math.round((linesLearned / allLines) * 100) : 0;
 
-    return { totalLines: allLines, linesDue, linesLearned, completionPercent };
+    // What "Recommended" would put in front of you: lines you keep getting wrong, and
+    // lines you have never drilled at all.
+    const weakLines = relevantStats.filter(
+      stat => stat.totalDrills > 0 && stat.mistakeCount / stat.totalDrills >= WEAK_LINE_THRESHOLD
+    ).length;
+    const unseenLines = Math.max(0, allLines - linesLearned);
+
+    return { totalLines: allLines, linesDue, linesLearned, completionPercent, weakLines, unseenLines };
   }, [selectedRepertoire, selectedChapterIds, maxDepth, lineStats, opponentBranchingOnly]);
 
   const handleStartSession = () => {
@@ -98,10 +169,10 @@ export default function TrainingDashboardScreen({ navigation }: TrainingDashboar
     navigation.navigate('TrainingSession', {
       repertoireId: selectedRepertoire.id,
       chapterIds: selectedChapterIds.length > 0 ? selectedChapterIds : undefined,
-      mode,
+      selection: { kind: selectionKind } as LineSelection,
+      order,
+      guidance,
       maxDepth: maxDepth ? parseInt(maxDepth, 10) * 2 : undefined,
-      includeOnlyDueLines: includeOnlyDue,
-      learnMode,
       opponentBranchingOnly,
     });
   };
@@ -110,33 +181,53 @@ export default function TrainingDashboardScreen({ navigation }: TrainingDashboar
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
       <Text style={styles.title}>Training Dashboard</Text>
 
-      {/* Repertoire Selector */}
+      {/* Repertoire Selector — colour first, then that colour's repertoires */}
       <View style={styles.section}>
         <Text style={styles.label}>Select Repertoire</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipRow}>
-          {repertoires.map(rep => (
+        <View style={styles.colorRow}>
+          {(['white', 'black'] as const).map(color => (
             <TouchableOpacity
-              key={rep.id}
-              style={[
-                styles.chip,
-                selectedRepertoireId === rep.id && styles.chipSelected,
-              ]}
+              key={color}
+              style={[styles.colorButton, selectedColor === color && styles.colorButtonSelected]}
               onPress={() => {
-                setSelectedRepertoireId(rep.id);
+                setSelectedColor(color);
+                setSelectedRepertoireId(null);
                 setSelectedChapterIds([]);
               }}
             >
               <Text
-                style={[
-                  styles.chipText,
-                  selectedRepertoireId === rep.id && styles.chipTextSelected,
-                ]}
+                style={[styles.colorButtonText, selectedColor === color && styles.colorButtonTextSelected]}
               >
-                {rep.name}
+                {color === 'white' ? 'White' : 'Black'} ({colorCounts[color]})
               </Text>
             </TouchableOpacity>
           ))}
-        </ScrollView>
+        </View>
+
+        {selectedColor && (
+          <View style={styles.repertoireList}>
+            {repertoiresOfColor.length === 0 && (
+              <Text style={styles.emptyHint}>No {selectedColor} repertoires yet</Text>
+            )}
+            {repertoiresOfColor.map(rep => {
+              const isSelected = selectedRepertoireId === rep.id;
+              return (
+                <TouchableOpacity
+                  key={rep.id}
+                  style={[styles.repertoireItem, isSelected && styles.repertoireItemSelected]}
+                  onPress={() => {
+                    setSelectedRepertoireId(rep.id);
+                    setSelectedChapterIds([]);
+                  }}
+                >
+                  <View style={[styles.radio, isSelected && styles.radioSelected]} />
+                  <Text style={styles.repertoireItemText} numberOfLines={1}>{rep.name}</Text>
+                  <Text style={styles.repertoireItemMeta}>{rep.chapters.length}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        )}
       </View>
 
       {/* Chapter Selector */}
@@ -176,23 +267,62 @@ export default function TrainingDashboardScreen({ navigation }: TrainingDashboar
 
       {/* Mode Selection */}
       <View style={styles.section}>
-        <Text style={styles.label}>Training Mode</Text>
+        <Text style={styles.label}>What to drill</Text>
         <View style={styles.radioGroup}>
-          <TouchableOpacity
-            style={styles.radioOption}
-            onPress={() => setMode('depth-first')}
-          >
-            <View style={[styles.radio, mode === 'depth-first' && styles.radioSelected]} />
-            <Text style={styles.radioText}>Depth-First</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.radioOption}
-            onPress={() => setMode('width-first')}
-          >
-            <View style={[styles.radio, mode === 'width-first' && styles.radioSelected]} />
-            <Text style={styles.radioText}>Width-First</Text>
-          </TouchableOpacity>
+          {SELECTION_OPTIONS.map(opt => (
+            <TouchableOpacity
+              key={opt.value}
+              style={styles.radioOption}
+              onPress={() => setSelectionKind(opt.value)}
+            >
+              <View style={[styles.radio, selectionKind === opt.value && styles.radioSelected]} />
+              <Text style={styles.radioText}>{opt.label}</Text>
+            </TouchableOpacity>
+          ))}
         </View>
+        <Text style={styles.checkboxHint}>
+          {SELECTION_OPTIONS.find(o => o.value === selectionKind)?.hint}
+        </Text>
+      </View>
+
+      {/* Order */}
+      <View style={styles.section}>
+        <Text style={styles.label}>Order</Text>
+        <View style={styles.radioGroup}>
+          {ORDER_OPTIONS.map(opt => (
+            <TouchableOpacity
+              key={opt.value}
+              style={styles.radioOption}
+              onPress={() => setOrder(opt.value)}
+            >
+              <View style={[styles.radio, order === opt.value && styles.radioSelected]} />
+              <Text style={styles.radioText}>{opt.label}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+        <Text style={styles.checkboxHint}>
+          {ORDER_OPTIONS.find(o => o.value === order)?.hint}
+        </Text>
+      </View>
+
+      {/* Guidance */}
+      <View style={styles.section}>
+        <Text style={styles.label}>Guidance</Text>
+        <View style={styles.radioGroup}>
+          {GUIDANCE_OPTIONS.map(opt => (
+            <TouchableOpacity
+              key={opt.value}
+              style={styles.radioOption}
+              onPress={() => setGuidance(opt.value)}
+            >
+              <View style={[styles.radio, guidance === opt.value && styles.radioSelected]} />
+              <Text style={styles.radioText}>{opt.label}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+        <Text style={styles.checkboxHint}>
+          {GUIDANCE_OPTIONS.find(o => o.value === guidance)?.hint}
+        </Text>
       </View>
 
       {/* Max Moves */}
@@ -208,35 +338,10 @@ export default function TrainingDashboardScreen({ navigation }: TrainingDashboar
         />
       </View>
 
-      {/* Options */}
+      {/* Pool filters */}
       <View style={styles.section}>
         <TouchableOpacity
           style={styles.checkboxRow}
-          onPress={() => setIncludeOnlyDue(!includeOnlyDue)}
-        >
-          <View style={[styles.checkbox, includeOnlyDue && styles.checkboxSelected]}>
-            {includeOnlyDue && <Text style={styles.checkmark}>✓</Text>}
-          </View>
-          <Text style={styles.checkboxLabel}>Only drill lines due for review</Text>
-        </TouchableOpacity>
-        <Text style={styles.checkboxHint}>
-          Skip lines the scheduler is not asking for yet. Off means you drill everything, due or not.
-        </Text>
-        <TouchableOpacity
-          style={[styles.checkboxRow, { marginTop: 12 }]}
-          onPress={() => setLearnMode(!learnMode)}
-        >
-          <View style={[styles.checkbox, learnMode && styles.checkboxSelected]}>
-            {learnMode && <Text style={styles.checkmark}>✓</Text>}
-          </View>
-          <Text style={styles.checkboxLabel}>Learn mode (show arrows + comments)</Text>
-        </TouchableOpacity>
-        <Text style={styles.checkboxHint}>
-          Shows the answer instead of testing you: the move arrow and any chapter comment are visible
-          before you play. Use it on a new line; turn it off to actually test recall.
-        </Text>
-        <TouchableOpacity
-          style={[styles.checkboxRow, { marginTop: 12 }]}
           onPress={() => setOpponentBranchingOnly(!opponentBranchingOnly)}
         >
           <View style={[styles.checkbox, opponentBranchingOnly && styles.checkboxSelected]}>
@@ -265,6 +370,16 @@ export default function TrainingDashboardScreen({ navigation }: TrainingDashboar
           <View style={styles.statRow}>
             <Text style={styles.statLabel}>Lines Learned:</Text>
             <Text style={styles.statValue}>{stats.linesLearned}</Text>
+          </View>
+          <View style={styles.statRow}>
+            <Text style={styles.statLabel}>Struggling With:</Text>
+            <Text style={[styles.statValue, stats.weakLines > 0 && styles.statValueWarn]}>
+              {stats.weakLines}
+            </Text>
+          </View>
+          <View style={styles.statRow}>
+            <Text style={styles.statLabel}>Never Drilled:</Text>
+            <Text style={styles.statValue}>{stats.unseenLines}</Text>
           </View>
           <View style={styles.statRow}>
             <Text style={styles.statLabel}>Completion:</Text>
@@ -307,6 +422,66 @@ const styles = StyleSheet.create({
     color: '#fff',
     marginBottom: 10,
     fontWeight: '600',
+  },
+  colorRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  colorButton: {
+    flex: 1,
+    backgroundColor: '#2a2a2a',
+    paddingVertical: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#444',
+    alignItems: 'center',
+  },
+  colorButtonSelected: {
+    backgroundColor: '#4a9eff',
+    borderColor: '#4a9eff',
+  },
+  colorButtonText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  colorButtonTextSelected: {
+    color: '#fff',
+  },
+  repertoireList: {
+    marginTop: 12,
+    backgroundColor: '#1e1e1e',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#333',
+  },
+  repertoireItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#333',
+  },
+  repertoireItemSelected: {
+    backgroundColor: '#26364a',
+  },
+  repertoireItemText: {
+    color: '#fff',
+    fontSize: 15,
+    flex: 1,
+    marginLeft: 10,
+  },
+  repertoireItemMeta: {
+    color: '#888',
+    fontSize: 13,
+    marginLeft: 8,
+  },
+  emptyHint: {
+    color: '#888',
+    fontSize: 14,
+    padding: 14,
+    fontStyle: 'italic',
   },
   chipRow: {
     flexDirection: 'row',
@@ -456,6 +631,9 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  statValueWarn: {
+    color: '#e8a87e',
   },
   startButton: {
     backgroundColor: '#4a9eff',

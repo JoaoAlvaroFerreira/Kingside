@@ -6,7 +6,7 @@
  */
 
 import { TrainingService } from '../TrainingService';
-import { Line, LineMove, TrainingSession } from '@types';
+import { Line, LineMove, TrainingSession, LineOrder } from '@types';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -38,15 +38,15 @@ function makeLine(id: string, moves: LineMove[]): Line {
 /** Build a minimal TrainingSession stub */
 function makeSession(
   lines: Line[],
-  mode: 'depth-first' | 'width-first'
+  order: LineOrder
 ): TrainingSession {
   return {
     id: 'sess1',
     repertoireId: 'rep1',
     chapterIds: [],
     color: 'white',
-    mode,
-    learnMode: false,
+    order,
+    guidance: 'none',
     maxDepth: null,
     lines,
     holdbackLines: [],

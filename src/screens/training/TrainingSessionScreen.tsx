@@ -42,7 +42,7 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
   const [currentComment, setCurrentComment] = useState<string | undefined>(undefined);
   const [opponentComment, setOpponentComment] = useState<string | undefined>(undefined);
 
-  const isLearnMode = session?.learnMode ?? false;
+  const isLearnMode = session?.guidance === 'learn';
 
   // Compute learn mode hint arrow for current user move
   const learnArrowUci = useMemo(() => {
@@ -62,7 +62,7 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
 
   // Update comment when position changes
   const updateComment = (sess: TrainingSession) => {
-    if (!sess.learnMode) {
+    if (sess.guidance === 'none') {
       setCurrentComment(undefined);
       setOpponentComment(undefined);
       return;

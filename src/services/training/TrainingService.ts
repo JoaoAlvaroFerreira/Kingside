@@ -15,6 +15,11 @@ import { LineExtractor } from './LineExtractor';
 import { SM2Service } from '@services/srs/SM2Service';
 
 const ACTIVE_BATCH_SIZE = 100;
+/**
+ * Where a never-drilled line sits on the recommendation scale (a mistake rate in [0,1]).
+ * Above a line you get right two thirds of the time, below one you actively keep failing.
+ */
+const UNSEEN_LINE_SCORE = 0.5;
 
 export const TrainingService = {
   /**
@@ -46,8 +51,8 @@ export const TrainingService = {
     // Filter to only lines with user moves
     allLines = LineExtractor.filterLinesWithUserMoves(allLines);
 
-    // Filter to due lines if requested
-    if (config.includeOnlyDueLines) {
+    // Narrow the pool to the requested selection
+    if (config.selection.kind === 'due') {
       const now = new Date();
       const dueLineIds = new Set(
         allLineStats
@@ -57,17 +62,33 @@ export const TrainingService = {
       allLines = allLines.filter(line => dueLineIds.has(line.id));
     }
 
+    if (config.selection.kind === 'recommended') {
+      allLines = this.sortByRecommendation(allLines, allLineStats);
+    }
+
+    // Shuffle before the batch split, not after — shuffling only the active batch would
+    // just reorder the same first 50 lines and never surface the rest of a big repertoire.
+    // Except under 'recommended', where the priority order is the whole point: there the
+    // batch is still the highest-priority lines, and random only shuffles within it.
+    const shuffleWholePool = config.order === 'random' && config.selection.kind !== 'recommended';
+    if (shuffleWholePool) {
+      allLines = this.shuffle(allLines);
+    }
+
     // Split into active batch and holdback when over the limit
-    const activeLines = allLines.slice(0, ACTIVE_BATCH_SIZE);
+    let activeLines = allLines.slice(0, ACTIVE_BATCH_SIZE);
     const holdbackLines = allLines.slice(ACTIVE_BATCH_SIZE);
+    if (config.order === 'random' && !shuffleWholePool) {
+      activeLines = this.shuffle(activeLines);
+    }
 
     return {
       id: this.generateSessionId(),
       repertoireId: repertoire.id,
       chapterIds: config.chapterIds ?? [],
       color: repertoire.color,
-      mode: config.mode,
-      learnMode: config.learnMode ?? false,
+      order: config.order,
+      guidance: config.guidance,
       maxDepth: config.maxDepth ?? null,
       lines: activeLines,
       holdbackLines,
@@ -224,7 +245,7 @@ export const TrainingService = {
    * Returns true if there's more to drill, false if line is complete
    */
   advanceToNextPosition(session: TrainingSession): boolean {
-    if (session.mode === 'width-first') {
+    if (session.order === 'width-first') {
       return this.advanceWidthFirst(session);
     } else {
       return this.advanceDepthFirst(session);
@@ -378,8 +399,8 @@ export const TrainingService = {
     session.linesCompleted = session.completedLineIds.length;
     session.awaitingRating = false;
 
-    if (session.mode === 'depth-first') {
-      // Depth-first: move to next line sequentially
+    if (session.order !== 'width-first') {
+      // Depth-first and random both walk the pool sequentially; random just shuffled it
       if (session.currentLineIndex < session.lines.length - 1) {
         session.currentLineIndex++;
         session.currentMoveIndex = 0;
@@ -497,6 +518,46 @@ export const TrainingService = {
   /**
    * Generate unique session ID
    */
+  /**
+   * How badly a line needs drilling. Higher comes first.
+   *
+   * A line you keep getting wrong outranks everything. A line you have never seen sits
+   * above lines you mostly get right, so "recommended" still feeds you new material
+   * instead of only ever re-showing old wounds.
+   */
+  recommendationScore(stats: LineStats | undefined): number {
+    if (!stats || stats.totalDrills === 0) return UNSEEN_LINE_SCORE;
+    return stats.mistakeCount / stats.totalDrills;
+  },
+
+  /** Weakest first, then how overdue, so equally-shaky lines surface oldest-first. */
+  sortByRecommendation(lines: Line[], allLineStats: LineStats[]): Line[] {
+    const statsById = new Map(allLineStats.map(s => [s.lineId, s]));
+    const now = Date.now();
+
+    return [...lines].sort((a, b) => {
+      const statsA = statsById.get(a.id);
+      const statsB = statsById.get(b.id);
+
+      const scoreDiff = this.recommendationScore(statsB) - this.recommendationScore(statsA);
+      if (scoreDiff !== 0) return scoreDiff;
+
+      const overdueA = statsA ? now - new Date(statsA.nextReviewDate).getTime() : 0;
+      const overdueB = statsB ? now - new Date(statsB.nextReviewDate).getTime() : 0;
+      return overdueB - overdueA;
+    });
+  },
+
+  /** Fisher-Yates, on a copy. */
+  shuffle<T>(items: T[]): T[] {
+    const result = [...items];
+    for (let i = result.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [result[i], result[j]] = [result[j], result[i]];
+    }
+    return result;
+  },
+
   generateSessionId(): string {
     return `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   },

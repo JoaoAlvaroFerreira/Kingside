@@ -63,7 +63,7 @@ Kingside is a React Native/Expo chess training app. Personal tool for a 2000+ ra
 - **Database**: SQLite storage for games, repertoires, settings, FEN position indexes, line stats and game review statuses. `StorageService` (AsyncStorage) survives only as the migration source.
 - **ChessWorkspace**: Centralized board+engine+movehistory layout. Engine runs internally via `useEngine` — **do not call `useEngine` in screens that use ChessWorkspace**. Percentage-based board sizing. Wide/narrow responsive layout.
 - **Orientation**: Full landscape/tablet support (`app.json "orientation": "default"`, `AndroidManifest screenOrientation="fullSensor"`)
-- **Training System**: `TrainingDashboardScreen` + `TrainingSessionScreen` (full drill UI), `TrainingService` (SM2-based scheduling), `SM2Service`, `LineGenerator` (lazy DFS batches), `BreadthFirstTrainer` (BFS queue for user-move positions). At end of line, "Analyse on Board" pushes the `LineAnalysis` stack route (AnalysisBoardScreen with a `line` param) **on top of** the session — navigating to the drawer's Analysis screen instead would pop the session, which is rebuilt from route params on mount and would lose the drill.
+- **Training System**: `TrainingDashboardScreen` + `TrainingSessionScreen` (full drill UI), `TrainingService` (SM2-based scheduling), `SM2Service`, `LineExtractor` (pulls drillable lines out of a MoveTree), `BreadthFirstTrainer` (BFS queue for user-move positions). At end of line, "Analyse on Board" pushes the `LineAnalysis` stack route (AnalysisBoardScreen with a `line` param) **on top of** the session — navigating to the drawer's Analysis screen instead would pop the session, which is rebuilt from route params on mount and would lose the drill.
 - **FEN Position Index**: `searchUserGamesByFEN` / `searchMasterGamesByFEN` — SQLite FEN index ready, UI not yet wired
 - **Find Position**: "Find Position" tab on Analysis Board / Repertoire Study lists which repertoire chapters contain the current FEN (indexed SQLite lookup via `DatabaseService.findChaptersByFen`), tap to jump to that chapter
 - **Candidate-move arrows**: the board draws up to `CANDIDATE_MOVE_LIMIT` (4) continuations for the current position, thickness and opacity scaled to frequency. The source **follows the active tab** — Find Position → repertoire, Your Games → user games, Master → master games, Moves → engine arrow only — so one kind of arrow is on the board at a time. Wide/landscape layout has no tab bar and currently shows none.
@@ -261,7 +261,7 @@ src/
 │   │   └── MigrationService.ts         # Schema migrations + AsyncStorage→SQLite
 │   ├── backup/BackupService.ts         # Export/restore the SQLite file (SAF + document picker)
 │   └── training/
-│       ├── LineGenerator.ts            # Lazy DFS line batches from MoveTree
+│       ├── LineExtractor.ts            # Drillable lines from a MoveTree
 │       └── BreadthFirstTrainer.ts      # BFS queue of user-decision positions
 ├── store/index.ts              # Zustand store (reads/writes via DatabaseService)
 ├── utils/
@@ -408,6 +408,26 @@ the early positions where the ranking matters most. This is a different cap from
 
 Repertoire candidates are **not filtered by color** by default, matching Find Position: what
 matters is which chapters contain the position, not which side's repertoire they came from.
+
+## Training Configuration: three axes, not one "mode"
+
+A drill is three independent choices, and `TrainingConfig` keeps them apart:
+
+- **`selection`** — which lines go in the pool (`{kind: 'all'}`, `{kind: 'due'}`)
+- **`order`** — how the pool is walked (`'depth-first'`, `'width-first'`)
+- **`guidance`** — whether the board shows the answer (`'none'`, `'learn'`)
+
+`maxDepth` and `opponentBranchingOnly` are pool filters and sit outside the three.
+
+These were previously a `mode` enum plus a row of booleans (`includeOnlyDueLines`,
+`learnMode`), which put a traversal order, a pool filter and a display setting side by side
+as peers — so every new drilling idea added a boolean that multiplied against all the
+others. **Add a new drilling idea by extending one of the three, never by adding a flag.**
+
+`TrainingSession` mirrors `order` and `guidance`; it does not keep `selection`, which has
+already done its work by the time the pool exists. Route params for the `TrainingSession`
+screen are the `TrainingConfig` itself — the session is rebuilt from them on mount, so the
+params and the config must stay the same shape.
 
 ## Known Issues
 

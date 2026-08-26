@@ -1,3 +1,4 @@
+import { LineSelection, LineOrder, Guidance } from '@types';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { createStackNavigator } from '@react-navigation/stack';
 import { NavigationContainer } from '@react-navigation/native';
@@ -28,10 +29,11 @@ export type RootStackParamList = {
   TrainingSession: {
     repertoireId: string;
     chapterId?: string;
-    mode: 'depth-first' | 'width-first';
+    selection: LineSelection;
+    order: LineOrder;
+    guidance: Guidance;
     maxDepth?: number;
-    includeOnlyDueLines?: boolean;
-    learnMode?: boolean;
+    opponentBranchingOnly?: boolean;
   };
   GameReview: { gameId: string };
   LineAnalysis: { line: { moves: string[]; startFen?: string } };
