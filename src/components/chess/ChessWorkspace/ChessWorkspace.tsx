@@ -18,6 +18,7 @@ import { EngineEvaluation, ScreenKey } from '@types';
 import { SettingsModal } from './SettingsModal';
 import { useStore } from '@store';
 import { useEngine } from '@hooks/useEngine';
+import { useCandidateMoves, CandidateSource } from '@hooks/useCandidateMoves';
 
 /** Cap on the comment box's scroll area; also reserved from the board budget in wide mode. */
 const COMMENT_BOX_MAX_HEIGHT = 100;
@@ -67,6 +68,10 @@ interface ChessWorkspaceProps {
   // Subtracted from available height when computing board size.
   verticalOffset?: number;
 
+  // Which source draws candidate-move arrows on the board. Driven by the active tab so
+  // only one kind of arrow is ever on the board at once; 'none' leaves just the engine's.
+  candidateSource?: CandidateSource;
+
   // Hard cap on board size (px). Used when ChessWorkspace is placed inside a
   // constrained container whose width is smaller than what useWindowDimensions reports.
   maxBoardSize?: number;
@@ -86,6 +91,7 @@ export const ChessWorkspace: React.FC<ChessWorkspaceProps> = ({
   onMarkCritical,
   onPromoteToMainLine,
   onDeleteMove,
+  candidateSource = 'none',
   currentEval,
   moveEvals = [],
   keyMoves = [],
@@ -175,6 +181,7 @@ export const ChessWorkspace: React.FC<ChessWorkspaceProps> = ({
 
   const currentNode = moveTree?.getCurrentNode();
   const pgnarrows = currentNode?.arrows;
+  const candidateArrows = useCandidateMoves(fen, candidateSource);
 
   const nagBadge = useMemo(() => {
     if (!currentNode?.nags?.length) return undefined;
@@ -221,6 +228,7 @@ export const ChessWorkspace: React.FC<ChessWorkspaceProps> = ({
               bestMove={hintArrow || (evalBarVisible ? activeEval?.bestMove : undefined)}
               arrowColor={hintArrow ? (hintArrowColor || 'rgba(198, 40, 40, 0.75)') : undefined}
               pgnarrows={pgnarrows}
+              candidateArrows={candidateArrows}
               nagBadge={nagBadge}
             />
           </View>

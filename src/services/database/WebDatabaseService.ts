@@ -3,7 +3,7 @@
  * Provides same interface as SQLite DatabaseService but uses IndexedDB
  */
 
-import { UserGame, MasterGame, Repertoire, EngineEvaluation } from '@types';
+import { UserGame, MasterGame, Repertoire, EngineEvaluation, LineStats, GameReviewStatus } from '@types';
 import { PositionMap } from '@utils/extractRepertoirePositions';
 
 const DB_NAME = 'kingside_db';
@@ -477,6 +477,36 @@ class WebDatabaseServiceClass {
 
   async getSetting<T>(_key: string): Promise<T | null> {
     throw new Error('Settings SQLite not supported on web platform');
+  }
+
+  // ==================== TRAINING / GAME REVIEW STATUS ====================
+
+  async getAllLineStats(): Promise<LineStats[]> {
+    throw new Error('Training SQLite not supported on web platform');
+  }
+
+  async upsertLineStats(_stat: LineStats): Promise<void> {
+    throw new Error('Training SQLite not supported on web platform');
+  }
+
+  async deleteLineStats(_lineId: string): Promise<void> {
+    throw new Error('Training SQLite not supported on web platform');
+  }
+
+  async replaceAllLineStats(_stats: LineStats[]): Promise<void> {
+    throw new Error('Training SQLite not supported on web platform');
+  }
+
+  async getAllGameReviewStatuses(): Promise<GameReviewStatus[]> {
+    throw new Error('Game review SQLite not supported on web platform');
+  }
+
+  async upsertGameReviewStatus(_status: GameReviewStatus): Promise<void> {
+    throw new Error('Game review SQLite not supported on web platform');
+  }
+
+  async replaceAllGameReviewStatuses(_statuses: GameReviewStatus[]): Promise<void> {
+    throw new Error('Game review SQLite not supported on web platform');
   }
 
   // ==================== SEARCH / FILTER ====================

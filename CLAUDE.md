@@ -43,7 +43,7 @@ Kingside is a React Native/Expo chess training app. Personal tool for a 2000+ ra
 ```
 
 **State Management:**
-- Zustand store (`src/store/index.ts`) — most data via `DatabaseService` (SQLite), but `lineStats` and `gameReviewStatuses` still persist through `StorageService` (AsyncStorage) pending migration
+- Zustand store (`src/store/index.ts`) — all data persists through `DatabaseService` (SQLite). `lineStats` is held in the store as a synchronous read model and written back one row at a time
 - **Subscribe with selectors** (`useStore(s => s.x)`), never bare `useStore()` — the bare form subscribes to the whole store, so every write re-renders every consumer
 - Date objects serialized/deserialized with custom reviver
 
@@ -60,12 +60,13 @@ Kingside is a React Native/Expo chess training app. Personal tool for a 2000+ ra
 - **Interactive Chess Board**: Full variation support, comment display (💬 indicators), touch handling optimized for mobile
 - **Screen Settings**: Per-screen UI preferences (orientation, engine, eval bar, coordinates, move history, per-tab visibility for Your Games / Master Games / Find Position)
 - **Backup/Restore**: Settings screen exports the SQLite file to a user-picked folder (Storage Access Framework) and restores one back. The WAL is checkpointed before copying, and a restore verifies the SQLite header before deleting anything. Android only.
-- **Database**: SQLite storage for games, repertoires, settings, and FEN position indexes. `lineStats` and `gameReviewStatuses` still in AsyncStorage — pending migration.
+- **Database**: SQLite storage for games, repertoires, settings, FEN position indexes, line stats and game review statuses. `StorageService` (AsyncStorage) survives only as the migration source.
 - **ChessWorkspace**: Centralized board+engine+movehistory layout. Engine runs internally via `useEngine` — **do not call `useEngine` in screens that use ChessWorkspace**. Percentage-based board sizing. Wide/narrow responsive layout.
 - **Orientation**: Full landscape/tablet support (`app.json "orientation": "default"`, `AndroidManifest screenOrientation="fullSensor"`)
 - **Training System**: `TrainingDashboardScreen` + `TrainingSessionScreen` (full drill UI), `TrainingService` (SM2-based scheduling), `SM2Service`, `LineGenerator` (lazy DFS batches), `BreadthFirstTrainer` (BFS queue for user-move positions). At end of line, "Analyse on Board" pushes the `LineAnalysis` stack route (AnalysisBoardScreen with a `line` param) **on top of** the session — navigating to the drawer's Analysis screen instead would pop the session, which is rebuilt from route params on mount and would lose the drill.
 - **FEN Position Index**: `searchUserGamesByFEN` / `searchMasterGamesByFEN` — SQLite FEN index ready, UI not yet wired
 - **Find Position**: "Find Position" tab on Analysis Board / Repertoire Study lists which repertoire chapters contain the current FEN (indexed SQLite lookup via `DatabaseService.findChaptersByFen`), tap to jump to that chapter
+- **Candidate-move arrows**: the board draws up to `CANDIDATE_MOVE_LIMIT` (4) continuations for the current position, thickness and opacity scaled to frequency. The source **follows the active tab** — Find Position → repertoire, Your Games → user games, Master → master games, Moves → engine arrow only — so one kind of arrow is on the board at a time. Wide/landscape layout has no tab bar and currently shows none.
 
 ### 🚧 In Progress
 - **Local Stockfish**: Rewritten 2026-02-16, verify works correctly on device
@@ -359,11 +360,11 @@ distinct causes, fixed across v1.4.0–v1.4.2. Regressing any one brings it back
    move tree to catch a handful of dates. `reviveRepertoireDates()` touches only the known
    `createdAt`/`updatedAt`/`lastStudiedAt` fields.
 4. **Find Position queries SQLite; it never builds an in-memory index.**
-   `repertoire_positions` carries `chapter_id` (schema v5), so `findChaptersByFen()` is one
+   `repertoire_moves` carries `chapter_id` (schema v6), so `findChaptersByFen()` is one
    indexed lookup for the current position and names resolve from the store's repertoires.
    Rows are written **per chapter** — do not merge chapters when indexing or chapter identity
    is lost.
-5. **`extractChapterPositions` reads each node's stored `fen`; it does not replay moves.**
+5. **`extractChapterMoves` reads each node's stored `fen`; it does not replay moves.**
    A node's pre-move position is its parent's FEN, so no `Chess` instance is needed except as
    a per-node fallback when `fen` is absent. Replaying through chess.js to recompute FENs
    already on disk was ~50x slower and was what made indexing noticeable on import.
@@ -374,10 +375,63 @@ Indexing is cheap enough to stay inline: `addRepertoire`/`updateRepertoire` awai
 index is never out of sync with the data. Renames go through `updateRepertoireMetadata`, which
 skips indexing — the index depends only on chapter ids and move trees.
 
+## Position → Move Frequency Index (schema v6)
+
+Two indexes answer "what gets played from this position, and how often":
+
+- **`repertoire_moves`** — one row per (chapter, position, move), replacing v3-v5's
+  `repertoire_positions` and its JSON `next_moves` blob. Normalized so ranking is a
+  `GROUP BY` over an index; the blob form meant fetching a row per chapter and
+  `JSON.parse`-ing each in JS, and after `1. d4 Nf6` that is thousands of rows on every
+  board move.
+- **`game_positions.next_move`** — the SAN played from each indexed game position.
+  Written on import; **deliberately not backfilled**, so rows imported before v6 keep
+  `next_move` NULL and simply don't feed the frequency query.
+
+**`var_depth` is how main-line a move is**, and it is what ranks repertoire arrows.
+It counts the steps on the path from the chapter root that were *not* a first child:
+following first children keeps it 0, entering a sideline makes it 1 and everything below
+that sideline stays ≥1, a sideline of a sideline is 2. Queries take `MIN(var_depth)` across
+chapters — if any chapter treats a move as its main line, it ranks as one — then break ties
+on chapter count. `extractChapterMoves.test.ts` pins these semantics.
+
+**Arrow weight = frequency x main-line factor**, not frequency alone (`candidateWeight` in
+`useCandidateMoves.ts`, dimming depth 1 to 0.75 and depth 2+ to 0.55). Frequency alone made a
+chapter's main line and its sideline render identically, since both have a count of 1 — the
+ranking was computed and then thrown away visually. Game sources have no `varDepth` and are
+never dimmed.
+
+**The display cap is applied after aggregation, never before.** `LIMIT 4` following the
+`GROUP BY` is correct; capping scanned rows would silently corrupt the frequencies at exactly
+the early positions where the ranking matters most. This is a different cap from
+`POSITION_MATCH_LIMIT`, which bounds list lookups.
+
+Repertoire candidates are **not filtered by color** by default, matching Find Position: what
+matters is which chapters contain the position, not which side's repertoire they came from.
+
 ## Known Issues
 
-### 1. Incomplete Storage Migration
-**Status:** ONGOING — `lineStats` and `gameReviewStatuses` still persist via `StorageService` (AsyncStorage), not SQLite. `DatabaseService` handles everything else. The `deleteRepertoire` action cascades across both stores with no transaction — a crash mid-delete can leave orphaned line stats. `updateLineStats` rewrites the full array to AsyncStorage on every training answer; fine now, painful at scale.
+### 1. Storage Migration
+**Status:** RESOLVED 2026-08-26. `lineStats` and `gameReviewStatuses` live in SQLite (`line_stats`,
+`game_review_statuses`). Three things follow, and each is load-bearing:
+
+- **`deleteRepertoire` is one transaction** covering the repertoire, its index marker, its
+  `repertoire_moves` rows and its `line_stats` rows. Anything else keyed to a repertoire
+  belongs in that same transaction.
+- **`updateLineStats` writes one row**, not the whole array. The store still holds the full
+  array as a synchronous read model so `getDueLineStats` and its consumers stay sync — that is
+  a deliberate choice, not an oversight. Revisit only if the row count actually hurts.
+- **Dates are stored as epoch ms**, so `next_review_date <= ?` is an indexed comparison and this
+  data needs no date reviver.
+
+Training data is now inside the SQLite file, so **backup/restore finally covers it** — before
+this, a restore silently brought back repertoires without their training progress.
+
+`MigrationService.migrateTrainingData()` moves the AsyncStorage copy across, behind its own
+`migration_training_v1` flag: the games and repertoire flags are already set on every existing
+install, so reusing either would have skipped this forever. The AsyncStorage keys are
+deliberately **left in place** — that copy is the only backup of the history. Delete them a
+release later.
 
 ### 2. MoveHistory nav arrows — partially diagnosed
 **Status:** one trigger fixed 2026-08-04, not confirmed closed.
@@ -428,10 +482,10 @@ still avoid adding them to touch handlers, which is where they measurably lag th
 
 ### Storage & Persistence
 - **Date objects**: Automatically serialized/deserialized with custom reviver
-- **SQLite via DatabaseService**: Repertoires, games, settings, and FEN indexes. Always use this for new data.
-- **AsyncStorage via StorageService**: `lineStats`, `gameReviewStatuses` — legacy, not yet migrated
+- **SQLite via DatabaseService**: Repertoires, games, settings, FEN indexes, line stats, review statuses. Always use this for new data.
+- **AsyncStorage via StorageService**: migration source only — no app code writes to it any more
 - **Automatic save**: Store mutations write to DB immediately
-- **Store initialization**: `App.tsx` calls `initialize()` which loads from both stores
+- **Store initialization**: `App.tsx` calls `initialize()`, which runs migrations then loads everything from SQLite
 - **Migration**: `MigrationService` runs once on first launch to move AsyncStorage data to SQLite
 
 ### Game Review
@@ -480,9 +534,11 @@ npm test -- --coverage            # Generate coverage report
 
 ## Next Steps
 
-### Phase 1 — Complete Storage Migration
-1. Migrate `lineStats` and `gameReviewStatuses` to SQLite with per-row writes
-2. Make `deleteRepertoire` cascade in a single transaction across both stores
+### Phase 1 — Complete Storage Migration ✅ done 2026-08-26
+1. ~~Migrate `lineStats` and `gameReviewStatuses` to SQLite with per-row writes~~
+2. ~~Make `deleteRepertoire` cascade in a single transaction across both stores~~
+3. Drop the legacy `lineStats` / `gameReviewStatuses` AsyncStorage keys once the SQLite copy
+   has proven itself on device
 
 ### Phase 2 — The Differentiator: Wire Review → Training
 4. When Game Review flags a repertoire deviation, reset/boost that line's SM2 interval in `lineStats` — this closes the loop between the two halves that already exist

@@ -1,15 +1,4 @@
 // Mock all services before importing the store
-jest.mock('@services/storage/StorageService', () => ({
-  StorageService: {
-    loadRepertoires: jest.fn().mockResolvedValue([]),
-    saveRepertoires: jest.fn().mockResolvedValue(undefined),
-    loadLineStats: jest.fn().mockResolvedValue([]),
-    saveLineStats: jest.fn().mockResolvedValue(undefined),
-    loadGameReviewStatuses: jest.fn().mockResolvedValue([]),
-    saveGameReviewStatuses: jest.fn().mockResolvedValue(undefined),
-  },
-}));
-
 jest.mock('@services/settings/SettingsService', () => ({
   SettingsService: {
     getDefaults: jest.fn().mockReturnValue({}),
@@ -61,6 +50,13 @@ jest.mock('@services/database/DatabaseService', () => ({
     getRepertoiresCount: jest.fn().mockResolvedValue(0),
     getSetting: jest.fn().mockResolvedValue(null),
     saveSetting: jest.fn().mockResolvedValue(undefined),
+    getAllLineStats: jest.fn().mockResolvedValue([]),
+    upsertLineStats: jest.fn().mockResolvedValue(undefined),
+    deleteLineStats: jest.fn().mockResolvedValue(undefined),
+    replaceAllLineStats: jest.fn().mockResolvedValue(undefined),
+    getAllGameReviewStatuses: jest.fn().mockResolvedValue([]),
+    upsertGameReviewStatus: jest.fn().mockResolvedValue(undefined),
+    replaceAllGameReviewStatuses: jest.fn().mockResolvedValue(undefined),
   },
 }));
 
@@ -86,7 +82,6 @@ jest.mock('@services/engine/EngineAnalyzer', () => ({
 }));
 
 import { useStore } from '../index';
-import { StorageService } from '@services/storage/StorageService';
 import { DatabaseService } from '@services/database/DatabaseService';
 import { LineStats, Repertoire, UserGame } from '@types';
 import { MoveTree } from '@utils/MoveTree';
@@ -152,8 +147,8 @@ beforeEach(() => {
   (DatabaseService.getMasterGamesCount as jest.Mock).mockResolvedValue(0);
   (DatabaseService.getAllRepertoires as jest.Mock).mockResolvedValue([]);
   (DatabaseService.getSetting as jest.Mock).mockResolvedValue(null);
-  (StorageService.loadLineStats as jest.Mock).mockResolvedValue([]);
-  (StorageService.loadGameReviewStatuses as jest.Mock).mockResolvedValue([]);
+  (DatabaseService.getAllLineStats as jest.Mock).mockResolvedValue([]);
+  (DatabaseService.getAllGameReviewStatuses as jest.Mock).mockResolvedValue([]);
 });
 
 describe('useStore', () => {

@@ -19,6 +19,7 @@ import { ChapterFenMatch } from '@utils/extractRepertoirePositions';
 import { DatabaseService } from '@services/database/DatabaseService';
 import { UserGame, MasterGame, ScreenKey, normalizeFen } from '@types';
 import { useStore } from '@store';
+import { CandidateSource } from '@hooks/useCandidateMoves';
 
 const WIDE_GAME_LIST_HEIGHT = 180;
 const EMPTY_MATCHES: ChapterFenMatch[] = [];
@@ -151,6 +152,15 @@ export function ChessAnalysisLayout({
   ];
   const effectiveActiveTab: AnalysisTab = TABS.some(t => t.key === activeTab) ? activeTab : 'moves';
 
+  // Arrows follow the tab, so the board shows one kind at a time instead of stacking
+  // engine + repertoire + both game sources into a mess. The Moves tab keeps the engine
+  // arrow it has always had.
+  const candidateSource: CandidateSource =
+    effectiveActiveTab === 'findPosition' ? 'repertoire'
+    : effectiveActiveTab === 'yourGames' ? 'user'
+    : effectiveActiveTab === 'masterGames' ? 'master'
+    : 'none';
+
   // ── Wide layout: board + inline MoveHistory, game lists below ──
   if (isWide) {
     return (
@@ -212,6 +222,7 @@ export function ChessAnalysisLayout({
         {...workspaceProps}
         showMoveHistory={false}
         showSettingsGear={false}
+        candidateSource={candidateSource}
       />
 
       {/* Tab Bar */}

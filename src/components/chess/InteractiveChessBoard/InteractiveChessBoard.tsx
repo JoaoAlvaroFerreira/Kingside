@@ -35,6 +35,8 @@ interface InteractiveChessBoardProps {
   bestMove?: string;
   arrowColor?: string;
   pgnarrows?: Array<{ from: string; to: string; color: string }>;
+  /** Candidate continuations. `weight` in [0,1] drives thickness and opacity. */
+  candidateArrows?: Array<{ from: string; to: string; color: string; weight: number }>;
   nagBadge?: { square: string; symbol: string };
 }
 
@@ -49,7 +51,8 @@ const squareToCenterPixel = (square: string, squareSize: number, orientation: 'w
   };
 };
 
-const getArrowPath = (x1: number, y1: number, x2: number, y2: number, squareSize: number): string => {
+/** `scale` thins the arrow without moving its endpoints — used to rank candidate moves. */
+const getArrowPath = (x1: number, y1: number, x2: number, y2: number, squareSize: number, scale: number = 1): string => {
   const dx = x2 - x1;
   const dy = y2 - y1;
   const len = Math.sqrt(dx * dx + dy * dy);
@@ -60,9 +63,9 @@ const getArrowPath = (x1: number, y1: number, x2: number, y2: number, squareSize
   const px = -uy;
   const py = ux;
 
-  const shaftW = squareSize * 0.18;
-  const headLen = squareSize * 0.38;
-  const headW = squareSize * 0.38;
+  const shaftW = squareSize * 0.18 * scale;
+  const headLen = squareSize * 0.38 * scale;
+  const headW = squareSize * 0.38 * scale;
 
   const sx = x2 - ux * headLen;
   const sy = y2 - uy * headLen;
@@ -166,6 +169,7 @@ export const InteractiveChessBoard: React.FC<InteractiveChessBoardProps> = ({
   bestMove,
   arrowColor = 'rgba(39, 174, 96, 0.7)',
   pgnarrows,
+  candidateArrows,
   nagBadge,
 }) => {
   const { width, height } = useWindowDimensions();
@@ -595,6 +599,33 @@ export const InteractiveChessBoard: React.FC<InteractiveChessBoardProps> = ({
                 <Svg width={boardSize} height={boardSize} viewBox={`0 0 ${boardSize} ${boardSize}`}>
                   {paths.map((p, i) => (
                     <Path key={i} d={p.d} fill={p.color + 'b3'} />
+                  ))}
+                </Svg>
+              </View>
+            );
+          })()}
+
+          {/* Candidate-move arrows (repertoire / games), ranked by weight */}
+          {candidateArrows && candidateArrows.length > 0 && (() => {
+            const paths = candidateArrows
+              .map(a => {
+                const from = squareToCenterPixel(a.from, squareSize, orientation);
+                const to = squareToCenterPixel(a.to, squareSize, orientation);
+                // Thinner and more transparent as the move gets rarer, so the ranking is
+                // readable at a glance without counting arrows.
+                const weight = Math.max(0, Math.min(1, a.weight));
+                const d = getArrowPath(from.x, from.y, to.x, to.y, squareSize, 0.55 + 0.45 * weight);
+                const alpha = Math.round((0.35 + 0.5 * weight) * 255).toString(16).padStart(2, '0');
+                return d ? { d, color: a.color + alpha } : null;
+              })
+              .filter(Boolean) as Array<{ d: string; color: string }>;
+
+            if (paths.length === 0) return null;
+            return (
+              <View style={[styles.arrowOverlay, { width: boardSize, height: boardSize }]} pointerEvents="none">
+                <Svg width={boardSize} height={boardSize} viewBox={`0 0 ${boardSize} ${boardSize}`}>
+                  {paths.map((p, i) => (
+                    <Path key={i} d={p.d} fill={p.color} />
                   ))}
                 </Svg>
               </View>

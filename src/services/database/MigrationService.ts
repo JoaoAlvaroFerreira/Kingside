@@ -9,6 +9,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const MIGRATION_KEY = '@kingside/migration-complete';
 const MIGRATION_REPERTOIRES_KEY = 'migration_asyncstorage_v1';
+// Deliberately its own key: the two flags above are already set on any existing install,
+// so hanging training data off either would mean this migration never runs for them.
+const MIGRATION_TRAINING_KEY = 'migration_training_v1';
 const REVIEW_SETTINGS_KEY = '@kingside/review-settings';
 
 export const MigrationService = {
@@ -24,6 +27,9 @@ export const MigrationService = {
 
       // Migrate repertoires and settings to SQLite
       await this.migrateRepertoiresAndSettings(onProgress);
+
+      // Migrate training data (line stats + game review statuses) to SQLite
+      await this.migrateTrainingData(onProgress);
     } catch (error) {
       console.error('[Migration] Migration failed:', error);
     }
@@ -102,6 +108,40 @@ export const MigrationService = {
 
     await DatabaseService.saveSetting(MIGRATION_REPERTOIRES_KEY, true);
     console.log('[Migration] Repertoire/settings migration completed successfully!');
+  },
+
+  /**
+   * Move line stats and game review statuses from AsyncStorage into SQLite.
+   *
+   * The AsyncStorage keys are intentionally left in place: this is the only copy of the
+   * user's training history and there is no undo. Remove them a release later, once the
+   * SQLite copy has proven itself.
+   */
+  async migrateTrainingData(onProgress?: (msg: string) => void): Promise<void> {
+    const alreadyRun = await DatabaseService.getSetting<boolean>(MIGRATION_TRAINING_KEY);
+    if (alreadyRun) {
+      console.log('[Migration] Training data migration already completed');
+      return;
+    }
+
+    console.log('[Migration] Checking for training data to migrate...');
+
+    const lineStats = await StorageService.loadLineStats();
+    if (lineStats.length > 0) {
+      onProgress?.(`Migrating ${lineStats.length} training lines…`);
+      await DatabaseService.replaceAllLineStats(lineStats);
+      console.log(`[Migration] Migrated ${lineStats.length} line stats`);
+    }
+
+    const statuses = await StorageService.loadGameReviewStatuses();
+    if (statuses.length > 0) {
+      onProgress?.(`Migrating ${statuses.length} game reviews…`);
+      await DatabaseService.replaceAllGameReviewStatuses(statuses);
+      console.log(`[Migration] Migrated ${statuses.length} game review statuses`);
+    }
+
+    await DatabaseService.saveSetting(MIGRATION_TRAINING_KEY, true);
+    console.log('[Migration] Training data migration completed successfully!');
   },
 
   async resetMigrationFlag(): Promise<void> {

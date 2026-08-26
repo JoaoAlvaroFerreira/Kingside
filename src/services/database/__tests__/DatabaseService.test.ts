@@ -47,7 +47,7 @@ jest.mock('../WebDatabaseService', () => ({
   },
 }));
 
-import { UserGame, Repertoire } from '@types';
+import { UserGame, Repertoire, LineStats } from '@types';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { DatabaseService } = require('../DatabaseService');
 
@@ -173,7 +173,7 @@ describe('DatabaseService', () => {
       await DatabaseService.backfillRepertoirePositionsIfNeeded();
 
       const deleted = mockDb.runAsync.mock.calls
-        .filter(([sql]: [string]) => /DELETE FROM repertoire_positions/.test(sql))
+        .filter(([sql]: [string]) => /DELETE FROM repertoire_moves/.test(sql))
         .map(([, args]: [string, string[]]) => args[0]);
       expect(deleted).toEqual(['rep-b']);
     });
@@ -222,7 +222,7 @@ describe('DatabaseService', () => {
       ]);
       const calls = mockDb.getAllAsync.mock.calls;
       const [sql, args] = calls[calls.length - 1];
-      expect(sql).toMatch(/FROM repertoire_positions/);
+      expect(sql).toMatch(/FROM repertoire_moves/);
       expect(sql).toMatch(/normalized_fen = \?/);
       // Bounded: an early position matches most of the index.
       expect(sql).toMatch(/LIMIT \?/);
@@ -556,6 +556,225 @@ describe('DatabaseService', () => {
       expect(sql).toMatch(/CREATE TABLE IF NOT EXISTS repertoires/);
       expect(sql).toMatch(/CREATE INDEX IF NOT EXISTS idx_repertoires_color/);
       expect(sql).toMatch(/CREATE TABLE IF NOT EXISTS settings/);
+    });
+
+    it('creates the training tables', async () => {
+      await DatabaseService.initialize();
+      const sql = mockDb.execAsync.mock.calls.map(([s]: [string]) => s).join('\n');
+      expect(sql).toMatch(/CREATE TABLE IF NOT EXISTS line_stats/);
+      expect(sql).toMatch(/CREATE INDEX IF NOT EXISTS idx_line_stats_due/);
+      expect(sql).toMatch(/CREATE TABLE IF NOT EXISTS game_review_statuses/);
+    });
+  });
+
+  describe('line stats', () => {
+    const stat: LineStats = {
+      lineId: 'line-1',
+      repertoireId: 'rep-1',
+      chapterId: 'ch-1',
+      easeFactor: 2.5,
+      interval: 6,
+      repetitions: 2,
+      nextReviewDate: new Date('2026-09-01T12:00:00.000Z'),
+      lastReviewDate: new Date('2026-08-26T12:00:00.000Z'),
+      totalDrills: 10,
+      correctCount: 8,
+      mistakeCount: 2,
+    };
+
+    it('upsertLineStats writes one row with dates as epoch ms', async () => {
+      await DatabaseService.initialize();
+      await DatabaseService.upsertLineStats(stat);
+
+      const call = mockDb.runAsync.mock.calls.find(([sql]: [string]) =>
+        /INSERT OR REPLACE INTO line_stats/.test(sql)
+      );
+      expect(call).toBeDefined();
+      const params = call![1];
+      expect(params[0]).toBe('line-1');
+      expect(params[6]).toBe(stat.nextReviewDate.getTime());
+      expect(params[7]).toBe(stat.lastReviewDate!.getTime());
+    });
+
+    it('getAllLineStats revives epoch ms back into Dates', async () => {
+      await DatabaseService.initialize();
+      mockDb.getAllAsync.mockResolvedValueOnce([{
+        line_id: stat.lineId,
+        repertoire_id: stat.repertoireId,
+        chapter_id: stat.chapterId,
+        ease_factor: stat.easeFactor,
+        interval: stat.interval,
+        repetitions: stat.repetitions,
+        next_review_date: stat.nextReviewDate.getTime(),
+        last_review_date: stat.lastReviewDate!.getTime(),
+        total_drills: stat.totalDrills,
+        correct_count: stat.correctCount,
+        mistake_count: stat.mistakeCount,
+      }]);
+
+      const [loaded] = await DatabaseService.getAllLineStats();
+      expect(loaded).toEqual(stat);
+      expect(loaded.nextReviewDate).toBeInstanceOf(Date);
+    });
+
+    it('getAllLineStats leaves lastReviewDate undefined when null', async () => {
+      await DatabaseService.initialize();
+      mockDb.getAllAsync.mockResolvedValueOnce([{
+        line_id: 'line-2',
+        repertoire_id: 'rep-1',
+        chapter_id: 'ch-1',
+        ease_factor: 2.5,
+        interval: 0,
+        repetitions: 0,
+        next_review_date: 0,
+        last_review_date: null,
+        total_drills: 0,
+        correct_count: 0,
+        mistake_count: 0,
+      }]);
+
+      const [loaded] = await DatabaseService.getAllLineStats();
+      expect(loaded.lastReviewDate).toBeUndefined();
+    });
+  });
+
+  describe('deleteRepertoire cascade', () => {
+    it('deletes repertoire, marker, line stats and positions in one transaction', async () => {
+      await DatabaseService.initialize();
+      await DatabaseService.deleteRepertoire('rep-1');
+
+      expect(mockDb.withTransactionAsync).toHaveBeenCalled();
+      const statements = mockDb.runAsync.mock.calls.map(([sql]: [string]) => sql);
+      expect(statements).toEqual(expect.arrayContaining([
+        expect.stringMatching(/DELETE FROM repertoires WHERE id = \?/),
+        expect.stringMatching(/DELETE FROM settings WHERE key = \?/),
+        expect.stringMatching(/DELETE FROM line_stats WHERE repertoire_id = \?/),
+        expect.stringMatching(/DELETE FROM repertoire_moves WHERE repertoire_id = \?/),
+      ]));
+    });
+  });
+
+  describe('game review statuses', () => {
+    it('round-trips booleans as 0/1 and dates as epoch ms', async () => {
+      await DatabaseService.initialize();
+      await DatabaseService.upsertGameReviewStatus({
+        gameId: 'game-1',
+        reviewed: true,
+        lastReviewDate: new Date('2026-08-26T12:00:00.000Z'),
+        keyMovesCount: 3,
+        followedRepertoire: false,
+      });
+
+      const call = mockDb.runAsync.mock.calls.find(([sql]: [string]) =>
+        /INSERT OR REPLACE INTO game_review_statuses/.test(sql)
+      );
+      expect(call![1]).toEqual([
+        'game-1', 1, new Date('2026-08-26T12:00:00.000Z').getTime(), 3, 0,
+      ]);
+
+      mockDb.getAllAsync.mockResolvedValueOnce([{
+        game_id: 'game-1',
+        reviewed: 1,
+        last_review_date: new Date('2026-08-26T12:00:00.000Z').getTime(),
+        key_moves_count: 3,
+        followed_repertoire: 0,
+      }]);
+      const [loaded] = await DatabaseService.getAllGameReviewStatuses();
+      expect(loaded.reviewed).toBe(true);
+      expect(loaded.followedRepertoire).toBe(false);
+      expect(loaded.lastReviewDate).toBeInstanceOf(Date);
+    });
+  });
+
+  describe('candidate moves', () => {
+    beforeEach(() => DatabaseService.initialize());
+
+    it('getRepertoireMoveCandidates aggregates in SQL, ranked main-line first', async () => {
+      mockDb.getAllAsync.mockResolvedValueOnce([
+        { move: 'Nf3', n: 12, d: 0 },
+        { move: 'Nc3', n: 40, d: 1 },
+      ]);
+
+      const result = await DatabaseService.getRepertoireMoveCandidates('some-fen');
+
+      expect(result).toEqual([
+        { move: 'Nf3', count: 12, varDepth: 0 },
+        { move: 'Nc3', count: 40, varDepth: 1 },
+      ]);
+
+      const calls = mockDb.getAllAsync.mock.calls;
+      const [sql, args] = calls[calls.length - 1];
+      expect(sql).toMatch(/FROM repertoire_moves/);
+      expect(sql).toMatch(/COUNT\(DISTINCT chapter_id\)/);
+      expect(sql).toMatch(/MIN\(var_depth\)/);
+      expect(sql).toMatch(/GROUP BY move/);
+      // Main-line-ness first, popularity as tiebreak — the ordering the arrows depend on.
+      expect(sql).toMatch(/ORDER BY d ASC, n DESC/);
+      expect(sql).toMatch(/move IS NOT NULL/);
+      // No color predicate by default — same rule as Find Position
+      expect(sql).not.toMatch(/color = \?/);
+      // Cap applies after aggregation, so the counts themselves stay correct
+      expect(sql.indexOf('LIMIT')).toBeGreaterThan(sql.indexOf('GROUP BY'));
+      expect(args[1]).toBe(4);
+    });
+
+    it('getGameMoveCandidates ranks purely by how often the move was played', async () => {
+      mockDb.getAllAsync.mockResolvedValueOnce([
+        { move: 'e5', n: 210 },
+        { move: 'c5', n: 90 },
+      ]);
+
+      const result = await DatabaseService.getGameMoveCandidates('master', 'some-fen');
+
+      expect(result).toEqual([
+        { move: 'e5', count: 210 },
+        { move: 'c5', count: 90 },
+      ]);
+
+      const calls = mockDb.getAllAsync.mock.calls;
+      const [sql, args] = calls[calls.length - 1];
+      expect(sql).toMatch(/FROM game_positions/);
+      expect(sql).toMatch(/GROUP BY next_move/);
+      expect(sql).toMatch(/ORDER BY n DESC/);
+      expect(sql).toMatch(/next_move IS NOT NULL/);
+      expect(args[0]).toBe('master');
+      expect(sql.indexOf('LIMIT')).toBeGreaterThan(sql.indexOf('GROUP BY'));
+    });
+
+    it('scopes by repertoire color only when asked', async () => {
+      mockDb.getAllAsync.mockResolvedValueOnce([]);
+      await DatabaseService.getRepertoireMoveCandidates('some-fen', 4, 'black');
+      const calls = mockDb.getAllAsync.mock.calls;
+      const [sql, args] = calls[calls.length - 1];
+      expect(sql).toMatch(/color = \?/);
+      expect(args).toEqual([expect.any(String), 'black', 4]);
+    });
+
+    it('returns empty rather than throwing when the index is unavailable', async () => {
+      mockDb.getAllAsync.mockRejectedValueOnce(new Error('no such table'));
+      await expect(DatabaseService.getRepertoireMoveCandidates('f')).resolves.toEqual([]);
+
+      mockDb.getAllAsync.mockRejectedValueOnce(new Error('no such column'));
+      await expect(DatabaseService.getGameMoveCandidates('user', 'f')).resolves.toEqual([]);
+    });
+  });
+
+  describe('game position indexing records the move played', () => {
+    beforeEach(() => DatabaseService.initialize());
+
+    it('stores each position with the SAN played from it, and the final position with null', async () => {
+      await DatabaseService.addUserGames([makeGame({ pgn: '1. e4 e5 2. Nf3 *' })]);
+
+      const inserts = mockDb.runAsync.mock.calls
+        .filter(([sql]: [string]) => /INSERT INTO game_positions/.test(sql))
+        .map(([, args]: [string, any[]]) => args);
+
+      expect(inserts.length).toBeGreaterThan(0);
+      for (const args of inserts) {
+        expect(args).toHaveLength(4);
+      }
+      const moves = inserts.map((args: any[]) => args[3]);
+      expect(moves).toEqual(['e4', 'e5', 'Nf3', null]);
     });
   });
 });

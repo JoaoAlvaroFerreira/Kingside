@@ -4,10 +4,10 @@
  */
 
 import { Platform } from 'react-native';
-import { UserGame, MasterGame, Repertoire, normalizeFen, EngineEvaluation } from '@types';
+import { UserGame, MasterGame, Repertoire, normalizeFen, EngineEvaluation, LineStats, GameReviewStatus } from '@types';
 import { Chess } from 'chess.js';
 import { WebDatabaseService } from './WebDatabaseService';
-import { extractChapterPositions, mergePositionMaps, PositionMap } from '@utils/extractRepertoirePositions';
+import { extractChapterMoves, extractChapterPositions, mergePositionMaps, PositionMap, PositionMove } from '@utils/extractRepertoirePositions';
 import * as FileSystem from 'expo-file-system';
 
 /** Thrown when the database cannot be opened even after WAL recovery. */
@@ -25,7 +25,11 @@ const PAGE_SIZE = 25; // Games per page
 // Position lookups are unbounded by nature - an early position matches most of
 // the database. Cap what we hand back so the board's tabs stay responsive.
 const POSITION_MATCH_LIMIT = 100;
-const SCHEMA_VERSION = 5; // Bump when schema changes
+// How many candidate moves an arrow overlay may show. Applied *after* aggregation — capping
+// the rows scanned instead would make the frequencies themselves wrong at early positions,
+// which is exactly where the ranking has to be trusted.
+const CANDIDATE_MOVE_LIMIT = 4;
+const SCHEMA_VERSION = 6; // Bump when schema changes
 const INDEX_BATCH_SIZE = 10; // Games per batch during background indexing
 
 interface PaginatedResult<T> {
@@ -33,6 +37,15 @@ interface PaginatedResult<T> {
   totalCount: number;
   hasMore: boolean;
   page: number;
+}
+
+/** A move playable from some position, with how often the source plays it. */
+export interface MoveCandidate {
+  move: string;
+  /** Chapters for the repertoire source, games for the game sources. */
+  count: number;
+  /** Repertoire only: 0 means the move is on some chapter's main line. */
+  varDepth?: number;
 }
 
 // Conditionally import SQLite only on native platforms
@@ -221,6 +234,35 @@ class DatabaseServiceClass {
         );
       `);
 
+      // Create training tables. Dates are epoch ms so "due" is an indexed comparison
+      // rather than a string parse, and so this data needs no date reviver.
+      await this.db.execAsync(`
+        CREATE TABLE IF NOT EXISTS line_stats (
+          line_id TEXT PRIMARY KEY,
+          repertoire_id TEXT NOT NULL,
+          chapter_id TEXT NOT NULL,
+          ease_factor REAL NOT NULL,
+          interval INTEGER NOT NULL,
+          repetitions INTEGER NOT NULL,
+          next_review_date INTEGER NOT NULL,
+          last_review_date INTEGER,
+          total_drills INTEGER NOT NULL,
+          correct_count INTEGER NOT NULL,
+          mistake_count INTEGER NOT NULL
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_line_stats_due ON line_stats(repertoire_id, next_review_date);
+        CREATE INDEX IF NOT EXISTS idx_line_stats_chapter ON line_stats(chapter_id);
+
+        CREATE TABLE IF NOT EXISTS game_review_statuses (
+          game_id TEXT PRIMARY KEY,
+          reviewed INTEGER NOT NULL,
+          last_review_date INTEGER,
+          key_moves_count INTEGER NOT NULL,
+          followed_repertoire INTEGER NOT NULL
+        );
+      `);
+
       // Schema migration: FEN index table
       await this.migrateSchema(onProgress);
 
@@ -268,29 +310,6 @@ class DatabaseServiceClass {
       console.log('[DatabaseService] Migrated to schema v2 (start_fen column)');
     }
 
-    // V3: repertoire_positions table — check actual existence, not just user_version.
-    // If the app ran during development before this migration was stable, user_version may
-    // already be 3 but the table might not exist.
-    const repPosExists = await this.db!.getFirstAsync(
-      "SELECT name FROM sqlite_master WHERE type='table' AND name='repertoire_positions'"
-    ) as any;
-    if (currentVersion < 3 || !repPosExists) {
-      await this.db!.execAsync(`
-        CREATE TABLE IF NOT EXISTS repertoire_positions (
-          repertoire_id TEXT NOT NULL,
-          color TEXT NOT NULL,
-          move_count INTEGER NOT NULL,
-          normalized_fen TEXT NOT NULL,
-          next_moves TEXT NOT NULL
-        );
-        CREATE INDEX IF NOT EXISTS idx_rep_pos_color_fen
-          ON repertoire_positions(color, normalized_fen);
-        CREATE INDEX IF NOT EXISTS idx_rep_pos_repertoire
-          ON repertoire_positions(repertoire_id);
-      `);
-      console.log('[DatabaseService] Migrated to schema v3 (repertoire_positions table)');
-    }
-
     if (currentVersion < 4) {
       // V4: game_analyses table — caches Stockfish evaluations per (game, color, depth)
       await this.db!.execAsync(`
@@ -306,21 +325,51 @@ class DatabaseServiceClass {
       console.log('[DatabaseService] Migrated to schema v4 (game_analyses table)');
     }
 
-    // V5: chapter_id on repertoire_positions, so "Find Position" can resolve which chapters
-    // contain a FEN with an indexed query instead of walking every move tree in the UI.
-    const repPosCols = await this.db!.getAllAsync(
-      'PRAGMA table_info(repertoire_positions)'
-    ) as Array<{ name: string }>;
-    if (!repPosCols.some(c => c.name === 'chapter_id')) {
+    // V6: repertoire_moves replaces repertoire_positions (v3-v5), normalizing the JSON
+    // next_moves blob into one row per (chapter, position, move) and adding var_depth.
+    // Candidate-move arrows can then rank in SQL — GROUP BY over an index — instead of
+    // fetching every matching row and JSON.parsing it in JS, which after 1. d4 Nf6 means
+    // a row per chapter of a 1000+ chapter repertoire on every board move.
+    //
+    // Checks actual existence rather than trusting user_version: a dev run may have bumped
+    // the version before this migration was stable.
+    const repMovesExists = await this.db!.getFirstAsync(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='repertoire_moves'"
+    ) as any;
+    if (!repMovesExists) {
       await this.db!.execAsync(`
-        ALTER TABLE repertoire_positions ADD COLUMN chapter_id TEXT;
-        CREATE INDEX IF NOT EXISTS idx_rep_pos_fen ON repertoire_positions(normalized_fen);
+        CREATE TABLE IF NOT EXISTS repertoire_moves (
+          repertoire_id TEXT NOT NULL,
+          chapter_id TEXT NOT NULL,
+          color TEXT NOT NULL,
+          move_count INTEGER NOT NULL,
+          normalized_fen TEXT NOT NULL,
+          move TEXT,
+          var_depth INTEGER NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_rep_moves_color_fen
+          ON repertoire_moves(color, normalized_fen);
+        CREATE INDEX IF NOT EXISTS idx_rep_moves_fen ON repertoire_moves(normalized_fen);
+        CREATE INDEX IF NOT EXISTS idx_rep_moves_repertoire ON repertoire_moves(repertoire_id);
+
+        DROP TABLE IF EXISTS repertoire_positions;
       `);
-      // Existing rows predate chapter_id and were merged across chapters, so they can't be
-      // backfilled in place — drop them and clear the markers to force a clean re-index.
-      await this.db!.execAsync('DELETE FROM repertoire_positions');
+      // Old rows carry no var_depth and cannot be backfilled in place — clear the markers
+      // so every repertoire re-indexes into the new table.
       await this.db!.runAsync('DELETE FROM settings WHERE key LIKE ?', [`${REP_INDEXED_KEY_PREFIX}%`]);
-      console.log('[DatabaseService] Migrated to schema v5 (repertoire_positions.chapter_id)');
+      console.log('[DatabaseService] Migrated to schema v6 (repertoire_moves table)');
+    }
+
+    // V6: which move was played from each indexed game position. Without it there is no way
+    // to ask "what gets played from here, how often" short of reopening every matching game.
+    // Deliberately not backfilled: existing rows keep next_move NULL and simply don't feed
+    // the frequency query — re-import is the way to light them up.
+    const gamePosCols = await this.db!.getAllAsync(
+      'PRAGMA table_info(game_positions)'
+    ) as Array<{ name: string }>;
+    if (gamePosCols.length > 0 && !gamePosCols.some(c => c.name === 'next_move')) {
+      await this.db!.execAsync('ALTER TABLE game_positions ADD COLUMN next_move TEXT');
+      console.log('[DatabaseService] Migrated to schema v6 (game_positions.next_move)');
     }
 
     if (currentVersion < SCHEMA_VERSION) {
@@ -383,25 +432,23 @@ class DatabaseServiceClass {
     await this.db!.runAsync('DELETE FROM settings WHERE key = ?', [marker]);
 
     await this.db!.runAsync(
-      'DELETE FROM repertoire_positions WHERE repertoire_id = ?',
+      'DELETE FROM repertoire_moves WHERE repertoire_id = ?',
       [repertoire.id]
     );
 
     // Rows are kept per chapter (not merged across the repertoire) so Find Position can
     // resolve which chapter a position came from without re-walking the move trees.
-    const rows: [string, string, string, number, string, string][] = [];
+    const rows: [string, string, string, number, string, string | null, number][] = [];
     for (const chapter of repertoire.chapters) {
-      let positions: PositionMap;
+      let moves: PositionMove[];
       try {
-        positions = extractChapterPositions(chapter);
+        moves = extractChapterMoves(chapter);
       } catch {
         console.warn(`[DatabaseService] Skipping malformed chapter "${chapter.name}" during position indexing`);
         continue;
       }
-      for (const [moveCount, posAtCount] of positions) {
-        for (const [fen, moves] of posAtCount) {
-          rows.push([repertoire.id, chapter.id, repertoire.color, moveCount, fen, JSON.stringify([...moves])]);
-        }
+      for (const m of moves) {
+        rows.push([repertoire.id, chapter.id, repertoire.color, m.moveCount, m.fen, m.move, m.varDepth]);
       }
     }
 
@@ -411,9 +458,9 @@ class DatabaseServiceClass {
       await this.db!.withTransactionAsync(async () => {
         for (const row of batch) {
           await this.db!.runAsync(
-            `INSERT INTO repertoire_positions
-               (repertoire_id, chapter_id, color, move_count, normalized_fen, next_moves)
-             VALUES (?, ?, ?, ?, ?, ?)`,
+            `INSERT INTO repertoire_moves
+               (repertoire_id, chapter_id, color, move_count, normalized_fen, move, var_depth)
+             VALUES (?, ?, ?, ?, ?, ?, ?)`,
             row
           );
         }
@@ -430,13 +477,31 @@ class DatabaseServiceClass {
   /**
    * Extract all unique normalized FENs from a PGN string
    */
-  private extractFensFromPgn(pgn: string): string[] {
+  /**
+   * Replay a PGN and return each position paired with the move played from it.
+   *
+   * The move is what makes "from this position, what gets played and how often" answerable
+   * as one GROUP BY, instead of reopening every matching game. The final position of the
+   * game is emitted with a null move so position search still finds it.
+   *
+   * SAN comes from chess.js rather than the raw token, so it matches the SAN the rest of
+   * the app produces regardless of how the PGN was written.
+   */
+  private extractPositionMovesFromPgn(pgn: string): Array<{ fen: string; move: string | null }> {
     // Check for custom starting FEN in headers
     const fenMatch = pgn.match(/^\[FEN\s+"([^"]+)"\s*\]$/m);
     const startFen = fenMatch ? fenMatch[1] : undefined;
 
     const chess = startFen ? new Chess(startFen) : new Chess();
-    const fens: string[] = [normalizeFen(chess.fen())];
+
+    const result: Array<{ fen: string; move: string | null }> = [];
+    const seen = new Set<string>();
+    const push = (fen: string, move: string | null) => {
+      const key = `${fen}|${move ?? ''}`;
+      if (seen.has(key)) return;
+      seen.add(key);
+      result.push({ fen, move });
+    };
 
     // Strip headers, comments, result tokens
     let movesText = pgn.replace(/^\[.*?\]$/gm, '');
@@ -444,6 +509,7 @@ class DatabaseServiceClass {
     movesText = movesText.replace(/;.*$/gm, '');
     movesText = movesText.replace(/\s+(1-0|0-1|1\/2-1\/2|\*)\s*$/g, '');
 
+    let preFen = normalizeFen(chess.fen());
     const sections = movesText.split(/\d+\.\s*/).filter(s => s.trim());
     for (const section of sections) {
       const tokens = section.trim().split(/\s+/).filter(t => t.trim());
@@ -451,15 +517,19 @@ class DatabaseServiceClass {
         const clean = token.replace(/[!?]+$/, '').replace(/[",]/g, '').trim();
         if (!clean) continue;
         try {
-          chess.move(clean);
-          fens.push(normalizeFen(chess.fen()));
+          const played = chess.move(clean);
+          push(preFen, played.san);
+          preFen = normalizeFen(chess.fen());
         } catch {
           // Not a valid move token
         }
       }
     }
 
-    return [...new Set(fens)];
+    // End of the game: the position is in the index, with no continuation
+    push(preFen, null);
+
+    return result;
   }
 
   /**
@@ -471,11 +541,10 @@ class DatabaseServiceClass {
   ): Promise<void> {
     await this.db!.withTransactionAsync(async () => {
       for (const game of games) {
-        const fens = this.extractFensFromPgn(game.pgn);
-        for (const fen of fens) {
+        for (const { fen, move } of this.extractPositionMovesFromPgn(game.pgn)) {
           await this.db!.runAsync(
-            'INSERT INTO game_positions (game_id, game_type, normalized_fen) VALUES (?, ?, ?)',
-            [game.id, gameType, fen]
+            'INSERT INTO game_positions (game_id, game_type, normalized_fen, next_move) VALUES (?, ?, ?, ?)',
+            [game.id, gameType, fen, move]
           );
         }
       }
@@ -597,16 +666,16 @@ class DatabaseServiceClass {
           );
 
           // Index FEN positions for this game
-          const fens = this.extractFensFromPgn(game.pgn);
+          const positionMoves = this.extractPositionMovesFromPgn(game.pgn);
           // Clear old positions first (handles re-import)
           await this.db!.runAsync(
             'DELETE FROM game_positions WHERE game_id = ? AND game_type = ?',
             [game.id, 'user']
           );
-          for (const fen of fens) {
+          for (const { fen, move } of positionMoves) {
             await this.db!.runAsync(
-              'INSERT INTO game_positions (game_id, game_type, normalized_fen) VALUES (?, ?, ?)',
-              [game.id, 'user', fen]
+              'INSERT INTO game_positions (game_id, game_type, normalized_fen, next_move) VALUES (?, ?, ?, ?)',
+              [game.id, 'user', fen, move]
             );
           }
         }
@@ -741,15 +810,15 @@ class DatabaseServiceClass {
           );
 
           // Index FEN positions for this game
-          const fens = this.extractFensFromPgn(game.pgn);
+          const positionMoves = this.extractPositionMovesFromPgn(game.pgn);
           await this.db!.runAsync(
             'DELETE FROM game_positions WHERE game_id = ? AND game_type = ?',
             [game.id, 'master']
           );
-          for (const fen of fens) {
+          for (const { fen, move } of positionMoves) {
             await this.db!.runAsync(
-              'INSERT INTO game_positions (game_id, game_type, normalized_fen) VALUES (?, ?, ?)',
-              [game.id, 'master', fen]
+              'INSERT INTO game_positions (game_id, game_type, normalized_fen, next_move) VALUES (?, ?, ?, ?)',
+              [game.id, 'master', fen, move]
             );
           }
         }
@@ -918,16 +987,25 @@ class DatabaseServiceClass {
     );
   }
 
+  /**
+   * Delete a repertoire and everything keyed to it, in one transaction.
+   *
+   * Line stats live here rather than in AsyncStorage precisely so this cascade is atomic —
+   * the old split across two stores could leave orphaned stats if the app died mid-delete.
+   */
   async deleteRepertoire(id: string): Promise<void> {
     if (this.isWeb) return WebDatabaseService.deleteRepertoire(id);
     if (!this.db) throw new Error('Database not initialized');
 
-    await this.db.runAsync('DELETE FROM repertoires WHERE id = ?', [id]);
-    await this.db.runAsync('DELETE FROM settings WHERE key = ?', [REP_INDEXED_KEY_PREFIX + id]);
-    // repertoire_positions may not exist if the V3 migration hasn't run yet (e.g. Fast Refresh)
-    try {
-      await this.db.runAsync('DELETE FROM repertoire_positions WHERE repertoire_id = ?', [id]);
-    } catch { /* table doesn't exist yet — ignore */ }
+    await this.db.withTransactionAsync(async () => {
+      await this.db!.runAsync('DELETE FROM repertoires WHERE id = ?', [id]);
+      await this.db!.runAsync('DELETE FROM settings WHERE key = ?', [REP_INDEXED_KEY_PREFIX + id]);
+      await this.db!.runAsync('DELETE FROM line_stats WHERE repertoire_id = ?', [id]);
+      // repertoire_moves may not exist if the V6 migration hasn't run yet (e.g. Fast Refresh)
+      try {
+        await this.db!.runAsync('DELETE FROM repertoire_moves WHERE repertoire_id = ?', [id]);
+      } catch { /* table doesn't exist yet — ignore */ }
+    });
   }
 
   async getAllRepertoires(): Promise<Repertoire[]> {
@@ -976,6 +1054,145 @@ class DatabaseServiceClass {
     const row = await this.db.getFirstAsync('SELECT value FROM settings WHERE key = ?', [key]) as any;
     if (!row) return null;
     return JSON.parse(row.value, (k, v) => this.dateReviver(k, v)) as T;
+  }
+
+  // ==================== TRAINING ====================
+
+  private rowToLineStats(row: any): LineStats {
+    return {
+      lineId: row.line_id,
+      repertoireId: row.repertoire_id,
+      chapterId: row.chapter_id,
+      easeFactor: row.ease_factor,
+      interval: row.interval,
+      repetitions: row.repetitions,
+      nextReviewDate: new Date(row.next_review_date),
+      lastReviewDate: row.last_review_date != null ? new Date(row.last_review_date) : undefined,
+      totalDrills: row.total_drills,
+      correctCount: row.correct_count,
+      mistakeCount: row.mistake_count,
+    };
+  }
+
+  private lineStatsToParams(stat: LineStats): unknown[] {
+    return [
+      stat.lineId,
+      stat.repertoireId,
+      stat.chapterId,
+      stat.easeFactor,
+      stat.interval,
+      stat.repetitions,
+      new Date(stat.nextReviewDate).getTime(),
+      stat.lastReviewDate != null ? new Date(stat.lastReviewDate).getTime() : null,
+      stat.totalDrills,
+      stat.correctCount,
+      stat.mistakeCount,
+    ];
+  }
+
+  async getAllLineStats(): Promise<LineStats[]> {
+    if (this.isWeb) return WebDatabaseService.getAllLineStats();
+    if (!this.db) throw new Error('Database not initialized');
+
+    const rows = await this.db.getAllAsync('SELECT * FROM line_stats') as any[];
+    return rows.map(row => this.rowToLineStats(row));
+  }
+
+  /** Write a single line's stats. One row per answer, not a rewrite of the whole history. */
+  async upsertLineStats(stat: LineStats): Promise<void> {
+    if (this.isWeb) return WebDatabaseService.upsertLineStats(stat);
+    if (!this.db) throw new Error('Database not initialized');
+
+    await this.db.runAsync(
+      `INSERT OR REPLACE INTO line_stats
+         (line_id, repertoire_id, chapter_id, ease_factor, interval, repetitions,
+          next_review_date, last_review_date, total_drills, correct_count, mistake_count)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      this.lineStatsToParams(stat)
+    );
+  }
+
+  async deleteLineStats(lineId: string): Promise<void> {
+    if (this.isWeb) return WebDatabaseService.deleteLineStats(lineId);
+    if (!this.db) throw new Error('Database not initialized');
+
+    await this.db.runAsync('DELETE FROM line_stats WHERE line_id = ?', [lineId]);
+  }
+
+  /** Replace the whole table. Used by the AsyncStorage migration and by bulk resets. */
+  async replaceAllLineStats(stats: LineStats[]): Promise<void> {
+    if (this.isWeb) return WebDatabaseService.replaceAllLineStats(stats);
+    if (!this.db) throw new Error('Database not initialized');
+
+    await this.db.withTransactionAsync(async () => {
+      await this.db!.runAsync('DELETE FROM line_stats');
+      for (const stat of stats) {
+        await this.db!.runAsync(
+          `INSERT OR REPLACE INTO line_stats
+             (line_id, repertoire_id, chapter_id, ease_factor, interval, repetitions,
+              next_review_date, last_review_date, total_drills, correct_count, mistake_count)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          this.lineStatsToParams(stat)
+        );
+      }
+    });
+  }
+
+  // ==================== GAME REVIEW STATUS ====================
+
+  async getAllGameReviewStatuses(): Promise<GameReviewStatus[]> {
+    if (this.isWeb) return WebDatabaseService.getAllGameReviewStatuses();
+    if (!this.db) throw new Error('Database not initialized');
+
+    const rows = await this.db.getAllAsync('SELECT * FROM game_review_statuses') as any[];
+    return rows.map(row => ({
+      gameId: row.game_id,
+      reviewed: row.reviewed === 1,
+      lastReviewDate: row.last_review_date != null ? new Date(row.last_review_date) : undefined,
+      keyMovesCount: row.key_moves_count,
+      followedRepertoire: row.followed_repertoire === 1,
+    }));
+  }
+
+  async upsertGameReviewStatus(status: GameReviewStatus): Promise<void> {
+    if (this.isWeb) return WebDatabaseService.upsertGameReviewStatus(status);
+    if (!this.db) throw new Error('Database not initialized');
+
+    await this.db.runAsync(
+      `INSERT OR REPLACE INTO game_review_statuses
+         (game_id, reviewed, last_review_date, key_moves_count, followed_repertoire)
+       VALUES (?, ?, ?, ?, ?)`,
+      [
+        status.gameId,
+        status.reviewed ? 1 : 0,
+        status.lastReviewDate != null ? new Date(status.lastReviewDate).getTime() : null,
+        status.keyMovesCount,
+        status.followedRepertoire ? 1 : 0,
+      ]
+    );
+  }
+
+  async replaceAllGameReviewStatuses(statuses: GameReviewStatus[]): Promise<void> {
+    if (this.isWeb) return WebDatabaseService.replaceAllGameReviewStatuses(statuses);
+    if (!this.db) throw new Error('Database not initialized');
+
+    await this.db.withTransactionAsync(async () => {
+      await this.db!.runAsync('DELETE FROM game_review_statuses');
+      for (const status of statuses) {
+        await this.db!.runAsync(
+          `INSERT OR REPLACE INTO game_review_statuses
+             (game_id, reviewed, last_review_date, key_moves_count, followed_repertoire)
+           VALUES (?, ?, ?, ?, ?)`,
+          [
+            status.gameId,
+            status.reviewed ? 1 : 0,
+            status.lastReviewDate != null ? new Date(status.lastReviewDate).getTime() : null,
+            status.keyMovesCount,
+            status.followedRepertoire ? 1 : 0,
+          ]
+        );
+      }
+    });
   }
 
   // ==================== SEARCH / FILTER ====================
@@ -1098,25 +1315,21 @@ class DatabaseServiceClass {
 
     try {
       const rows = await this.db.getAllAsync(
-        'SELECT move_count, normalized_fen, next_moves FROM repertoire_positions WHERE color = ?',
+        'SELECT move_count, normalized_fen, move FROM repertoire_moves WHERE color = ?',
         [color]
-      ) as Array<{ move_count: number; normalized_fen: string; next_moves: string }>;
+      ) as Array<{ move_count: number; normalized_fen: string; move: string | null }>;
 
       const map: PositionMap = new Map();
       for (const row of rows) {
         if (!map.has(row.move_count)) map.set(row.move_count, new Map());
         const atCount = map.get(row.move_count)!;
-        const moves: string[] = JSON.parse(row.next_moves);
-        if (!atCount.has(row.normalized_fen)) {
-          atCount.set(row.normalized_fen, new Set(moves));
-        } else {
-          for (const m of moves) atCount.get(row.normalized_fen)!.add(m);
-        }
+        if (!atCount.has(row.normalized_fen)) atCount.set(row.normalized_fen, new Set());
+        if (row.move) atCount.get(row.normalized_fen)!.add(row.move);
       }
       return map;
     } catch {
       // Table not ready — build in-memory from stored repertoires as fallback
-      console.warn('[DatabaseService] repertoire_positions unavailable, building position map in-memory');
+      console.warn('[DatabaseService] repertoire_moves unavailable, building position map in-memory');
       const repertoires = await this.getAllRepertoires();
       const combined: PositionMap = new Map();
       for (const rep of repertoires.filter(r => r.color === color)) {
@@ -1140,14 +1353,74 @@ class DatabaseServiceClass {
 
     try {
       const rows = await this.db.getAllAsync(
-        `SELECT DISTINCT repertoire_id, chapter_id FROM repertoire_positions
-         WHERE normalized_fen = ? AND chapter_id IS NOT NULL
+        `SELECT DISTINCT repertoire_id, chapter_id FROM repertoire_moves
+         WHERE normalized_fen = ?
          LIMIT ?`,
         [normalizedFen, POSITION_MATCH_LIMIT]
       ) as Array<{ repertoire_id: string; chapter_id: string }>;
       return rows.map(r => ({ repertoireId: r.repertoire_id, chapterId: r.chapter_id }));
     } catch {
       // Table or column not ready yet (e.g. Fast Refresh mid-migration)
+      return [];
+    }
+  }
+
+  // ==================== CANDIDATE MOVES ====================
+
+  /**
+   * Which moves your repertoire plays from this position, best first.
+   *
+   * Ranked by main-line-ness before popularity: `MIN(var_depth)` means "if any chapter
+   * treats this as its main line, it ranks as a main line", and chapter count breaks ties.
+   * Aggregating in SQL matters — an early position matches a row per chapter, and a large
+   * repertoire has thousands.
+   */
+  async getRepertoireMoveCandidates(
+    fen: string,
+    limit: number = CANDIDATE_MOVE_LIMIT,
+    color?: 'white' | 'black'
+  ): Promise<MoveCandidate[]> {
+    if (this.isWeb || !this.db) return [];
+
+    try {
+      // Unfiltered by color by default, to match Find Position: what matters is which
+      // chapters contain the position, not which side's repertoire they belong to.
+      const rows = await this.db.getAllAsync(
+        `SELECT move, COUNT(DISTINCT chapter_id) AS n, MIN(var_depth) AS d
+         FROM repertoire_moves
+         WHERE normalized_fen = ? AND move IS NOT NULL${color ? ' AND color = ?' : ''}
+         GROUP BY move
+         ORDER BY d ASC, n DESC
+         LIMIT ?`,
+        color ? [normalizeFen(fen), color, limit] : [normalizeFen(fen), limit]
+      ) as Array<{ move: string; n: number; d: number }>;
+      return rows.map(r => ({ move: r.move, count: r.n, varDepth: r.d }));
+    } catch {
+      // Table not ready yet (e.g. Fast Refresh mid-migration)
+      return [];
+    }
+  }
+
+  /** Which moves get played from this position in the stored games, most frequent first. */
+  async getGameMoveCandidates(
+    gameType: 'user' | 'master',
+    fen: string,
+    limit: number = CANDIDATE_MOVE_LIMIT
+  ): Promise<MoveCandidate[]> {
+    if (this.isWeb || !this.db) return [];
+
+    try {
+      const rows = await this.db.getAllAsync(
+        `SELECT next_move AS move, COUNT(*) AS n
+         FROM game_positions
+         WHERE game_type = ? AND normalized_fen = ? AND next_move IS NOT NULL
+         GROUP BY next_move
+         ORDER BY n DESC
+         LIMIT ?`,
+        [gameType, normalizeFen(fen), limit]
+      ) as Array<{ move: string; n: number }>;
+      return rows.map(r => ({ move: r.move, count: r.n }));
+    } catch {
       return [];
     }
   }
@@ -1243,3 +1516,4 @@ class DatabaseServiceClass {
 
 export const DatabaseService = new DatabaseServiceClass();
 export type { PaginatedResult };
+export { CANDIDATE_MOVE_LIMIT };

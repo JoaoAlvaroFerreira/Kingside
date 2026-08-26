@@ -18,7 +18,6 @@ import {
   ScreenSettings,
   AnalysisProgress,
 } from '@types';
-import { StorageService } from '@services/storage/StorageService';
 import { SettingsService } from '@services/settings/SettingsService';
 import { ScreenSettingsService } from '@services/settings/ScreenSettingsService';
 import { GameReviewService } from '@services/gameReview/GameReviewService';
@@ -121,10 +120,10 @@ export const useStore = create<AppState>((set, get) => ({
         DatabaseService.getAllRepertoires(),
         DatabaseService.getUserGamesCount(),
         DatabaseService.getMasterGamesCount(),
-        StorageService.loadLineStats(),
+        DatabaseService.getAllLineStats(),
         DatabaseService.getSetting<ReviewSettings>('reviewSettings'),
         ScreenSettingsService.loadSettings(),
-        StorageService.loadGameReviewStatuses(),
+        DatabaseService.getAllGameReviewStatuses(),
       ]);
 
       const defaults = SettingsService.getDefaults();
@@ -218,15 +217,10 @@ export const useStore = create<AppState>((set, get) => ({
     const repertoires = currentRepertoires.filter(r => r.id !== id);
     console.log('Store: Repertoires after filter:', repertoires.length, 'was:', currentRepertoires.length);
 
-    // Delete associated line stats
-    const currentLineStats = get().lineStats;
-    const lineStats = currentLineStats.filter(stat => stat.repertoireId !== id);
-    console.log('Store: Line stats after filter:', lineStats.length, 'was:', currentLineStats.length);
+    // The repertoire, its position index and its line stats all go in one transaction.
+    await DatabaseService.deleteRepertoire(id);
 
-    await Promise.all([
-      DatabaseService.deleteRepertoire(id),
-      StorageService.saveLineStats(lineStats),
-    ]);
+    const lineStats = get().lineStats.filter(stat => stat.repertoireId !== id);
     set({ repertoires, lineStats });
     console.log('Store: Repertoire deleted successfully');
   },
@@ -293,33 +287,31 @@ export const useStore = create<AppState>((set, get) => ({
 
   // Training actions
   loadLineStats: async () => {
-    const lineStats = await StorageService.loadLineStats();
+    const lineStats = await DatabaseService.getAllLineStats();
     set({ lineStats });
   },
 
   saveLineStats: async (lineStats) => {
-    await StorageService.saveLineStats(lineStats);
+    await DatabaseService.replaceAllLineStats(lineStats);
     set({ lineStats });
   },
 
   removeLineStats: async (lineId: string) => {
-    const updated = get().lineStats.filter(s => s.lineId !== lineId);
-    await StorageService.saveLineStats(updated);
-    set({ lineStats: updated });
+    await DatabaseService.deleteLineStats(lineId);
+    set({ lineStats: get().lineStats.filter(s => s.lineId !== lineId) });
   },
 
   updateLineStats: async (updatedStat) => {
+    // One row per answer. The in-memory array stays the read model so getDueLineStats
+    // and every consumer remain synchronous.
+    await DatabaseService.upsertLineStats(updatedStat);
+
     const lineStats = get().lineStats;
     const index = lineStats.findIndex(s => s.lineId === updatedStat.lineId);
+    const newLineStats: LineStats[] = index >= 0
+      ? lineStats.map(s => s.lineId === updatedStat.lineId ? updatedStat : s)
+      : [...lineStats, updatedStat];
 
-    let newLineStats: LineStats[];
-    if (index >= 0) {
-      newLineStats = lineStats.map(s => s.lineId === updatedStat.lineId ? updatedStat : s);
-    } else {
-      newLineStats = [...lineStats, updatedStat];
-    }
-
-    await StorageService.saveLineStats(newLineStats);
     set({ lineStats: newLineStats });
   },
 
@@ -472,17 +464,14 @@ export const useStore = create<AppState>((set, get) => ({
     };
 
     const status = GameReviewService.createReviewStatus(completedSession);
+    await DatabaseService.upsertGameReviewStatus(status);
+
     const statuses = get().gameReviewStatuses;
     const index = statuses.findIndex(s => s.gameId === session.gameId);
+    const newStatuses: GameReviewStatus[] = index >= 0
+      ? statuses.map(s => (s.gameId === session.gameId ? status : s))
+      : [...statuses, status];
 
-    let newStatuses: GameReviewStatus[];
-    if (index >= 0) {
-      newStatuses = statuses.map(s => (s.gameId === session.gameId ? status : s));
-    } else {
-      newStatuses = [...statuses, status];
-    }
-
-    await StorageService.saveGameReviewStatuses(newStatuses);
     set({ gameReviewStatuses: newStatuses, currentReviewSession: null });
     console.log('Store: Game review completed');
   },

@@ -12,6 +12,16 @@ const DEFAULT_START_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 
 /** Map<moveCount, Map<normalizedFen, Set<nextMoveSAN>>> */
 export type PositionMap = Map<number, Map<string, Set<string>>>;
 
+/** One (position, continuation) pair from a chapter. `move` is null at the end of a line. */
+export interface PositionMove {
+  moveCount: number;
+  /** Normalized FEN of the position *before* `move` is played. */
+  fen: string;
+  move: string | null;
+  /** See `extractChapterMoves` — 0 means the move is on the chapter's main line. */
+  varDepth: number;
+}
+
 /**
  * Walk a chapter's move tree and extract every reachable position along with
  * the moves playable from it. The key insight: we record (preFen → nextMove)
@@ -24,19 +34,17 @@ export type PositionMap = Map<number, Map<string, Set<string>>>;
  * on disk, which dominated indexing time on large repertoires.
  *
  * chess.js is used only as a fallback for nodes with no stored FEN.
+ *
+ * `varDepth` is how far inside PGN's parentheses a move sits: following only first
+ * children from the root keeps it 0, stepping into a sideline makes it 1 (and the whole
+ * sideline below it stays at least 1), a sideline of a sideline is 2. It is what ranks
+ * candidate-move arrows by main-line-ness.
  */
-export function extractChapterPositions(chapter: Chapter): PositionMap {
-  const result: PositionMap = new Map();
+export function extractChapterMoves(chapter: Chapter): PositionMove[] {
+  const result: PositionMove[] = [];
 
-  const addPosition = (moveCount: number, normalizedFen: string, nextMove?: string) => {
-    if (!result.has(moveCount)) result.set(moveCount, new Map());
-    const atCount = result.get(moveCount)!;
-    if (!atCount.has(normalizedFen)) atCount.set(normalizedFen, new Set());
-    if (nextMove) atCount.get(normalizedFen)!.add(nextMove);
-  };
-
-  const visit = (node: MoveNode, parentFen: string, moveCount: number) => {
-    addPosition(moveCount, normalizeFen(parentFen), node.san);
+  const visit = (node: MoveNode, parentFen: string, moveCount: number, varDepth: number) => {
+    result.push({ moveCount, fen: normalizeFen(parentFen), move: node.san, varDepth });
 
     let fen = node.fen;
     if (!fen) {
@@ -53,17 +61,35 @@ export function extractChapterPositions(chapter: Chapter): PositionMap {
 
     if (!node.children || node.children.length === 0) {
       // Leaf: register the resulting position with no outgoing moves yet
-      addPosition(moveCount + 1, normalizeFen(fen));
+      result.push({ moveCount: moveCount + 1, fen: normalizeFen(fen), move: null, varDepth });
     } else {
-      for (const child of node.children) visit(child, fen, moveCount + 1);
+      node.children.forEach((child, i) =>
+        visit(child, fen!, moveCount + 1, i === 0 ? varDepth : varDepth + 1)
+      );
     }
   };
 
   const rootMoves: MoveNode[] = chapter.moveTree?.rootMoves ?? [];
   const startFen: string = chapter.moveTree?.startFen || DEFAULT_START_FEN;
-  for (const root of rootMoves) visit(root, startFen, 0);
+  rootMoves.forEach((root, i) => visit(root, startFen, 0, i === 0 ? 0 : 1));
 
   return result;
+}
+
+/** Collapse flat (position, move) pairs into the map shape the review matcher wants. */
+export function positionMovesToMap(moves: PositionMove[]): PositionMap {
+  const result: PositionMap = new Map();
+  for (const { moveCount, fen, move } of moves) {
+    if (!result.has(moveCount)) result.set(moveCount, new Map());
+    const atCount = result.get(moveCount)!;
+    if (!atCount.has(fen)) atCount.set(fen, new Set());
+    if (move) atCount.get(fen)!.add(move);
+  }
+  return result;
+}
+
+export function extractChapterPositions(chapter: Chapter): PositionMap {
+  return positionMovesToMap(extractChapterMoves(chapter));
 }
 
 /** Merge `from` into `into` in-place. */
