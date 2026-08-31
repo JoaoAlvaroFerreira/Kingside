@@ -99,6 +99,19 @@ export interface TrainingTimingSettings {
   opponentAnimation: boolean;   // Animate opponent moves with a brief pause (default: false)
 }
 
+export interface BookSettings {
+  /**
+   * Show only the moves the book's own player chose, rather than every move played from
+   * the position. A player book has the same person on one side of every game, so the
+   * unfiltered counts blend their choices with their opponents' replies.
+   *
+   * On a position where the opponent is to move this legitimately yields nothing — the
+   * player made no choice there — which is the honest answer rather than silently
+   * falling back to everyone's moves.
+   */
+  playerMovesOnly: boolean;
+}
+
 export interface ReviewSettings {
   engine: EngineSettings;
   showEvalBar: boolean;
@@ -106,6 +119,7 @@ export interface ReviewSettings {
   autoAdvanceDelay: number; // ms, 0 = manual
   lichess: LichessSettings;
   training: TrainingTimingSettings;
+  books: BookSettings;
 }
 
 export interface AnalysisProgress {

@@ -11,6 +11,7 @@ import { useState, useEffect } from 'react';
 import { Chess } from 'chess.js';
 import { DatabaseService, MoveCandidate } from '@services/database/DatabaseService';
 import { BookService } from '@services/books/BookService';
+import { useStore } from '@store';
 
 export type CandidateSource = 'none' | 'repertoire' | 'user' | 'master';
 
@@ -43,20 +44,26 @@ const EMPTY: CandidateArrow[] = [];
  */
 async function gameCandidates(
   source: 'user' | 'master',
-  fen: string
+  fen: string,
+  playerMovesOnly: boolean
 ): Promise<MoveCandidate[]> {
   const local = await DatabaseService.getGameMoveCandidates(source, fen);
   if (source !== 'master') return local;
 
-  const book = await BookService.getMoveCandidates(fen);
-  if (book.length === 0) return local;
+  const book = await BookService.getMoveCandidates(fen, 4, playerMovesOnly);
+  if (book.length === 0) return playerMovesOnly ? [] : local;
 
   const merged = new Map<string, MoveCandidate>();
-  for (const candidate of local) merged.set(candidate.move, { ...candidate });
+  // With playerMovesOnly the local master games have no player to filter on, so they are
+  // left out rather than blended back in under a filter they cannot honour.
+  if (!playerMovesOnly) {
+    for (const candidate of local) merged.set(candidate.move, { ...candidate });
+  }
   for (const candidate of book) {
+    const count = playerMovesOnly ? candidate.heroCount : candidate.count;
     const existing = merged.get(candidate.move);
-    if (existing) existing.count += candidate.count;
-    else merged.set(candidate.move, { move: candidate.move, count: candidate.count });
+    if (existing) existing.count += count;
+    else merged.set(candidate.move, { move: candidate.move, count });
   }
 
   return Array.from(merged.values()).sort((a, b) => b.count - a.count).slice(0, 4);
@@ -109,6 +116,7 @@ export function useCandidateMoves(fen: string, source: CandidateSource): Candida
   const [arrows, setArrows] = useState<CandidateArrow[]>(EMPTY);
   // Books feed the master arrows, so installing or deleting one has to redraw them.
   const [bookRevision, setBookRevision] = useState(BookService.revision);
+  const playerMovesOnly = useStore(s => s.reviewSettings.books.playerMovesOnly);
 
   useEffect(() => BookService.subscribe(() => setBookRevision(BookService.revision)), []);
 
@@ -122,7 +130,7 @@ export function useCandidateMoves(fen: string, source: CandidateSource): Candida
     (async () => {
       const candidates = source === 'repertoire'
         ? await DatabaseService.getRepertoireMoveCandidates(fen)
-        : await gameCandidates(source, fen);
+        : await gameCandidates(source, fen, playerMovesOnly);
 
       if (cancelled) return;
       if (candidates.length === 0) {
@@ -142,7 +150,7 @@ export function useCandidateMoves(fen: string, source: CandidateSource): Candida
     })();
 
     return () => { cancelled = true; };
-  }, [fen, source, bookRevision]);
+  }, [fen, source, bookRevision, playerMovesOnly]);
 
   return arrows;
 }

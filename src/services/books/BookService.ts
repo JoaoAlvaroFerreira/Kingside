@@ -33,7 +33,20 @@ const CANDIDATE_MOVE_LIMIT = 4;
 const MOVE_LIST_LIMIT = 24;
 const BOOK_EXTENSION = '.kbook';
 /** Games surfaced for one position. Bounded like POSITION_MATCH_LIMIT, for the same reason. */
-const POSITION_SAMPLE_LIMIT = 40;
+const POSITION_SAMPLE_LIMIT = 50;
+
+/**
+ * Games from a position, and whether the cap hid any.
+ *
+ * `hasMore` exists because the count is a sample size, not a total: a bare "50" reads as
+ * "there are exactly 50 games here" when the real number is usually far larger.
+ */
+export interface BookGamesResult {
+  games: MasterGame[];
+  hasMore: boolean;
+}
+
+const EMPTY_GAMES: BookGamesResult = { games: [], hasMore: false };
 
 class BookServiceClass {
   private isWeb = Platform.OS === 'web';
@@ -278,7 +291,11 @@ class BookServiceClass {
    * rather than compete for arrow slots. `sampleGameIds` stays with the book that owns
    * those ids — they are only meaningful there.
    */
-  async getMoveCandidates(fen: string, limit: number = CANDIDATE_MOVE_LIMIT): Promise<BookMoveCandidate[]> {
+  async getMoveCandidates(
+    fen: string,
+    limit: number = CANDIDATE_MOVE_LIMIT,
+    playerMovesOnly = false
+  ): Promise<BookMoveCandidate[]> {
     if (this.isWeb) return [];
     const books = await this.listBooks();
     if (books.length === 0) return [];
@@ -290,14 +307,18 @@ class BookServiceClass {
       const db = await this.connect(book);
       if (!db) continue;
       try {
+        // With playerMovesOnly the ranking is by hero_n, not n: a move the player answered
+        // once but their opponents chose hundreds of times is rare *for them*, and ordering
+        // by the blended count would put it on top.
+        const countColumn = playerMovesOnly ? 'hero_n' : 'n';
         // The cap is applied per book after ranking, never to the rows scanned — capping
         // the scan would corrupt the counts at exactly the early positions where the
         // ranking matters most.
         const rows = await db.getAllAsync(
           `SELECT move, n, hero_n, white_n, draw_n, black_n, sample_games
            FROM book_moves
-           WHERE fen = ?
-           ORDER BY n DESC
+           WHERE fen = ?${playerMovesOnly ? ' AND hero_n > 0' : ''}
+           ORDER BY ${countColumn} DESC
            LIMIT ?`,
           [normalized, MOVE_LIST_LIMIT]
         ) as Array<{
@@ -331,14 +352,16 @@ class BookServiceClass {
       }
     }
 
-    return Array.from(merged.values())
-      .sort((a, b) => b.count - a.count)
-      .slice(0, limit);
+    const rank = playerMovesOnly
+      ? (a: BookMoveCandidate, b: BookMoveCandidate) => b.heroCount - a.heroCount
+      : (a: BookMoveCandidate, b: BookMoveCandidate) => b.count - a.count;
+
+    return Array.from(merged.values()).sort(rank).slice(0, limit);
   }
 
   /** Full move list for the position panel — same data, less truncation. */
-  async getPositionMoves(fen: string): Promise<BookMoveCandidate[]> {
-    return this.getMoveCandidates(fen, MOVE_LIST_LIMIT);
+  async getPositionMoves(fen: string, playerMovesOnly = false): Promise<BookMoveCandidate[]> {
+    return this.getMoveCandidates(fen, MOVE_LIST_LIMIT, playerMovesOnly);
   }
 
   /** Fetch specific games out of one book, for drill-down from a move. */
@@ -377,26 +400,34 @@ class BookServiceClass {
    * format exists to avoid. What each move carries instead is a bounded set of recent games
    * that continued with it, so the union across this position's moves is what can be shown.
    */
-  async getGamesAtPosition(fen: string, limit: number = POSITION_SAMPLE_LIMIT): Promise<MasterGame[]> {
-    if (this.isWeb) return [];
+  async getGamesAtPosition(
+    fen: string,
+    playerMovesOnly = false,
+    limit: number = POSITION_SAMPLE_LIMIT
+  ): Promise<BookGamesResult> {
+    if (this.isWeb) return EMPTY_GAMES;
 
-    const candidates = await this.getPositionMoves(fen);
-    if (candidates.length === 0) return [];
+    const candidates = await this.getPositionMoves(fen, playerMovesOnly);
+    if (candidates.length === 0) return EMPTY_GAMES;
 
     // Walk the moves in rank order so the most-played continuations contribute their games
     // first, and the cap trims the rarest rather than an arbitrary slice.
     const byBook = new Map<string, number[]>();
+    const seen = new Set<string>();
+    let available = 0;
     let taken = 0;
     for (const candidate of candidates) {
       for (const gameId of candidate.sampleGameIds) {
-        if (taken >= limit) break;
+        const key = `${candidate.bookId}:${gameId}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        available++;
+        if (taken >= limit) continue; // keep counting, so hasMore is accurate
         const ids = byBook.get(candidate.bookId) ?? [];
-        if (ids.includes(gameId)) continue; // a game can continue with only one move, but be defensive
         ids.push(gameId);
         byBook.set(candidate.bookId, ids);
         taken++;
       }
-      if (taken >= limit) break;
     }
 
     const games: MasterGame[] = [];
@@ -404,7 +435,11 @@ class BookServiceClass {
       const found = await this.getGames(bookId, ids);
       games.push(...found.map(toMasterGame));
     }
-    return games;
+
+    // Each book returned its own games in rank order; sort across books so the combined
+    // list still reads newest-first.
+    games.sort(byDateDescending);
+    return { games, hasMore: available > taken };
   }
 
   /** True when at least one book is installed — cheap enough to call from render paths. */
@@ -458,6 +493,11 @@ function buildPgn(game: BookGame, moves: string[]): string {
   if (game.result) body.push(game.result);
 
   return `${headers}\n\n${body.join(' ')}`;
+}
+
+/** Newest first. PGN dates are "YYYY.MM.DD", so a string compare orders them correctly. */
+function byDateDescending(a: MasterGame, b: MasterGame): number {
+  return (b.date || '').localeCompare(a.date || '');
 }
 
 function parseGameIds(raw: string | null): number[] {

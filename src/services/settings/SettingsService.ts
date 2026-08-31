@@ -32,6 +32,9 @@ export const SettingsService = {
         lineCompleteDelayMs: 150,
         opponentAnimation: false,
       },
+      books: {
+        playerMovesOnly: false,
+      },
     };
   },
 
@@ -48,6 +51,7 @@ export const SettingsService = {
           engine: { ...this.getDefaults().engine, ...stored.engine },
           lichess: { ...this.getDefaults().lichess, ...stored.lichess },
           training: { ...this.getDefaults().training, ...stored.training },
+          books: { ...this.getDefaults().books, ...stored.books },
         };
       }
     } catch (error) {

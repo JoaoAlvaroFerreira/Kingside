@@ -482,15 +482,27 @@ Things that are load-bearing:
   avoid, so the `.kbook` path must never reach `readFileWithTimeout`.
 - **`hero_n` splits the player from their opponents.** Every game in a player book has the
   same player on one side, so raw counts blend his choices with his opponents' replies.
+  Surfaced as the **Player Moves Only** setting, which filters to `hero_n > 0` *and ranks by
+  `hero_n`* — ranking by the blended `n` under a player filter would put a move his
+  opponents chose hundreds of times above one he actually plays. In this corpus it moves
+  Nf3 ahead of d4 at the start position, which is the real answer to "what does he open
+  with". On a position where the opponent is to move it yields nothing, which is honest
+  rather than falling back to everyone's moves.
 - **`sample_games` replaces a full position index.** Answering "every game that reached
   here" needs a row per game per ply — the 13M-row table being avoided. Each move instead
-  carries a bounded set of recent games, so drill-down is a *sample*, by construction.
+  carries a bounded set of recent games, so drill-down is a *sample*, by construction. The
+  UI shows `50+` rather than `50` for exactly this reason: the count is a sample size, and
+  a bare number reads as a total.
 - **Samples rank by game date, never by id.** Ids follow file order, and chess.com writes
   newest-first while other exports run oldest-first — ranking on id silently picked 2010
   games out of a 2025 archive.
 - **No index on `book_moves(fen)`.** The table is `WITHOUT ROWID` with `PRIMARY KEY (fen,
   move)`, so it already *is* a B-tree ordered by fen. Adding one cost 40MB of a 162MB book
   and produced an identical query plan.
+- **Position lookups are keyed on every input, not just the FEN.** `useGameSearch`
+  memoizes on `fen|playerMovesOnly|bookRevision`. Keying on the FEN alone left the board
+  showing the previous answer whenever a filter changed or a book was installed under a
+  stationary position — the position is only one of the things that decides the result.
 - **The registry and the files drift.** A restore swaps `kingside.db`, and with it
   `master_books`, while the book files stay on disk. `listBooks()` forgets records whose
   file is missing; `pruneOrphanFiles()` deletes files no record points at. Both run after a

@@ -234,6 +234,80 @@ describe('getGames', () => {
   });
 });
 
+describe('player moves only', () => {
+  const heroRows = [
+    { move: 'e4', n: 100, hero_n: 60, white_n: 50, draw_n: 20, black_n: 30, sample_games: '1,2' },
+    { move: 'd4', n: 900, hero_n: 5, white_n: 400, draw_n: 200, black_n: 300, sample_games: '3' },
+  ];
+
+  it('filters to the player and ranks by their count, not the blended one', async () => {
+    mockDb.getBookRecords.mockResolvedValue([record({ id: 'a', fileName: 'a.kbook' })]);
+    const book = fakeBook({ moves: heroRows });
+    mockSQLite.openDatabaseAsync.mockResolvedValue(book);
+
+    const candidates = await BookService.getMoveCandidates(START, 4, true);
+
+    // d4 leads on raw count (900 vs 100) but the player almost never chose it, so under
+    // this filter e4 has to come first — otherwise the toggle changes nothing visible.
+    expect(candidates.map(c => c.move)).toEqual(['e4', 'd4']);
+    const [sql] = book.getAllAsync.mock.calls[0];
+    expect(sql).toContain('hero_n > 0');
+    expect(sql).toContain('ORDER BY hero_n DESC');
+  });
+
+  it('leaves the query unfiltered when the toggle is off', async () => {
+    mockDb.getBookRecords.mockResolvedValue([record({ id: 'a', fileName: 'a.kbook' })]);
+    const book = fakeBook({ moves: heroRows });
+    mockSQLite.openDatabaseAsync.mockResolvedValue(book);
+
+    const candidates = await BookService.getMoveCandidates(START, 4, false);
+
+    expect(candidates.map(c => c.move)).toEqual(['d4', 'e4']);
+    const [sql] = book.getAllAsync.mock.calls[0];
+    expect(sql).not.toContain('hero_n > 0');
+  });
+});
+
+describe('getGamesAtPosition', () => {
+  const manyMoves = Array.from({ length: 20 }, (_, i) => ({
+    move: `m${i}`, n: 20 - i, hero_n: 1, white_n: 1, draw_n: 0, black_n: 0,
+    sample_games: Array.from({ length: 8 }, (_, j) => i * 8 + j + 1).join(','),
+  }));
+
+  it('reports hasMore when the cap hides games, and caps at 50', async () => {
+    mockDb.getBookRecords.mockResolvedValue([record({ id: 'a', fileName: 'a.kbook' })]);
+    // 20 moves x 8 samples = 160 distinct games available, far past the cap.
+    mockSQLite.openDatabaseAsync.mockResolvedValue(fakeBook({
+      moves: manyMoves,
+      games: Array.from({ length: 200 }, (_, i) => ({
+        id: i + 1, white: 'W', black: 'B', result: '1-0', date: '2025.01.01', moves: 'e4',
+      })),
+    }));
+
+    const result = await BookService.getGamesAtPosition(START);
+
+    expect(result.games).toHaveLength(50);
+    expect(result.hasMore).toBe(true);
+  });
+
+  it('does not claim more when everything fits', async () => {
+    mockDb.getBookRecords.mockResolvedValue([record({ id: 'a', fileName: 'a.kbook' })]);
+    mockSQLite.openDatabaseAsync.mockResolvedValue(fakeBook({
+      moves: [{ move: 'e4', n: 2, hero_n: 1, white_n: 1, draw_n: 0, black_n: 1, sample_games: '1,2' }],
+      games: [
+        { id: 1, white: 'W1', black: 'B1', result: '1-0', date: '2020.05.05', moves: 'e4' },
+        { id: 2, white: 'W2', black: 'B2', result: '0-1', date: '2025.05.05', moves: 'd4' },
+      ],
+    }));
+
+    const result = await BookService.getGamesAtPosition(START);
+
+    expect(result.hasMore).toBe(false);
+    // Newest first, regardless of the order the ids were ranked in.
+    expect(result.games.map(g => g.date)).toEqual(['2025.05.05', '2020.05.05']);
+  });
+});
+
 describe('deleteBook', () => {
   it('removes the file with its sidecars and forgets the record', async () => {
     mockDb.getBookRecords.mockResolvedValue([record({ id: 'a', fileName: 'a.kbook' })]);

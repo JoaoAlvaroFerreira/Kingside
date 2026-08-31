@@ -14,10 +14,18 @@ interface GameListProps {
   onSelect: (game: UserGame | MasterGame) => void;
   defaultCollapsed?: boolean;
   loading?: boolean;
+  /** More games exist than the sample cap returned — shown as a trailing "+". */
+  hasMore?: boolean;
 }
 
-export function GameList({ title, games, onSelect, defaultCollapsed, loading }: GameListProps) {
-  const titleText = loading ? title : `${title} (${games.length})`;
+/** "50+" when the cap hid games, plain "50" when it did not. */
+export function formatCount(shown: number, hasMore?: boolean): string {
+  return hasMore ? `${shown}+` : `${shown}`;
+}
+
+export function GameList({ title, games, onSelect, defaultCollapsed, loading, hasMore }: GameListProps) {
+  // A bare count reads as a total. Books answer with a bounded sample, so say so.
+  const titleText = loading ? title : `${title} (${formatCount(games.length, hasMore)})`;
 
   return (
     <CollapsiblePanel title={titleText} defaultCollapsed={defaultCollapsed}>

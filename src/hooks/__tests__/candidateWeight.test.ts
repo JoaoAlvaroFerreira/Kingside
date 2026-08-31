@@ -2,6 +2,7 @@
 // thus react-native).
 jest.mock('@services/database/DatabaseService', () => ({ DatabaseService: {} }));
 jest.mock('@services/books/BookService', () => ({ BookService: {} }));
+jest.mock('@store', () => ({ useStore: () => false }));
 
 import { candidateWeight } from '@hooks/useCandidateMoves';
 

@@ -54,6 +54,7 @@ export type {
   EngineSettings,
   ReviewSettings,
   TrainingTimingSettings,
+  BookSettings,
   AnalysisProgress,
 } from './gameReview.types';
 

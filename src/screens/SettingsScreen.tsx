@@ -54,6 +54,9 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
   const [lineCompleteDelay, setLineCompleteDelay] = useState(reviewSettings.training.lineCompleteDelayMs.toString());
   const [opponentAnimation, setOpponentAnimation] = useState(reviewSettings.training.opponentAnimation);
 
+  // Opening books
+  const [playerMovesOnly, setPlayerMovesOnly] = useState(reviewSettings.books.playerMovesOnly);
+
   // Update local state when store changes
   useEffect(() => {
     setMoveTime(reviewSettings.engine.moveTime.toString());
@@ -69,6 +72,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
     setIncorrectDelay(reviewSettings.training.incorrectDelayMs.toString());
     setLineCompleteDelay(reviewSettings.training.lineCompleteDelayMs.toString());
     setOpponentAnimation(reviewSettings.training.opponentAnimation);
+    setPlayerMovesOnly(reviewSettings.books.playerMovesOnly);
   }, [reviewSettings]);
 
   const validateSettings = (): string | null => {
@@ -237,6 +241,9 @@ ${msg}`)) void runRestore();
           incorrectDelayMs: parseInt(incorrectDelay, 10),
           lineCompleteDelayMs: parseInt(lineCompleteDelay, 10),
           opponentAnimation,
+        },
+        books: {
+          playerMovesOnly,
         },
       });
 
@@ -613,6 +620,23 @@ ${msg}`)) void runRestore();
               </View>
             ))
           )}
+
+          <View style={styles.switchRow}>
+            <View style={styles.switchLabel}>
+              <Text style={styles.label}>Player Moves Only</Text>
+              <Text style={styles.hint}>
+                Show only the moves the book&apos;s own player chose, instead of every move
+                played from the position. Positions where the opponent is to move will show
+                nothing.
+              </Text>
+            </View>
+            <Switch
+              value={playerMovesOnly}
+              onValueChange={setPlayerMovesOnly}
+              trackColor={{ false: '#3a3a3c', true: '#4a9eff' }}
+              thumbColor="#fff"
+            />
+          </View>
 
           <Text style={styles.hint}>
             Books are not included in backups — they are large and can be rebuilt from

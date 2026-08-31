@@ -12,7 +12,7 @@ import { View, Text, TouchableOpacity, StyleSheet, useWindowDimensions, Activity
 import { ChessWorkspace } from '@components/chess/ChessWorkspace/ChessWorkspace';
 import { MoveHistory } from '@components/chess/MoveHistory/MoveHistory';
 import { SettingsModal } from '@components/chess/ChessWorkspace/SettingsModal';
-import { GameList } from '@components/repertoire/GameList';
+import { GameList, formatCount } from '@components/repertoire/GameList';
 import { RepertoireMatchList } from '@components/repertoire/RepertoireMatchList';
 import { MoveTree } from '@utils/MoveTree';
 import { ChapterFenMatch } from '@utils/extractRepertoirePositions';
@@ -47,6 +47,8 @@ interface ChessAnalysisLayoutProps {
   // Game search results (from useGameSearch hook)
   userGames: UserGame[];
   masterGames: MasterGame[];
+  /** Book samples are capped, so the master count may understate what exists. */
+  masterHasMore?: boolean;
   loadingGames: boolean;
   onSelectGame: (game: UserGame | MasterGame) => void;
   onSelectRepertoireMatch: (match: ChapterFenMatch) => void;
@@ -75,6 +77,7 @@ export function ChessAnalysisLayout({
   orientationOverride,
   userGames,
   masterGames,
+  masterHasMore,
   loadingGames,
   onSelectGame,
   onSelectRepertoireMatch,
@@ -150,7 +153,7 @@ export function ChessAnalysisLayout({
   const TABS: { key: AnalysisTab; label: string }[] = [
     { key: 'moves', label: 'Moves' },
     ...(visibleTabs.yourGames ? [{ key: 'yourGames' as const, label: `Your Games (${userGames.length})` }] : []),
-    ...(visibleTabs.masterGames ? [{ key: 'masterGames' as const, label: `Master (${masterGames.length})` }] : []),
+    ...(visibleTabs.masterGames ? [{ key: 'masterGames' as const, label: `Master (${formatCount(masterGames.length, masterHasMore)})` }] : []),
     ...(visibleTabs.findPosition ? [{ key: 'findPosition' as const, label: `Find Position (${repertoireMatches.length})` }] : []),
   ];
   const effectiveActiveTab: AnalysisTab = TABS.some(t => t.key === activeTab) ? activeTab : 'moves';
@@ -194,6 +197,7 @@ export function ChessAnalysisLayout({
                   <GameList
                     title="Master Games"
                     games={masterGames}
+                    hasMore={masterHasMore}
                     onSelect={onSelectGame}
                     defaultCollapsed={false}
                     loading={loadingGames}
@@ -292,6 +296,7 @@ export function ChessAnalysisLayout({
               <GameList
                 title="Master Games"
                 games={masterGames}
+                hasMore={masterHasMore}
                 onSelect={onSelectGame}
                 defaultCollapsed={false}
                 loading={false}

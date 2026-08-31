@@ -1594,6 +1594,7 @@ class DatabaseServiceClass {
       const allGames = await this.getAllUserGames();
       return allGames
         .filter(game => this.gameContainsFen(game.pgn, normalized))
+        .sort((a, b) => (b.date || '').localeCompare(a.date || ''))
         .slice(0, POSITION_MATCH_LIMIT);
     }
 
@@ -1601,6 +1602,7 @@ class DatabaseServiceClass {
       `SELECT DISTINCT ug.* FROM user_games ug
        INNER JOIN game_positions gp ON ug.id = gp.game_id AND gp.game_type = 'user'
        WHERE gp.normalized_fen = ?
+       ORDER BY ug.date DESC
        LIMIT ?`,
       [normalized, POSITION_MATCH_LIMIT]
     );
@@ -1620,6 +1622,7 @@ class DatabaseServiceClass {
       const allGames = await this.getAllMasterGames();
       return allGames
         .filter(game => this.gameContainsFen(game.pgn, normalized))
+        .sort((a, b) => (b.date || '').localeCompare(a.date || ''))
         .slice(0, POSITION_MATCH_LIMIT);
     }
 
@@ -1627,6 +1630,7 @@ class DatabaseServiceClass {
       `SELECT DISTINCT mg.* FROM master_games mg
        INNER JOIN game_positions gp ON mg.id = gp.game_id AND gp.game_type = 'master'
        WHERE gp.normalized_fen = ?
+       ORDER BY mg.date DESC
        LIMIT ?`,
       [normalized, POSITION_MATCH_LIMIT]
     );
