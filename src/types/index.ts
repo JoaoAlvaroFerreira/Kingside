@@ -74,3 +74,15 @@ export type {
 } from './book.types';
 
 export { BookImportError, BOOK_SCHEMA_VERSION } from './book.types';
+
+export type {
+  // Online game source types
+  Speed,
+  GameSourceId,
+  FetchSpec,
+  FetchPeriod,
+  FetchFailure,
+  GameSource,
+} from './gameSource.types';
+
+export { SPEEDS, FetchError, FetchCancelled } from './gameSource.types';

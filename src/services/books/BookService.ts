@@ -32,6 +32,15 @@ const CANDIDATE_MOVE_LIMIT = 4;
 /** Rows returned for the position's move list, which shows more than the arrows do. */
 const MOVE_LIST_LIMIT = 24;
 const BOOK_EXTENSION = '.kbook';
+const PENDING_BUILD_KEY = 'book_build_pending';
+
+/** An interrupted on-device build, kept so it can be resumed rather than restarted. */
+export interface PendingBuild {
+  fileName: string;
+  displayName: string;
+  /** The spec, serialised — dates come back as ISO strings. */
+  spec: any;
+}
 /** Games surfaced for one position. Bounded like POSITION_MATCH_LIMIT, for the same reason. */
 const POSITION_SAMPLE_LIMIT = 50;
 
@@ -97,6 +106,9 @@ class BookServiceClass {
   async pruneOrphanFiles(): Promise<number> {
     if (this.isWeb) return 0;
     const known = new Set((await this.listBooks()).map(b => b.fileName));
+    // An interrupted build is not an orphan — it is a resume point.
+    const pending = await this.getPendingBuild();
+    if (pending) known.add(pending.fileName);
     let reclaimed = 0;
     try {
       const entries = await FileSystem.readDirectoryAsync(this.sqliteDir);
@@ -262,6 +274,74 @@ class BookServiceClass {
     } catch {
       throw new BookImportError('not-a-book', 'The file has no book_moves table.');
     }
+  }
+
+  /**
+   * Register a book this app just built, reading its own metadata back.
+   *
+   * Shares readMeta/countPositions with importBook so a built book is validated exactly
+   * like an imported one — if the builder ever writes something the reader cannot handle,
+   * it fails here rather than on the board.
+   */
+  async registerBuiltBook(fileName: string, displayName: string): Promise<BookRecord> {
+    const destination = this.bookPath(fileName);
+    const db = await SQLite.openDatabaseAsync(fileName);
+    try {
+      const meta = await this.readMeta(db);
+      const info = await FileSystem.getInfoAsync(destination);
+      const record: BookRecord = {
+        id: fileName.replace(BOOK_EXTENSION, ''),
+        name: displayName || meta.name || 'Opening book',
+        player: meta.player || '',
+        sourceFile: meta.source_file || '',
+        fileName,
+        gameCount: Number(meta.game_count) || 0,
+        positionCount: await this.countPositions(db),
+        sizeBytes: (info as any).size ?? 0,
+        maxPly: Number(meta.max_ply) || 0,
+        hasGames: meta.has_games === '1',
+        importedAt: new Date(),
+      };
+      await DatabaseService.addBookRecord(record);
+      this.connections.set(record.id, db);
+      await this.clearPendingBuild();
+      this.invalidate();
+      return record;
+    } catch (e) {
+      try { await db.closeAsync(); } catch { /* ignore */ }
+      throw e;
+    }
+  }
+
+  /**
+   * An interrupted build keeps its file, because the finished-month markers inside it are
+   * what make resuming cheap. Recording it here stops pruneOrphanFiles from deleting the
+   * very thing a resume needs.
+   */
+  async setPendingBuild(state: PendingBuild): Promise<void> {
+    await DatabaseService.saveSetting(PENDING_BUILD_KEY, state);
+  }
+
+  async getPendingBuild(): Promise<PendingBuild | null> {
+    const stored = await DatabaseService.getSetting<PendingBuild | null>(PENDING_BUILD_KEY);
+    return stored && stored.fileName ? stored : null;
+  }
+
+  async clearPendingBuild(): Promise<void> {
+    await DatabaseService.saveSetting(PENDING_BUILD_KEY, null);
+  }
+
+  /** Discard an interrupted build and its file. */
+  async discardPendingBuild(): Promise<void> {
+    const pending = await this.getPendingBuild();
+    if (pending) {
+      for (const suffix of ['', '-wal', '-shm']) {
+        await FileSystem
+          .deleteAsync(`${this.bookPath(pending.fileName)}${suffix}`, { idempotent: true })
+          .catch(() => {});
+      }
+    }
+    await this.clearPendingBuild();
   }
 
   /** Remove a book: close it, delete its file, forget it. */

@@ -7,6 +7,7 @@ import AnalysisBoardScreen from '@screens/AnalysisBoardScreen';
 import RepertoireScreen from '@screens/RepertoireScreen';
 import GameListScreen from '@screens/GameListScreen';
 import ImportPGNScreen from '@screens/ImportPGNScreen';
+import BuildBookScreen from '@screens/BuildBookScreen';
 import RepertoireStudyScreen from '@screens/RepertoireStudyScreen';
 import TrainingDashboardScreen from '@screens/training/TrainingDashboardScreen';
 import TrainingSessionScreen from '@screens/training/TrainingSessionScreen';
@@ -26,6 +27,7 @@ export type RootStackParamList = {
   Settings: undefined;
   Home?: undefined;
   ImportPGN: { target: 'repertoire' | 'my-games' | 'master-games' };
+  BuildBook: undefined;
   RepertoireStudy: { repertoireId: string; chapterId: string };
   TrainingSession: {
     repertoireId: string;
@@ -111,6 +113,16 @@ export default function AppNavigator() {
             headerStyle: { backgroundColor: '#2c2c2c' },
             headerTintColor: '#e0e0e0',
             presentation: 'modal',
+          }}
+        />
+        <Stack.Screen
+          name="BuildBook"
+          component={BuildBookScreen}
+          options={{
+            headerShown: true,
+            headerStyle: { backgroundColor: '#2c2c2c' },
+            headerTintColor: '#e0e0e0',
+            title: 'Build Book',
           }}
         />
         <Stack.Screen

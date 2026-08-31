@@ -731,18 +731,24 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
 
               {/* A book is a prebuilt frequency index, not games to parse — a corpus far
                   too large to import as PGN arrives this way instead. */}
-              <Text style={styles.sectionTitle}>Import Opening Book</Text>
+              <Text style={styles.sectionTitle}>Opening Book</Text>
               <Text style={styles.bookHint}>
-                A .kbook file holds a prebuilt move-frequency index for a large game
-                collection. Its moves join the Master arrows on the board.
+                A book is a move-frequency index over a whole account — far more games than
+                can be imported one by one. Its moves join the Master arrows on the board.
               </Text>
               <TouchableOpacity
-                style={[styles.lichessButton, isImportingBook && styles.buttonDisabled]}
+                style={styles.lichessButton}
+                onPress={() => navigation.navigate('BuildBook')}
+              >
+                <Text style={styles.buttonText}>Build From Account…</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.secondaryButton, isImportingBook && styles.buttonDisabled]}
                 onPress={handleBookImport}
                 disabled={isImportingBook}
               >
                 <Text style={styles.buttonText}>
-                  {isImportingBook ? 'Importing book…' : 'Select Book File (.kbook)'}
+                  {isImportingBook ? 'Importing book…' : 'Import .kbook File'}
                 </Text>
               </TouchableOpacity>
 
@@ -1067,6 +1073,13 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     marginHorizontal: 12,
+  },
+  secondaryButton: {
+    backgroundColor: '#2c2c2e',
+    borderRadius: 8,
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginTop: 8,
   },
   bookHint: {
     color: '#888',

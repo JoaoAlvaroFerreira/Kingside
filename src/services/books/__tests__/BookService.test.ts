@@ -17,6 +17,8 @@ const mockDb = {
   getBookRecords: jest.fn().mockResolvedValue([]),
   addBookRecord: jest.fn().mockResolvedValue(undefined),
   deleteBookRecord: jest.fn().mockResolvedValue(undefined),
+  saveSetting: jest.fn().mockResolvedValue(undefined),
+  getSetting: jest.fn().mockResolvedValue(null),
 };
 jest.mock('@services/database/DatabaseService', () => ({ DatabaseService: mockDb }));
 
@@ -64,6 +66,7 @@ beforeEach(async () => {
   mockFs.getInfoAsync.mockResolvedValue({ exists: true, size: 1024 });
   mockFs.readDirectoryAsync.mockResolvedValue([]);
   mockDb.getBookRecords.mockResolvedValue([]);
+  mockDb.getSetting.mockResolvedValue(null);
   await BookService.closeAll(); // drops the registry cache between tests
 });
 
@@ -362,5 +365,22 @@ describe('pruneOrphanFiles', () => {
     expect(deleted).not.toContain('file:///mock-documents/SQLite/keep.kbook');
     expect(deleted).not.toContain('file:///mock-documents/SQLite/kingside.db');
     expect(reclaimed).toBe(2048);
+  });
+
+  it('spares the file of an interrupted build', async () => {
+    // Its finished-month markers live inside that file — deleting it as an orphan would
+    // turn a resumable pause into a full restart.
+    mockDb.getBookRecords.mockResolvedValue([]);
+    mockDb.getSetting.mockResolvedValue({
+      fileName: 'half-built.kbook', displayName: 'Partial', spec: {},
+    });
+    mockFs.readDirectoryAsync.mockResolvedValue(['half-built.kbook', 'orphan.kbook']);
+    mockFs.getInfoAsync.mockResolvedValue({ exists: true, size: 1024 });
+
+    await BookService.pruneOrphanFiles();
+
+    const deleted = mockFs.deleteAsync.mock.calls.map(c => c[0]);
+    expect(deleted).toContain('file:///mock-documents/SQLite/orphan.kbook');
+    expect(deleted).not.toContain('file:///mock-documents/SQLite/half-built.kbook');
   });
 });
