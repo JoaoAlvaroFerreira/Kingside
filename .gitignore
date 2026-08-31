@@ -44,3 +44,6 @@ Kingside.apk
 
 # Lichess API spec (contains example tokens flagged by secret scanning)
 lichess-api.json
+
+# Large PGN corpora — sample/test data, not source
+example_pgns/naroditsky.pgn

@@ -10,6 +10,7 @@
 import { useState, useEffect } from 'react';
 import { Chess } from 'chess.js';
 import { DatabaseService, MoveCandidate } from '@services/database/DatabaseService';
+import { BookService } from '@services/books/BookService';
 
 export type CandidateSource = 'none' | 'repertoire' | 'user' | 'master';
 
@@ -31,6 +32,35 @@ export const CANDIDATE_ARROW_COLORS: Record<Exclude<CandidateSource, 'none'>, st
 };
 
 const EMPTY: CandidateArrow[] = [];
+
+/**
+ * Moves the game sources play from this position.
+ *
+ * Imported opening books count as master games: both answer "what gets played here across
+ * a body of games", so their counts sum rather than competing for the four arrow slots. A
+ * book usually dwarfs the local master DB in volume, but arrow weight is relative to the
+ * strongest candidate here, so a large book raises the ceiling instead of drowning it.
+ */
+async function gameCandidates(
+  source: 'user' | 'master',
+  fen: string
+): Promise<MoveCandidate[]> {
+  const local = await DatabaseService.getGameMoveCandidates(source, fen);
+  if (source !== 'master') return local;
+
+  const book = await BookService.getMoveCandidates(fen);
+  if (book.length === 0) return local;
+
+  const merged = new Map<string, MoveCandidate>();
+  for (const candidate of local) merged.set(candidate.move, { ...candidate });
+  for (const candidate of book) {
+    const existing = merged.get(candidate.move);
+    if (existing) existing.count += candidate.count;
+    else merged.set(candidate.move, { move: candidate.move, count: candidate.count });
+  }
+
+  return Array.from(merged.values()).sort((a, b) => b.count - a.count).slice(0, 4);
+}
 
 /**
  * How much a sideline is dimmed relative to a main line.
@@ -88,7 +118,7 @@ export function useCandidateMoves(fen: string, source: CandidateSource): Candida
     (async () => {
       const candidates = source === 'repertoire'
         ? await DatabaseService.getRepertoireMoveCandidates(fen)
-        : await DatabaseService.getGameMoveCandidates(source, fen);
+        : await gameCandidates(source, fen);
 
       if (cancelled) return;
       if (candidates.length === 0) {

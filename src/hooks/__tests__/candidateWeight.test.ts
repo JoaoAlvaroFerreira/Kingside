@@ -1,5 +1,7 @@
-// candidateWeight is pure, but its module pulls in DatabaseService (and thus react-native).
+// candidateWeight is pure, but its module pulls in DatabaseService and BookService (and
+// thus react-native).
 jest.mock('@services/database/DatabaseService', () => ({ DatabaseService: {} }));
+jest.mock('@services/books/BookService', () => ({ BookService: {} }));
 
 import { candidateWeight } from '@hooks/useCandidateMoves';
 

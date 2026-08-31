@@ -63,3 +63,13 @@ export type {
   AllScreenSettings,
   ScreenKey,
 } from './settings.types';
+
+export type {
+  // Opening book types
+  BookRecord,
+  BookMoveCandidate,
+  BookGame,
+  BookImportFailure,
+} from './book.types';
+
+export { BookImportError, BOOK_SCHEMA_VERSION } from './book.types';

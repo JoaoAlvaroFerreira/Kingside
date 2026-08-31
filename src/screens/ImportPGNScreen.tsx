@@ -6,7 +6,8 @@ import { PGNService } from '@services/pgn/PGNService';
 import { OpeningClassifier } from '@services/openings/OpeningClassifier';
 import { LichessService } from '@services/lichess/LichessService';
 import { useStore } from '@store';
-import { RepertoireColor } from '@types';
+import { RepertoireColor, BookImportError } from '@types';
+import { BookService } from '@services/books/BookService';
 import { MoveTree } from '@utils/MoveTree';
 
 // Three import types: repertoire, user games, master games
@@ -19,6 +20,20 @@ interface ImportPGNScreenProps {
     };
   };
   navigation: any;
+}
+
+/** Each rejection reason gets the action that actually fixes it. */
+function bookErrorMessage(error: BookImportError): string {
+  switch (error.reason) {
+    case 'not-a-database':
+      return 'That file is not a SQLite database. Pick the .kbook file produced by the book generator.';
+    case 'not-a-book':
+      return 'That database is not an opening book - it has no book tables. Pick a .kbook file.';
+    case 'unsupported-version':
+      return error.message;
+    case 'copy-failed':
+      return `The file could not be copied into the app: ${error.message}`;
+  }
 }
 
 function generateId(): string {
@@ -53,6 +68,7 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
   const [lichessStudyUrl, setLichessStudyUrl] = useState('');
   const [chessableMode, setChessableMode] = useState(false);
   const [chessableDirectMode, setChessableDirectMode] = useState(false);
+  const [isImportingBook, setIsImportingBook] = useState(false);
   const addRepertoire = useStore(s => s.addRepertoire);
   const addUserGames = useStore(s => s.addUserGames);
   const addMasterGames = useStore(s => s.addMasterGames);
@@ -584,6 +600,48 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
     }
   };
 
+  /**
+   * Import a prebuilt opening book (.kbook).
+   *
+   * Deliberately does NOT go through readFileWithTimeout: a book is a 100MB+ SQLite file
+   * and reading one into a JS string is the exact failure this format exists to avoid.
+   * The file is copied and opened, never parsed.
+   */
+  const handleBookImport = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: '*/*',
+        copyToCacheDirectory: true,
+      });
+      if (result.canceled || !result.assets || result.assets.length === 0) return;
+
+      const file = result.assets[0];
+      setIsImportingBook(true);
+      const suggested = (file.name || '').replace(/\.kbook$/i, '');
+      const record = await BookService.importBook(file.uri, suggested);
+      setIsImportingBook(false);
+
+      const summary = [
+        record.name,
+        '',
+        `${record.gameCount.toLocaleString()} games`,
+        `${record.positionCount.toLocaleString()} positions indexed`,
+        `${(record.sizeBytes / 1048576).toFixed(0)} MB`,
+        ...(record.hasGames ? [] : ['', 'Counts only - individual games are not included.']),
+      ].join('\n');
+
+      Alert.alert('Book Imported', summary, [
+        { text: 'OK', onPress: () => navigation.goBack() },
+      ]);
+    } catch (error: any) {
+      setIsImportingBook(false);
+      const message = error instanceof BookImportError
+        ? bookErrorMessage(error)
+        : `The book could not be imported: ${error?.message ?? error}`;
+      Alert.alert('Import Failed', message);
+    }
+  };
+
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.title}>{getTitle()}</Text>
@@ -665,6 +723,29 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
                   {isImportingLichess ? 'Importing from Lichess...' : 'Import from Lichess'}
                 </Text>
               </TouchableOpacity>
+              <View style={styles.divider}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.dividerText}>OR</Text>
+                <View style={styles.dividerLine} />
+              </View>
+
+              {/* A book is a prebuilt frequency index, not games to parse — a corpus far
+                  too large to import as PGN arrives this way instead. */}
+              <Text style={styles.sectionTitle}>Import Opening Book</Text>
+              <Text style={styles.bookHint}>
+                A .kbook file holds a prebuilt move-frequency index for a large game
+                collection. Its moves join the Master arrows on the board.
+              </Text>
+              <TouchableOpacity
+                style={[styles.lichessButton, isImportingBook && styles.buttonDisabled]}
+                onPress={handleBookImport}
+                disabled={isImportingBook}
+              >
+                <Text style={styles.buttonText}>
+                  {isImportingBook ? 'Importing book…' : 'Select Book File (.kbook)'}
+                </Text>
+              </TouchableOpacity>
+
               <View style={styles.divider}>
                 <View style={styles.dividerLine} />
                 <Text style={styles.dividerText}>OR</Text>
@@ -986,6 +1067,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     marginHorizontal: 12,
+  },
+  bookHint: {
+    color: '#888',
+    fontSize: 12,
+    lineHeight: 17,
+    marginBottom: 10,
   },
   inlineRow: {
     flexDirection: 'row',

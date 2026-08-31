@@ -4,7 +4,7 @@
  */
 
 import { Platform } from 'react-native';
-import { UserGame, MasterGame, Repertoire, normalizeFen, EngineEvaluation, LineStats, GameReviewStatus } from '@types';
+import { UserGame, MasterGame, Repertoire, normalizeFen, EngineEvaluation, LineStats, GameReviewStatus, BookRecord } from '@types';
 import { Chess } from 'chess.js';
 import { WebDatabaseService } from './WebDatabaseService';
 import { extractChapterMoves, extractChapterPositions, mergePositionMaps, PositionMap, PositionMove } from '@utils/extractRepertoirePositions';
@@ -29,7 +29,7 @@ const POSITION_MATCH_LIMIT = 100;
 // the rows scanned instead would make the frequencies themselves wrong at early positions,
 // which is exactly where the ranking has to be trusted.
 const CANDIDATE_MOVE_LIMIT = 4;
-const SCHEMA_VERSION = 6; // Bump when schema changes
+const SCHEMA_VERSION = 7; // Bump when schema changes
 const INDEX_BATCH_SIZE = 10; // Games per batch during background indexing
 
 interface PaginatedResult<T> {
@@ -46,6 +46,23 @@ export interface MoveCandidate {
   count: number;
   /** Repertoire only: 0 means the move is on some chapter's main line. */
   varDepth?: number;
+}
+
+/** Registry row -> BookRecord. Dates are epoch ms, so no reviver is needed. */
+function toBookRecord(row: any): BookRecord {
+  return {
+    id: row.id,
+    name: row.name,
+    player: row.player,
+    sourceFile: row.source_file,
+    fileName: row.file_name,
+    gameCount: row.game_count,
+    positionCount: row.position_count,
+    sizeBytes: row.size_bytes,
+    maxPly: row.max_ply,
+    hasGames: row.has_games === 1,
+    importedAt: new Date(row.imported_at),
+  };
 }
 
 // Conditionally import SQLite only on native platforms
@@ -273,6 +290,23 @@ class DatabaseServiceClass {
           move TEXT NOT NULL,
           first_seen_at INTEGER NOT NULL,
           PRIMARY KEY (repertoire_id, normalized_fen, move)
+        );
+
+        -- Registry of imported opening books. The books themselves are separate SQLite
+        -- files opened on their own connections (see BookService) — only the fact that
+        -- one is installed lives here, so a 100MB book never enters the backup copy.
+        CREATE TABLE IF NOT EXISTS master_books (
+          id             TEXT PRIMARY KEY,
+          name           TEXT NOT NULL,
+          player         TEXT NOT NULL,
+          source_file    TEXT NOT NULL,
+          file_name      TEXT NOT NULL,
+          game_count     INTEGER NOT NULL,
+          position_count INTEGER NOT NULL,
+          size_bytes     INTEGER NOT NULL,
+          max_ply        INTEGER NOT NULL,
+          has_games      INTEGER NOT NULL,
+          imported_at    INTEGER NOT NULL
         );
       `);
 
@@ -1474,6 +1508,41 @@ class DatabaseServiceClass {
     } catch {
       return [];
     }
+  }
+
+  // ==================== OPENING BOOK REGISTRY ====================
+
+  /** Every installed book, newest first. The book files themselves live outside this DB. */
+  async getBookRecords(): Promise<BookRecord[]> {
+    if (this.isWeb || !this.db) return [];
+    try {
+      const rows = await this.db.getAllAsync(
+        'SELECT * FROM master_books ORDER BY imported_at DESC'
+      ) as any[];
+      return rows.map(toBookRecord);
+    } catch {
+      return [];
+    }
+  }
+
+  async addBookRecord(book: BookRecord): Promise<void> {
+    if (this.isWeb || !this.db) return;
+    await this.db.runAsync(
+      `INSERT OR REPLACE INTO master_books
+       (id, name, player, source_file, file_name, game_count, position_count,
+        size_bytes, max_ply, has_games, imported_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        book.id, book.name, book.player, book.sourceFile, book.fileName,
+        book.gameCount, book.positionCount, book.sizeBytes, book.maxPly,
+        book.hasGames ? 1 : 0, book.importedAt.getTime(),
+      ]
+    );
+  }
+
+  async deleteBookRecord(id: string): Promise<void> {
+    if (this.isWeb || !this.db) return;
+    await this.db.runAsync('DELETE FROM master_books WHERE id = ?', [id]);
   }
 
   // ==================== FEN-BASED SEARCH ====================

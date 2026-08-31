@@ -17,6 +17,8 @@ import {
 } from 'react-native';
 import { useStore } from '@store';
 import { BackupService } from '@services/backup/BackupService';
+import { BookService } from '@services/books/BookService';
+import { BookRecord } from '@types';
 
 interface SettingsScreenProps {
   navigation: any;
@@ -28,6 +30,8 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
   const [saving, setSaving] = useState(false);
   const reloadDatabase = useStore(s => s.reloadDatabase);
   const [backupBusy, setBackupBusy] = useState(false);
+  const [books, setBooks] = useState<BookRecord[]>([]);
+  const [bookBusy, setBookBusy] = useState(false);
 
   // Engine settings
   const [moveTime, setMoveTime] = useState(reviewSettings.engine.moveTime.toString());
@@ -122,6 +126,37 @@ ${message}`);
     }
   };
 
+  const refreshBooks = async () => {
+    setBooks(await BookService.listBooks());
+  };
+
+  useEffect(() => { refreshBooks(); }, []);
+
+  const handleDeleteBook = (id: string, name: string) => {
+    Alert.alert(
+      'Delete Book',
+      `Delete "${name}"? Its file is removed from the device. Repertoires and games are untouched.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            setBookBusy(true);
+            try {
+              await BookService.deleteBook(id);
+              await refreshBooks();
+            } catch (e: any) {
+              Alert.alert('Delete Failed', `${e?.message ?? e}`);
+            } finally {
+              setBookBusy(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const handleExport = async () => {
     setBackupBusy(true);
     try {
@@ -141,6 +176,11 @@ ${message}`);
       if (result.status === 'ok') {
         // The file on disk changed underneath the store, so re-read all of it.
         await reloadDatabase();
+        // The restored kingside.db carries its own book registry, which may not match the
+        // book files actually on disk. Reconcile both directions before showing the list.
+        await BookService.closeAll();
+        await BookService.pruneOrphanFiles();
+        await refreshBooks();
         notify('Backup Restored', result.message);
       } else if (result.status === 'error') {
         notify('Restore Failed', result.message);
@@ -538,6 +578,48 @@ ${msg}`)) void runRestore();
           </Text>
         </View>
 
+        {/* Opening Books */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Opening Books</Text>
+          <Text style={styles.sectionDescription}>
+            Prebuilt move-frequency indexes. Their moves feed the Master arrows on the board.
+          </Text>
+
+          {books.length === 0 ? (
+            <Text style={styles.hint}>
+              No books installed. Import one from Import Master Games.
+            </Text>
+          ) : (
+            books.map(book => (
+              <View key={book.id} style={styles.bookRow}>
+                <View style={styles.bookInfo}>
+                  <Text style={styles.bookName}>{book.name}</Text>
+                  <Text style={styles.bookMeta}>
+                    {book.gameCount.toLocaleString()} games ·{' '}
+                    {book.positionCount.toLocaleString()} positions ·{' '}
+                    {(book.sizeBytes / 1048576).toFixed(0)} MB
+                  </Text>
+                  {!!book.player && (
+                    <Text style={styles.bookMeta}>Player: {book.player}</Text>
+                  )}
+                </View>
+                <TouchableOpacity
+                  style={styles.bookDelete}
+                  onPress={() => handleDeleteBook(book.id, book.name)}
+                  disabled={bookBusy}
+                >
+                  <Text style={styles.bookDeleteText}>Delete</Text>
+                </TouchableOpacity>
+              </View>
+            ))
+          )}
+
+          <Text style={styles.hint}>
+            Books are not included in backups — they are large and can be rebuilt from
+            their source PGN.
+          </Text>
+        </View>
+
         {/* Save Button */}
         <TouchableOpacity
           style={[styles.saveButton, saving && styles.saveButtonDisabled]}
@@ -612,6 +694,39 @@ const styles = StyleSheet.create({
   },
   section: {
     marginBottom: 16,
+  },
+  bookRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#1c1c1e',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 8,
+  },
+  bookInfo: {
+    flex: 1,
+    paddingRight: 12,
+  },
+  bookName: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  bookMeta: {
+    color: '#888',
+    fontSize: 12,
+  },
+  bookDelete: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 6,
+    backgroundColor: '#3a1f1f',
+  },
+  bookDeleteText: {
+    color: '#ff6b6b',
+    fontSize: 13,
+    fontWeight: '600',
   },
   sectionTitle: {
     fontSize: 16,
