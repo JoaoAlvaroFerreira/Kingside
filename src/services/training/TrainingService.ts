@@ -362,43 +362,9 @@ export const TrainingService = {
     session: TrainingSession,
     quality: number,
     existingStats: LineStats[]
-  ): { updatedStats: LineStats; hasMore: boolean } {
+  ): { updatedStats: LineStats; alsoCompleted: LineStats[]; hasMore: boolean } {
     const currentLine = session.lines[session.currentLineIndex];
-
-    // Find or create stats for this line
-    let lineStats = existingStats.find(s => s.lineId === currentLine.id);
-
-    if (!lineStats) {
-      // Create new stats with SM-2 defaults
-      lineStats = {
-        lineId: currentLine.id,
-        repertoireId: currentLine.repertoireId,
-        chapterId: currentLine.chapterId,
-        easeFactor: 2.5,
-        interval: 0,
-        repetitions: 0,
-        nextReviewDate: new Date(),
-        totalDrills: 0,
-        correctCount: 0,
-        mistakeCount: session.totalMistakes,
-      };
-    }
-
-    // Apply SM-2 algorithm
-    const sm2Result = SM2Service.calculateNext(lineStats, quality);
-
-    // Update stats
-    const updatedStats: LineStats = {
-      ...lineStats,
-      easeFactor: sm2Result.easeFactor,
-      interval: sm2Result.interval,
-      repetitions: sm2Result.repetitions,
-      nextReviewDate: sm2Result.nextReviewDate,
-      lastReviewDate: new Date(),
-      totalDrills: lineStats.totalDrills + 1,
-      correctCount: lineStats.correctCount + (session.totalMistakes === 0 ? 1 : 0),
-      mistakeCount: lineStats.mistakeCount + session.totalMistakes,
-    };
+    const updatedStats = this.applyRating(currentLine, quality, existingStats, session.totalMistakes);
 
     // Reset mistake counter for next line
     session.totalMistakes = 0;
@@ -408,19 +374,37 @@ export const TrainingService = {
     session.linesCompleted = session.completedLineIds.length;
     session.awaitingRating = false;
 
+    // Width-first shares prefixes, so drilling a long line carries every shorter line that
+    // is a prefix of it all the way to complete — without that line ever being current, and
+    // so without anything ever asking for a rating. Those lines *were* answered, every move
+    // of them, so they are credited here. Before this they were silently dropped: no SM2
+    // update at all, and linesCompleted undercounting what the user actually drilled.
+    const alsoCompleted: LineStats[] = [];
+    if (session.order === 'width-first') {
+      for (const line of session.lines) {
+        if (session.completedLineIds.includes(line.id)) continue;
+        const userMoves = line.moves.filter(m => m.isUserMove);
+        if (userMoves.length === 0) continue;
+        if ((session.lineProgress[line.id] ?? 0) < userMoves.length) continue;
+        alsoCompleted.push(this.applyRating(line, quality, existingStats, 0));
+        session.completedLineIds.push(line.id);
+      }
+      session.linesCompleted = session.completedLineIds.length;
+    }
+
     if (session.order !== 'width-first') {
       // Depth-first and random both walk the pool sequentially; random just shuffled it
       if (session.currentLineIndex < session.lines.length - 1) {
         session.currentLineIndex++;
         session.currentMoveIndex = 0;
-        return { updatedStats, hasMore: true };
+        return { updatedStats, alsoCompleted, hasMore: true };
       } else if (session.holdbackLines.length > 0) {
         // Promote next batch from holdback
         this.promoteFromHoldback(session);
-        return { updatedStats, hasMore: true };
+        return { updatedStats, alsoCompleted, hasMore: true };
       } else {
         session.isComplete = true;
-        return { updatedStats, hasMore: false };
+        return { updatedStats, alsoCompleted, hasMore: false };
       }
     } else {
       // Width-first: find next incomplete line
@@ -433,7 +417,7 @@ export const TrainingService = {
         if (progress < userMoves.length) {
           session.currentLineIndex = i;
           session.currentMoveIndex = progress;
-          return { updatedStats, hasMore: true };
+          return { updatedStats, alsoCompleted, hasMore: true };
         }
       }
 
@@ -446,19 +430,53 @@ export const TrainingService = {
         if (progress < userMoves.length) {
           session.currentLineIndex = i;
           session.currentMoveIndex = progress;
-          return { updatedStats, hasMore: true };
+          return { updatedStats, alsoCompleted, hasMore: true };
         }
       }
 
       // All active lines complete — check holdback
       if (session.holdbackLines.length > 0) {
         this.promoteFromHoldback(session);
-        return { updatedStats, hasMore: true };
+        return { updatedStats, alsoCompleted, hasMore: true };
       }
 
       session.isComplete = true;
-      return { updatedStats, hasMore: false };
+      return { updatedStats, alsoCompleted, hasMore: false };
     }
+  },
+
+  /** Apply SM-2 to one line, creating its stats row if this is its first drill. */
+  applyRating(
+    line: Line,
+    quality: number,
+    existingStats: LineStats[],
+    mistakes: number
+  ): LineStats {
+    const lineStats: LineStats = existingStats.find(s => s.lineId === line.id) ?? {
+      lineId: line.id,
+      repertoireId: line.repertoireId,
+      chapterId: line.chapterId,
+      easeFactor: 2.5,
+      interval: 0,
+      repetitions: 0,
+      nextReviewDate: new Date(),
+      totalDrills: 0,
+      correctCount: 0,
+      mistakeCount: 0,
+    };
+
+    const sm2Result = SM2Service.calculateNext(lineStats, quality);
+    return {
+      ...lineStats,
+      easeFactor: sm2Result.easeFactor,
+      interval: sm2Result.interval,
+      repetitions: sm2Result.repetitions,
+      nextReviewDate: sm2Result.nextReviewDate,
+      lastReviewDate: new Date(),
+      totalDrills: lineStats.totalDrills + 1,
+      correctCount: lineStats.correctCount + (mistakes === 0 ? 1 : 0),
+      mistakeCount: lineStats.mistakeCount + mistakes,
+    };
   },
 
   /**

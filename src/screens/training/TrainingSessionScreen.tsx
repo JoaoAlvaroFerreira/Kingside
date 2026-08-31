@@ -273,13 +273,15 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
   const _completeLineAndAdvance = async () => {
     if (!session) return;
 
-    const { updatedStats, hasMore } = TrainingService.completeLineAndAdvance(
+    const { updatedStats, alsoCompleted, hasMore } = TrainingService.completeLineAndAdvance(
       session,
       4, // quality=4 for learn mode (just tracks totalDrills)
       lineStats
     );
 
     await updateLineStats(updatedStats);
+    // Width-first can finish shorter lines as a side effect of drilling a longer one.
+    for (const covered of alsoCompleted) await updateLineStats(covered);
 
     if (hasMore) {
       setSession({ ...session });
@@ -304,7 +306,7 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
   const handleRating = async (quality: number) => {
     if (!session) return;
 
-    const { updatedStats, hasMore } = TrainingService.completeLineAndAdvance(
+    const { updatedStats, alsoCompleted, hasMore } = TrainingService.completeLineAndAdvance(
       session,
       quality,
       lineStats
@@ -312,6 +314,8 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
 
     // Update stats in store
     await updateLineStats(updatedStats);
+    // Width-first can finish shorter lines as a side effect of drilling a longer one.
+    for (const covered of alsoCompleted) await updateLineStats(covered);
 
     if (hasMore) {
       // Move to next line
