@@ -29,6 +29,19 @@ const POSITION_MATCH_LIMIT = 100;
 // the rows scanned instead would make the frequencies themselves wrong at early positions,
 // which is exactly where the ranking has to be trusted.
 const CANDIDATE_MOVE_LIMIT = 4;
+/**
+ * How deep a game is indexed into `game_positions`.
+ *
+ * A game averages ~94 plies and every one of them used to be indexed, which made this
+ * table and its FEN index ~81% of what a stored game costs — 18.5KB per game, so 0.42GB
+ * for a 24k-game master database. Position lookup is an opening tool: past this depth
+ * positions are almost always unique, so a match returns the one game you already know
+ * about while the rows cost the same as the useful ones.
+ *
+ * This is a real trade-off, not a free win — a position deeper than this is no longer
+ * findable. Raise it if middlegame search matters more than the space.
+ */
+const POSITION_INDEX_MAX_PLY = 40;
 const SCHEMA_VERSION = 7; // Bump when schema changes
 const INDEX_BATCH_SIZE = 10; // Games per batch during background indexing
 
@@ -568,7 +581,9 @@ class DatabaseServiceClass {
     movesText = movesText.replace(/\s+(1-0|0-1|1\/2-1\/2|\*)\s*$/g, '');
 
     let preFen = normalizeFen(chess.fen());
+    let ply = 0;
     const sections = movesText.split(/\d+\.\s*/).filter(s => s.trim());
+    outer:
     for (const section of sections) {
       const tokens = section.trim().split(/\s+/).filter(t => t.trim());
       for (const token of tokens) {
@@ -578,6 +593,7 @@ class DatabaseServiceClass {
           const played = chess.move(clean);
           push(preFen, played.san);
           preFen = normalizeFen(chess.fen());
+          if (++ply >= POSITION_INDEX_MAX_PLY) break outer;
         } catch {
           // Not a valid move token
         }

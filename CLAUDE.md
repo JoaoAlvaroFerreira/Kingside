@@ -517,6 +517,38 @@ Things that are load-bearing:
   either side would make every key miss silently rather than error, so re-run that
   comparison if either library is upgraded.
 
+## Stored game cost (`master_games` / `user_games`)
+
+Measured against a real chess.com corpus, one stored game cost **~18.5 KB** — 0.42 GB for
+a 24k-game master database:
+
+| | per game |
+|---|---|
+| `pgn` (raw, with `[%clk]`) | 3,326 B |
+| `moves` (JSON array) | 659 B |
+| `game_positions` rows (94 plies) | 8,084 B |
+| its FEN index | 6,768 B |
+
+**`game_positions` is 81% of that**, because every ply of every game was indexed.
+`POSITION_INDEX_MAX_PLY` (40) caps it, roughly halving the cost of a stored game.
+
+This is a real trade-off, not a free win: **a position deeper than ply 40 is no longer
+findable** by the Your Games / Master / Find Position lookups. It is defensible because
+past that depth positions are nearly always unique — the match returns the single game you
+were already looking at — but raise the constant if middlegame search matters more than
+the space. Existing rows keep their original depth; the cap applies to what is indexed
+next, the same way `game_positions.next_move` was deliberately not backfilled.
+
+Two further savings are measured but **not** taken, because both need real work rather than
+a constant: dropping the `pgn` column and rebuilding PGN from headers + `moves` on demand
+(-3.3 KB/game, but `GameReviewService` parses `game.pgn` in three places and would have to
+move onto the `moves` array), and storing `moves` as space-separated SAN instead of a JSON
+array (-282 B/game, and drops a `JSON.parse` per row read).
+
+Note the division of labour: even fully reshaped, this is the wrong home for a 100k-game
+corpus — that is what a book is for. The reshape matters for the master database you browse
+game-by-game and for user-game volume.
+
 ## Known Issues
 
 ### 1. Storage Migration

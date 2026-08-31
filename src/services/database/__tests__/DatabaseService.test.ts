@@ -836,6 +836,40 @@ describe('DatabaseService', () => {
     });
   });
 
+  describe('position index depth', () => {
+    beforeEach(() => DatabaseService.initialize());
+
+    /**
+     * A real 70-ply game. It has to be a real one: positions are deduplicated per game,
+     * so a synthetic shuffle that revisits the same squares indexes almost nothing and
+     * would pass this test whatever the cap did.
+     */
+    const LONG_GAME_BODY =
+      '1. f4 d5 2. Nf3 g6 3. e3 Bg7 4. Be2 Nh6 5. O-O O-O 6. d3 c5 7. Qe1 Nc6 8. e4 c4 ' +
+      '9. e5 cxd3 10. Bxd3 Bf5 11. Nc3 Rc8 12. Qh4 Nb4 13. Ng5 Nxd3 14. cxd3 f6 ' +
+      '15. exf6 exf6 16. Nf3 Bxd3 17. Rd1 Bc4 18. Be3 Nf5 19. Qf2 Nxe3 20. Qxe3 Qa5 ' +
+      '21. Qe6+ Kh8 22. Nd4 f5 23. Kh1 Rfe8 24. Qd7 Qb6 25. Na4 Qc7 26. Qxc7 Rxc7 ' +
+      '27. Nc3 Rce7 28. h3 Re4 29. Nxe4 Rxe4 30. Nf3 Rxf4 31. Rd2 Re4 32. Rad1 Bxa2 ' +
+      '33. Ra1 Bc4 34. Rxa7 Bh6 35. Rd4 Re7';
+    const longGame = () => ['[Event "Long"]', '', LONG_GAME_BODY].join('\n');
+
+    it('stops indexing a game past the depth cap', async () => {
+      mockDb.runAsync.mockClear();
+      await DatabaseService.addMasterGames([{
+        id: 'long', white: 'W', black: 'B', result: '*', date: '2025.01.01',
+        pgn: longGame(), moves: [], importedAt: new Date(),
+      } as any]);
+
+      const inserts = mockDb.runAsync.mock.calls.filter(([sql]: [string]) =>
+        /INSERT INTO game_positions/.test(sql)
+      );
+      // 40 indexed plies plus the final position row; a game averages ~94 plies, and
+      // indexing all of them made this table 81% of what a stored game costs.
+      expect(inserts.length).toBeLessThanOrEqual(41);
+      expect(inserts.length).toBeGreaterThan(30);
+    });
+  });
+
   describe('position search truncation', () => {
     beforeEach(() => DatabaseService.initialize());
 
