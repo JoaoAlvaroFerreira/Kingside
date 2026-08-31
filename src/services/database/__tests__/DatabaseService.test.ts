@@ -301,17 +301,34 @@ describe('DatabaseService', () => {
       expect(insertCalls).toHaveLength(games.length);
     });
 
-    it('addUserGames stores moves as JSON string', async () => {
+    it('stores moves as space-separated SAN and does not store the raw PGN', async () => {
       const game = makeGame({ moves: ['e4', 'e5', 'Nf3'] });
       await DatabaseService.addUserGames([game]);
       const insert = mockDb.runAsync.mock.calls.find(
         ([sql]: [string]) => sql.includes('INSERT OR REPLACE INTO user_games')
       );
-      const args = insert[1];
-      const movesArg = args.find((a: any) => {
-        try { return Array.isArray(JSON.parse(a)); } catch { return false; }
+
+      expect(insert[1]).toContain('e4 e5 Nf3');
+      // The PGN column is written as a literal empty string in the statement: it was ~2/3
+      // clock comments nothing reads, and the rest duplicates these very columns. Empty
+      // rather than NULL because the column is NOT NULL on installs predating the change —
+      // a device run rejected NULL outright where the mocked DB here did not.
+      expect(insert[0]).toMatch(/VALUES \(\?, \?, \?, \?, \?, \?, \?, \?, '',/);
+      expect(insert[1]).not.toContain(game.pgn);
+    });
+
+    it('keeps [%eval] annotations, which are the one thing the PGN carried that is read', async () => {
+      // GameReviewService uses these to skip Stockfish for positions Lichess already
+      // analysed, so dropping them would silently make review slower, not just lossier.
+      const game = makeGame({
+        moves: ['e4', 'e5'],
+        pgn: '1. e4 { [%eval 0.24] [%clk 0:03:00] } e5 { [%eval #-3] } *',
       });
-      expect(JSON.parse(movesArg)).toEqual(['e4', 'e5', 'Nf3']);
+      await DatabaseService.addUserGames([game]);
+      const insert = mockDb.runAsync.mock.calls.find(
+        ([sql]: [string]) => sql.includes('INSERT OR REPLACE INTO user_games')
+      );
+      expect(insert[1]).toContain('0.24,#-3');
     });
 
     it('getUserGameById returns null for missing ID', async () => {

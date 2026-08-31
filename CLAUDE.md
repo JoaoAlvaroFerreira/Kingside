@@ -539,11 +539,24 @@ were already looking at — but raise the constant if middlegame search matters 
 the space. Existing rows keep their original depth; the cap applies to what is indexed
 next, the same way `game_positions.next_move` was deliberately not backfilled.
 
-Two further savings are measured but **not** taken, because both need real work rather than
-a constant: dropping the `pgn` column and rebuilding PGN from headers + `moves` on demand
-(-3.3 KB/game, but `GameReviewService` parses `game.pgn` in three places and would have to
-move onto the `moves` array), and storing `moves` as space-separated SAN instead of a JSON
-array (-282 B/game, and drops a `JSON.parse` per row read).
+**The raw PGN is no longer stored** (schema v8). Measured over 3,000 real games, the
+movetext is ~2,800 B of which ~1,862 B is `[%clk]` comments *nothing in the app reads*; the
+SAN itself is ~844 B and the ~617 B of headers are already columns. So a game is stored as
+its parts and the PGN is rebuilt on read by `gameStorage.buildPgn`.
+
+The one annotation that is **not** dead weight is `[%eval]`: `GameReviewService` reads those
+to skip Stockfish for positions Lichess already analysed. They get their own column and are
+written back into the reconstructed PGN, so that parser keeps working untouched. Dropping
+them would have made review quietly slower, not just lossier — check for this before
+trimming anything else from a stored game.
+
+`moves` is now space-separated SAN rather than a JSON array. Legacy rows are detected by
+their leading `[` (SAN never starts with one) and are read unchanged — **existing rows are
+deliberately not rewritten**, because a full-table migration of tens of thousands of games
+at startup is exactly what the startup-performance rules above exist to prevent.
+
+`pgn` is written as `''`, not `NULL`: the column is `NOT NULL` on installs predating v8, and
+a device run rejected `NULL` outright where the mocked DB in the unit tests did not.
 
 Note the division of labour: even fully reshaped, this is the wrong home for a 100k-game
 corpus — that is what a book is for. The reshape matters for the master database you browse

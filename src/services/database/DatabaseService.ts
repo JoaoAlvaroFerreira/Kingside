@@ -9,6 +9,9 @@ import { Chess } from 'chess.js';
 import { WebDatabaseService } from './WebDatabaseService';
 import { extractChapterMoves, extractChapterPositions, mergePositionMaps, PositionMap, PositionMove } from '@utils/extractRepertoirePositions';
 import * as FileSystem from 'expo-file-system';
+import {
+  encodeMoves, decodeMoves, encodeEvals, decodeEvals, extractEvalsFromPgn, buildPgn,
+} from './gameStorage';
 
 /** Thrown when the database cannot be opened even after WAL recovery. */
 export class DatabaseOpenError extends Error {
@@ -42,7 +45,7 @@ const CANDIDATE_MOVE_LIMIT = 4;
  * findable. Raise it if middlegame search matters more than the space.
  */
 const POSITION_INDEX_MAX_PLY = 40;
-const SCHEMA_VERSION = 7; // Bump when schema changes
+const SCHEMA_VERSION = 8; // Bump when schema changes
 const INDEX_BATCH_SIZE = 10; // Games per batch during background indexing
 
 /**
@@ -443,6 +446,25 @@ class DatabaseServiceClass {
       console.log('[DatabaseService] Migrated to schema v6 (game_positions.next_move)');
     }
 
+    // V8: games are stored as their parts rather than as a raw PGN. `[%eval]` is the one
+    // annotation the app reads (GameReviewService skips Stockfish where Lichess already
+    // analysed), so it gets a column; `[%clk]` — ~1,862 of the ~2,800 movetext bytes — is
+    // read by nothing and is simply not kept.
+    //
+    // Existing rows keep their `pgn` and are read from it unchanged. They are deliberately
+    // NOT rewritten: a full-table migration of tens of thousands of games at startup is
+    // exactly the kind of work the startup-performance rules above exist to prevent, and
+    // the saving lands on import anyway.
+    for (const table of ['user_games', 'master_games']) {
+      const columns = await this.db!.getAllAsync(
+        `PRAGMA table_info(${table})`
+      ) as Array<{ name: string }>;
+      if (columns.length > 0 && !columns.some(c => c.name === 'evals')) {
+        await this.db!.execAsync(`ALTER TABLE ${table} ADD COLUMN evals TEXT`);
+        console.log(`[DatabaseService] Migrated to schema v8 (${table}.evals)`);
+      }
+    }
+
     if (currentVersion < SCHEMA_VERSION) {
       await this.db!.execAsync(`PRAGMA user_version = ${SCHEMA_VERSION}`);
     }
@@ -678,10 +700,33 @@ class DatabaseServiceClass {
       event: row.event,
       site: row.site,
       eco: row.eco,
-      pgn: row.pgn,
-      moves: JSON.parse(row.moves),
+      ...this.gameContent(row),
       startFen: row.start_fen || undefined,
       importedAt: new Date(row.imported_at),
+    };
+  }
+
+  /**
+   * Moves and PGN for a row, whichever shape it was stored in.
+   *
+   * Rows written before v8 carry a raw PGN and a JSON moves array; newer ones carry
+   * space-separated SAN and an optional evals column, and have their PGN rebuilt here so
+   * every consumer — including GameReviewService's `[%eval]` parser — sees the same thing.
+   */
+  private gameContent(row: any): { pgn: string; moves: string[] } {
+    const moves = decodeMoves(row.moves);
+    if (row.pgn) return { pgn: row.pgn, moves };
+    return {
+      moves,
+      pgn: buildPgn(
+        {
+          white: row.white, black: row.black, result: row.result, date: row.date,
+          event: row.event, site: row.site, eco: row.eco,
+          startFen: row.start_fen || undefined,
+        },
+        moves,
+        decodeEvals(row.evals)
+      ),
     };
   }
 
@@ -698,8 +743,7 @@ class DatabaseServiceClass {
       event: row.event,
       site: row.site,
       eco: row.eco,
-      pgn: row.pgn,
-      moves: JSON.parse(row.moves),
+      ...this.gameContent(row),
       startFen: row.start_fen || undefined,
       importedAt: new Date(row.imported_at),
     };
@@ -721,8 +765,8 @@ class DatabaseServiceClass {
         for (const game of games) {
           await this.db!.runAsync(
             `INSERT OR REPLACE INTO user_games
-             (id, white, black, result, date, event, site, eco, pgn, moves, start_fen, imported_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+             (id, white, black, result, date, event, site, eco, pgn, moves, evals, start_fen, imported_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, '', ?, ?, ?, ?)`,
             [
               game.id,
               game.white,
@@ -732,8 +776,12 @@ class DatabaseServiceClass {
               game.event || '',
               game.site || '',
               game.eco || '',
-              game.pgn,
-              JSON.stringify(game.moves),
+              // The raw PGN is not stored: it is ~2/3 clock comments nothing reads, and
+              // the rest is the headers and SAN already in these columns. Written as ''
+              // rather than NULL because the column is declared NOT NULL on installs that
+              // predate this change; both read back as "rebuild it".
+              encodeMoves(game.moves),
+              encodeEvals(extractEvalsFromPgn(game.pgn || '')),
               game.startFen || null,
               game.importedAt.getTime(),
             ]
@@ -865,8 +913,8 @@ class DatabaseServiceClass {
         for (const game of games) {
           await this.db!.runAsync(
             `INSERT OR REPLACE INTO master_games
-             (id, white, black, result, date, event, site, eco, pgn, moves, start_fen, imported_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+             (id, white, black, result, date, event, site, eco, pgn, moves, evals, start_fen, imported_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, '', ?, ?, ?, ?)`,
             [
               game.id,
               game.white,
@@ -876,8 +924,12 @@ class DatabaseServiceClass {
               game.event || '',
               game.site || '',
               game.eco || '',
-              game.pgn,
-              JSON.stringify(game.moves),
+              // The raw PGN is not stored: it is ~2/3 clock comments nothing reads, and
+              // the rest is the headers and SAN already in these columns. Written as ''
+              // rather than NULL because the column is declared NOT NULL on installs that
+              // predate this change; both read back as "rebuild it".
+              encodeMoves(game.moves),
+              encodeEvals(extractEvalsFromPgn(game.pgn || '')),
               game.startFen || null,
               game.importedAt.getTime(),
             ]
