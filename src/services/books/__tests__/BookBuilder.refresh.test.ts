@@ -174,6 +174,22 @@ describe('book refresh', () => {
     expect(insert?.[1]?.[0]).toBe(101);
   });
 
+  it('fetches the newest missing month first', async () => {
+    // A budgeted run must leave behind the months a player actually prepares against.
+    // Oldest-first would spend the whole budget on games from a decade ago.
+    const db = fakeBook({ donePeriods: [] });
+    mockSQLite.openDatabaseAsync.mockResolvedValue(db);
+    mockSource.listPeriods.mockResolvedValue([
+      { id: '2024-01', year: 2024, month: 1 },
+      { id: '2025-06', year: 2025, month: 6 },
+    ]);
+    mockSource.fetchPeriod.mockResolvedValue([]);
+
+    await BookBuilder.refresh(record, noop, never);
+
+    expect(mockSource.fetchPeriod.mock.calls[0][1].id).toBe('2025-06');
+  });
+
   it('drops its scratch table and leaves the book usable when a fetch fails', async () => {
     const db = fakeBook({ donePeriods: [] });
     mockSQLite.openDatabaseAsync.mockResolvedValue(db);

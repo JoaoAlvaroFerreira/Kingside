@@ -322,6 +322,43 @@ Further options, if size still matters:
 - ABI splits (`splits.abi`) to publish one APK per ABI instead of a fat one; this
   changes `release.bat`, which assumes a single `app-release.apk`.
 
+## Before a public 1.0.0: hide the personal-use features
+
+The app is currently built for one user, and some features only make sense to that user.
+They stay for now, but **1.0.0 is a public release and must not ship them visible**:
+
+- **`.kbook` import** (Import Master Games → *Import .kbook File*). The format is a private
+  SQLite schema invented for this app — it is not a standard, nothing else reads or writes
+  one, and the only way to produce one is the generator in `D:\Projects\MyLands`. Shipping
+  the button without shipping MyLands offers the public a file they cannot obtain.
+  **Build From Account… stays** — that path needs no desktop step and is the public story.
+- **Chessable import** (Import Repertoire → the Chessable modes). Personal workflow.
+
+Hide, do not delete: they are still how the maintainer works. A build-time flag or a
+hidden/debug settings toggle is enough — the underlying `BookService.importBook` is also
+what `registerBuiltBook` validates through, so removing the *service* would break the
+public path too.
+
+## Import is bounded by time, not by months
+
+`BUILD_BUDGET_MS` (120s) stops a build or refresh at the next month boundary and hands back
+a usable book, with `remaining` saying how many months are left; Refresh continues.
+
+It is a **time** budget rather than a month cap because months are not comparable between
+accounts. Measured at ~35 games/sec on device, two minutes is ~4,150 games — about **1.7
+months** of a streamer's bullet output and **over 130 months** of a casual player's. Any
+fixed month count that suited one would be absurd for the other. Time also self-corrects
+for a slower phone, which a game count would not.
+
+Two consequences:
+
+- **Months are walked newest-first.** A budgeted run has to leave behind the months a
+  player actually prepares against; oldest-first would spend the entire budget on games
+  from a decade ago and stop before reaching anything current.
+- **The budget is only checked at month boundaries**, because a month is the resume unit
+  and a partial month cannot be marked complete without risking its games being fetched
+  twice. Overshoot is bounded by one month.
+
 ## Versioning
 
 The app is pre-1.0 on purpose: **1.0.0 is reserved for the Play Store release.**

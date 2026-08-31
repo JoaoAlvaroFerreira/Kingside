@@ -58,6 +58,21 @@ const STAGING_CHUNK = Math.floor(MAX_BIND_PARAMS / STAGING_COLUMNS);
 /** Rows buffered in JS before a flush. Bounds memory without shrinking the batches. */
 const FLUSH_THRESHOLD = 5000;
 
+/**
+ * How long a build or refresh may run before it stops and hands back a usable book.
+ *
+ * Deliberately a time budget rather than a month cap, because months are not comparable
+ * between accounts: measured at ~35 games/sec, two minutes is ~4,150 games, which is about
+ * 1.7 months of a streamer's bullet output and over 130 months of a casual player's. A
+ * month count that suited one would be absurd for the other. Time also self-corrects for a
+ * slower or faster phone, which a game count would not.
+ *
+ * Checked at month boundaries only: a month is the resume unit, and stopping mid-month
+ * could not be marked complete without risking those games being fetched twice. Overshoot
+ * is therefore bounded by one month.
+ */
+const BUILD_BUDGET_MS = 120_000;
+
 const RESULT_CODE: Record<string, number> = { '1-0': 1, '1/2-1/2': 0, '0-1': -1 };
 const UNKNOWN_RESULT = 2;
 
@@ -74,6 +89,8 @@ export interface RefreshResult {
   newGames: number;
   newPositions: number;
   months: number;
+  /** Months still missing because the time budget ran out. Refresh again to continue. */
+  remaining: number;
   seconds: number;
   /** True when the book already covered every month the source has. */
   upToDate: boolean;
@@ -85,6 +102,8 @@ export interface BuildResult {
   positions: number;
   unparsed: number;
   seconds: number;
+  /** Months left unfetched because the time budget ran out. Refresh continues from here. */
+  remaining: number;
 }
 
 type StagingRow = [string, string, number, number, number, number];
@@ -126,10 +145,14 @@ class BookBuilderClass {
     let plies = 0;
     let unparsed = 0;
     let gameId = 0;
+    let remaining = 0;
 
     try {
       onProgress({ phase: 'Listing months…', periodsDone: 0, periodsTotal: 0, games, plies });
-      const periods = await source.listPeriods(spec, signal);
+      // Newest first. A build that runs out of budget must leave behind the months a player
+      // actually prepares against; oldest-first would spend the whole budget on games from
+      // a decade ago and stop before reaching anything current.
+      const periods = (await source.listPeriods(spec, signal)).reverse();
       const done = await this.completedPeriods(db);
 
       for (let i = 0; i < periods.length; i++) {
@@ -172,6 +195,11 @@ class BookBuilderClass {
         await this.flushStaging(db, staging);
         await this.markPeriodDone(db, period);
         await yieldToUi();
+
+        if (Date.now() - started >= BUILD_BUDGET_MS && i < periods.length - 1) {
+          remaining = periods.length - 1 - i;
+          break;
+        }
       }
 
       // Filters that match nothing are easy to write by accident (a speed the account
@@ -206,7 +234,10 @@ class BookBuilderClass {
       await db.closeAsync();
 
       const record = await BookService.registerBuiltBook(fileName, displayName);
-      return { record, games, positions, unparsed, seconds: (Date.now() - started) / 1000 };
+      return {
+        record, games, positions, unparsed, remaining,
+        seconds: (Date.now() - started) / 1000,
+      };
     } catch (error) {
       try { await db.closeAsync(); } catch { /* already closed */ }
       // A cancelled build keeps its file: the resume markers inside it are the whole point.
@@ -266,10 +297,16 @@ class BookBuilderClass {
       onProgress({ phase: 'Checking for new months…', periodsDone: 0, periodsTotal: 0, games: 0, plies: 0 });
 
       const done = await this.completedPeriods(db);
-      const periods = (await source.listPeriods(spec, signal)).filter(p => !done.has(p.id));
+      const periods = (await source.listPeriods(spec, signal))
+        .filter(p => !done.has(p.id))
+        .reverse();
+      let remaining = 0;
       if (periods.length === 0) {
         await db.closeAsync();
-        return { record, newGames: 0, newPositions: 0, months: 0, seconds: 0, upToDate: true };
+        return {
+          record, newGames: 0, newPositions: 0, months: 0, remaining: 0,
+          seconds: 0, upToDate: true,
+        };
       }
 
       await db.execAsync(`
@@ -309,6 +346,11 @@ class BookBuilderClass {
         await this.flushStaging(db, staging);
         await this.markPeriodDone(db, period);
         await yieldToUi();
+
+        if (Date.now() - started >= BUILD_BUDGET_MS && i < periods.length - 1) {
+          remaining = periods.length - 1 - i;
+          break;
+        }
       }
 
       onProgress({ phase: 'Merging positions…', periodsDone: periods.length, periodsTotal: periods.length, games, plies });
@@ -324,7 +366,8 @@ class BookBuilderClass {
 
       const updated = await BookService.reregisterBook(record);
       return {
-        record: updated, newGames: games, newPositions, months: periods.length,
+        record: updated, newGames: games, newPositions,
+        months: periods.length - remaining, remaining,
         seconds: (Date.now() - started) / 1000, upToDate: false,
       };
     } catch (error) {

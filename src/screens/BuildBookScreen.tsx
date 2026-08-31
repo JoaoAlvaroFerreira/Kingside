@@ -83,10 +83,13 @@ export default function BuildBookScreen({ navigation, route }: Props) {
           : [
               book.name,
               '',
-              `${result.months} new month${result.months === 1 ? '' : 's'}`,
+              `${result.months} month${result.months === 1 ? '' : 's'} added`,
               `${result.newGames.toLocaleString()} games added`,
               `${result.newPositions.toLocaleString()} new positions`,
               `${Math.round(result.seconds)}s`,
+              ...(result.remaining > 0
+                ? ['', `${result.remaining} months still missing — Refresh again to continue.`]
+                : []),
             ].join('\n'),
         [{ text: 'OK', onPress: () => navigation.goBack() }]
       );
@@ -151,7 +154,7 @@ export default function BuildBookScreen({ navigation, route }: Props) {
       setBuilding(false);
       setPending(null);
       Alert.alert(
-        'Book Built',
+        result.remaining > 0 ? 'Book Built (recent months)' : 'Book Built',
         [
           result.record.name,
           '',
@@ -159,6 +162,9 @@ export default function BuildBookScreen({ navigation, route }: Props) {
           `${result.positions.toLocaleString()} positions indexed`,
           `${(result.record.sizeBytes / 1048576).toFixed(0)} MB`,
           `${Math.round(result.seconds)}s`,
+          ...(result.remaining > 0
+            ? ['', `${result.remaining} older months not fetched yet — use Refresh in Settings to continue.`]
+            : []),
         ].join('\n'),
         [{ text: 'OK', onPress: () => navigation.goBack() }]
       );
@@ -345,8 +351,9 @@ export default function BuildBookScreen({ navigation, route }: Props) {
       </TouchableOpacity>
 
       <Text style={styles.hint}>
-        A few years of games takes a minute or two. A very large account can take
-        considerably longer — it is fetched a month at a time and can be paused and resumed.
+        Fetches the most recent months first and stops after about two minutes, so you get a
+        usable book quickly. Anything older is picked up by Refresh in Settings — as many
+        times as it takes.
       </Text>
     </ScrollView>
   );
