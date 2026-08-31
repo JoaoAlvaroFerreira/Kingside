@@ -42,8 +42,8 @@ const record: BookRecord = {
 };
 
 const SPEC = JSON.stringify({
-  source: 'chesscom', username: 'someone', speeds: ['blitz'],
-  ratedOnly: false, standardOnly: true,
+  accounts: [{ source: 'chesscom', username: 'someone' }],
+  speeds: ['blitz'], ratedOnly: false, standardOnly: true,
 });
 
 /** A fake book file: records the SQL it is asked to run. */
@@ -101,7 +101,7 @@ describe('book refresh', () => {
 
     // Skipping finished months is the entire reason a top-up costs minutes, not an hour.
     expect(mockSource.fetchPeriod).toHaveBeenCalledTimes(1);
-    expect(mockSource.fetchPeriod.mock.calls[0][1].id).toBe('2025-03');
+    expect(mockSource.fetchPeriod.mock.calls[0][2].id).toBe('2025-03');
     expect(result.months).toBe(1);
     expect(result.upToDate).toBe(false);
   });
@@ -187,7 +187,48 @@ describe('book refresh', () => {
 
     await BookBuilder.refresh(record, noop, never);
 
-    expect(mockSource.fetchPeriod.mock.calls[0][1].id).toBe('2025-06');
+    expect(mockSource.fetchPeriod.mock.calls[0][2].id).toBe('2025-06');
+  });
+
+  it('keeps the months of each account separate', async () => {
+    // Two accounts have different archives, so a bare month marker would let one account's
+    // finished month mark the other's as done and silently skip those games.
+    const db = fakeBook({
+      meta: {
+        schema_version: '1', game_count: '100', full_ply: '16',
+        spec: JSON.stringify({
+          accounts: [
+            { source: 'chesscom', username: 'alice' },
+            { source: 'chesscom', username: 'bob' },
+          ],
+          speeds: ['blitz'], ratedOnly: false, standardOnly: true,
+        }),
+      },
+      donePeriods: ['chesscom:alice:2025-03'],
+    });
+    mockSQLite.openDatabaseAsync.mockResolvedValue(db);
+    mockSource.listPeriods.mockResolvedValue([{ id: '2025-03', year: 2025, month: 3 }]);
+    mockSource.fetchPeriod.mockResolvedValue([]);
+
+    const result = await BookBuilder.refresh(record, noop, never);
+
+    // alice's March is done; bob's is not.
+    expect(mockSource.fetchPeriod).toHaveBeenCalledTimes(1);
+    expect(mockSource.fetchPeriod.mock.calls[0][1].username).toBe('bob');
+    expect(result.upToDate).toBe(false);
+  });
+
+  it('honours the bare month markers written before books had several accounts', async () => {
+    // Those markers can only have meant the book's single account. Ignoring them would
+    // make every existing book re-fetch its entire history on the next refresh.
+    const db = fakeBook({ donePeriods: ['2025-03'] });
+    mockSQLite.openDatabaseAsync.mockResolvedValue(db);
+    mockSource.listPeriods.mockResolvedValue([{ id: '2025-03', year: 2025, month: 3 }]);
+
+    const result = await BookBuilder.refresh(record, noop, never);
+
+    expect(result.upToDate).toBe(true);
+    expect(mockSource.fetchPeriod).not.toHaveBeenCalled();
   });
 
   it('drops its scratch table and leaves the book usable when a fetch fails', async () => {

@@ -22,10 +22,6 @@ export const SettingsService = {
       showEvalBar: true,
       showBestMove: false,
       autoAdvanceDelay: 0,
-      lichess: {
-        username: '',
-        importDaysBack: 1,
-      },
       training: {
         correctDelayMs: 150,
         incorrectDelayMs: 500,
@@ -49,7 +45,6 @@ export const SettingsService = {
           ...this.getDefaults(),
           ...stored,
           engine: { ...this.getDefaults().engine, ...stored.engine },
-          lichess: { ...this.getDefaults().lichess, ...stored.lichess },
           training: { ...this.getDefaults().training, ...stored.training },
           books: { ...this.getDefaults().books, ...stored.books },
         };
@@ -81,7 +76,6 @@ export const SettingsService = {
       ...current,
       ...updates,
       engine: updates.engine ? { ...current.engine, ...updates.engine } : current.engine,
-      lichess: updates.lichess ? { ...current.lichess, ...updates.lichess } : current.lichess,
       training: updates.training ? { ...current.training, ...updates.training } : current.training,
     };
     await this.saveSettings(updated);

@@ -17,10 +17,21 @@ export type Speed = (typeof SPEEDS)[number];
 
 export type GameSourceId = 'lichess' | 'chesscom';
 
-/** What to fetch and what to keep. */
-export interface FetchSpec {
+/** One account to pull games from. A book may draw on several. */
+export interface FetchAccount {
   source: GameSourceId;
   username: string;
+}
+
+/**
+ * What to fetch and what to keep.
+ *
+ * `accounts` is a list because one player is often several accounts — a Lichess handle and
+ * a chess.com handle, or an old username and a current one — and their games are one body
+ * of play, not two. Everything else applies to all of them.
+ */
+export interface FetchSpec {
+  accounts: FetchAccount[];
   /** Only games where the user had this colour. */
   color?: 'white' | 'black';
   speeds: Speed[];
@@ -33,12 +44,22 @@ export interface FetchSpec {
   token?: string;
 }
 
-/** One month of an account's history. */
+/** One month of one account's history. */
 export interface FetchPeriod {
-  /** Stable "YYYY-MM", used as the resume marker. */
+  /** Stable "YYYY-MM". Combined with the account to form the resume marker. */
   id: string;
   year: number;
   month: number; // 1-12
+}
+
+/**
+ * The resume marker for one account-month.
+ *
+ * Scoped by account because two accounts have different archives: a bare month would let
+ * one account's finished month mark another's as done, silently skipping those games.
+ */
+export function periodKey(account: FetchAccount, period: FetchPeriod): string {
+  return `${account.source}:${account.username.trim().toLowerCase()}:${period.id}`;
 }
 
 export type FetchFailure =
@@ -72,7 +93,9 @@ export class FetchCancelled extends Error {
 export interface GameSource {
   readonly id: GameSourceId;
   /** Months this account has games in, oldest first, already trimmed to the spec's range. */
-  listPeriods(spec: FetchSpec, signal: AbortSignal): Promise<FetchPeriod[]>;
+  listPeriods(spec: FetchSpec, account: FetchAccount, signal: AbortSignal): Promise<FetchPeriod[]>;
   /** One month of PGNs, already filtered by the spec. One string per game. */
-  fetchPeriod(spec: FetchSpec, period: FetchPeriod, signal: AbortSignal): Promise<string[]>;
+  fetchPeriod(
+    spec: FetchSpec, account: FetchAccount, period: FetchPeriod, signal: AbortSignal
+  ): Promise<string[]>;
 }

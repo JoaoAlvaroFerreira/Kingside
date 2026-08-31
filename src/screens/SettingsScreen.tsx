@@ -44,10 +44,6 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
   const [showBestMove, setShowBestMove] = useState(reviewSettings.showBestMove);
   const [autoAdvanceDelay, setAutoAdvanceDelay] = useState(reviewSettings.autoAdvanceDelay.toString());
 
-  // Lichess settings
-  const [lichessUsername, setLichessUsername] = useState(reviewSettings.lichess.username);
-  const [lichessImportDaysBack, setLichessImportDaysBack] = useState(reviewSettings.lichess.importDaysBack.toString());
-
   // Training timing settings
   const [correctDelay, setCorrectDelay] = useState(reviewSettings.training.correctDelayMs.toString());
   const [incorrectDelay, setIncorrectDelay] = useState(reviewSettings.training.incorrectDelayMs.toString());
@@ -66,8 +62,6 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
     setShowEvalBar(reviewSettings.showEvalBar);
     setShowBestMove(reviewSettings.showBestMove);
     setAutoAdvanceDelay(reviewSettings.autoAdvanceDelay.toString());
-    setLichessUsername(reviewSettings.lichess.username);
-    setLichessImportDaysBack(reviewSettings.lichess.importDaysBack.toString());
     setCorrectDelay(reviewSettings.training.correctDelayMs.toString());
     setIncorrectDelay(reviewSettings.training.incorrectDelayMs.toString());
     setLineCompleteDelay(reviewSettings.training.lineCompleteDelayMs.toString());
@@ -99,11 +93,6 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
     const delayNum = parseInt(autoAdvanceDelay, 10);
     if (isNaN(delayNum) || delayNum < 0 || delayNum > 10000) {
       return 'Auto-advance delay must be between 0ms and 10000ms';
-    }
-
-    const importDaysBackNum = parseInt(lichessImportDaysBack, 10);
-    if (isNaN(importDaysBackNum) || importDaysBackNum < 1 || importDaysBackNum > 365) {
-      return 'Import days back must be between 1 and 365';
     }
 
     for (const [val, label] of [
@@ -232,10 +221,6 @@ ${msg}`)) void runRestore();
         showEvalBar,
         showBestMove,
         autoAdvanceDelay: parseInt(autoAdvanceDelay, 10),
-        lichess: {
-          username: lichessUsername.trim(),
-          importDaysBack: parseInt(lichessImportDaysBack, 10),
-        },
         training: {
           correctDelayMs: parseInt(correctDelay, 10),
           incorrectDelayMs: parseInt(incorrectDelay, 10),
@@ -275,8 +260,6 @@ ${msg}`)) void runRestore();
         showEvalBar: true,
         showBestMove: false,
         autoAdvanceDelay: '0',
-        lichessUsername: '',
-        lichessImportDaysBack: '1',
         correctDelay: '150',
         incorrectDelay: '500',
         lineCompleteDelay: '150',
@@ -290,8 +273,6 @@ ${msg}`)) void runRestore();
       setShowEvalBar(defaults.showEvalBar);
       setShowBestMove(defaults.showBestMove);
       setAutoAdvanceDelay(defaults.autoAdvanceDelay);
-      setLichessUsername(defaults.lichessUsername);
-      setLichessImportDaysBack(defaults.lichessImportDaysBack);
       setCorrectDelay(defaults.correctDelay);
       setIncorrectDelay(defaults.incorrectDelay);
       setLineCompleteDelay(defaults.lineCompleteDelay);
@@ -307,10 +288,6 @@ ${msg}`)) void runRestore();
         showEvalBar: true,
         showBestMove: false,
         autoAdvanceDelay: 0,
-        lichess: {
-          username: '',
-          importDaysBack: 1,
-        },
         training: {
           correctDelayMs: 150,
           incorrectDelayMs: 500,
@@ -460,40 +437,6 @@ ${msg}`)) void runRestore();
           </View>
         </View>
 
-        {/* Lichess Integration */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Lichess Integration</Text>
-          <Text style={styles.sectionDescription}>
-            Configure Lichess username to quickly import your recent games
-          </Text>
-
-          <View style={styles.field}>
-            <Text style={styles.label}>Lichess Username</Text>
-            <TextInput
-              style={styles.input}
-              value={lichessUsername}
-              onChangeText={setLichessUsername}
-              placeholder="your-lichess-username"
-              placeholderTextColor="#666"
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
-            <Text style={styles.hint}>Your Lichess account username (case-sensitive)</Text>
-          </View>
-
-          <View style={styles.field}>
-            <Text style={styles.label}>Import Days Back</Text>
-            <TextInput
-              style={styles.input}
-              value={lichessImportDaysBack}
-              onChangeText={setLichessImportDaysBack}
-              placeholder="1"
-              keyboardType="numeric"
-              placeholderTextColor="#666"
-            />
-            <Text style={styles.hint}>How many days of games to import (1-365, default: 1)</Text>
-          </View>
-        </View>
 
         {/* Training Timing */}
         <View style={styles.section}>

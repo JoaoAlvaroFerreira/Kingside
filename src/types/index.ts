@@ -80,9 +80,10 @@ export type {
   Speed,
   GameSourceId,
   FetchSpec,
+  FetchAccount,
   FetchPeriod,
   FetchFailure,
   GameSource,
 } from './gameSource.types';
 
-export { SPEEDS, FetchError, FetchCancelled } from './gameSource.types';
+export { SPEEDS, FetchError, FetchCancelled, periodKey } from './gameSource.types';

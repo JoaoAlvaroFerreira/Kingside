@@ -11,7 +11,7 @@ import {
   View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet,
   Alert, ActivityIndicator, Switch,
 } from 'react-native';
-import { FetchSpec, GameSourceId, Speed, SPEEDS, FetchError, FetchCancelled } from '@types';
+import { FetchSpec, FetchAccount, GameSourceId, Speed, SPEEDS, FetchError, FetchCancelled } from '@types';
 import { BookBuilder, BuildProgress, reviveSpec } from '@services/books/BookBuilder';
 import { BookService, PendingBuild } from '@services/books/BookService';
 import { BookRecord } from '@types';
@@ -40,6 +40,8 @@ export default function BuildBookScreen({ navigation, route }: Props) {
   const refreshBookId = route?.params?.refreshBookId;
   const [source, setSource] = useState<GameSourceId>('chesscom');
   const [username, setUsername] = useState('');
+  /** Accounts already added. One player is often several handles across both sites. */
+  const [accounts, setAccounts] = useState<FetchAccount[]>([]);
   const [speeds, setSpeeds] = useState<Speed[]>(['bullet', 'blitz', 'rapid', 'classical']);
   const [ratedOnly, setRatedOnly] = useState(false);
   const [standardOnly, setStandardOnly] = useState(true);
@@ -115,10 +117,30 @@ export default function BuildBookScreen({ navigation, route }: Props) {
     );
   };
 
-  const buildSpec = (): FetchSpec | null => {
+  const addAccount = () => {
     const name = username.trim();
-    if (!name) {
-      Alert.alert('Username Required', `Enter the ${SOURCE_LABEL[source]} account to build from.`);
+    if (!name) return;
+    const exists = accounts.some(
+      a => a.source === source && a.username.toLowerCase() === name.toLowerCase()
+    );
+    if (!exists) setAccounts([...accounts, { source, username: name }]);
+    setUsername('');
+  };
+
+  const removeAccount = (index: number) => {
+    setAccounts(accounts.filter((_, i) => i !== index));
+  };
+
+  const buildSpec = (): FetchSpec | null => {
+    // The typed-but-not-yet-added name counts: forgetting to press Add is not a reason to
+    // refuse to build.
+    const pending = username.trim();
+    const all = pending && !accounts.some(
+      a => a.source === source && a.username.toLowerCase() === pending.toLowerCase()
+    ) ? [...accounts, { source, username: pending }] : accounts;
+
+    if (all.length === 0) {
+      Alert.alert('Account Required', `Enter the ${SOURCE_LABEL[source]} account to build from.`);
       return null;
     }
     if (speeds.length === 0) {
@@ -131,8 +153,7 @@ export default function BuildBookScreen({ navigation, route }: Props) {
       return null;
     }
     return {
-      source,
-      username: name,
+      accounts: all,
       speeds,
       ratedOnly,
       standardOnly,
@@ -187,7 +208,7 @@ export default function BuildBookScreen({ navigation, route }: Props) {
   const handleBuild = () => {
     const spec = buildSpec();
     if (!spec) return;
-    run(spec, spec.username);
+    run(spec, spec.accounts.map(a => a.username).join(', '));
   };
 
   const handleResume = () => {
@@ -278,16 +299,36 @@ export default function BuildBookScreen({ navigation, route }: Props) {
         ))}
       </View>
 
-      <Text style={styles.label}>Username</Text>
-      <TextInput
-        style={styles.input}
-        value={username}
-        onChangeText={setUsername}
-        placeholder={source === 'chesscom' ? 'DanielNaroditsky' : 'lichess username'}
-        placeholderTextColor="#666"
-        autoCapitalize="none"
-        autoCorrect={false}
-      />
+      <Text style={styles.label}>Accounts</Text>
+      {accounts.map((account, index) => (
+        <View key={`${account.source}:${account.username}`} style={styles.accountRow}>
+          <Text style={styles.accountText}>
+            {SOURCE_LABEL[account.source]} · {account.username}
+          </Text>
+          <TouchableOpacity onPress={() => removeAccount(index)}>
+            <Text style={styles.accountRemove}>Remove</Text>
+          </TouchableOpacity>
+        </View>
+      ))}
+      <View style={styles.accountAddRow}>
+        <TextInput
+          style={[styles.input, styles.accountInput]}
+          value={username}
+          onChangeText={setUsername}
+          placeholder={source === 'chesscom' ? 'chess.com username' : 'lichess username'}
+          placeholderTextColor="#666"
+          autoCapitalize="none"
+          autoCorrect={false}
+          onSubmitEditing={addAccount}
+        />
+        <TouchableOpacity style={styles.accountAdd} onPress={addAccount}>
+          <Text style={styles.buttonText}>Add</Text>
+        </TouchableOpacity>
+      </View>
+      <Text style={styles.hint}>
+        Add more than one to build a single book from several handles — your Lichess and
+        chess.com accounts, or an old username and a current one.
+      </Text>
 
       <Text style={styles.label}>Time controls</Text>
       <View style={styles.wrapRow}>
@@ -372,6 +413,19 @@ const styles = StyleSheet.create({
   },
   row: { flexDirection: 'row', gap: 8 },
   wrapRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  accountRow: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    backgroundColor: '#1c1c1e', borderRadius: 8, paddingHorizontal: 14,
+    paddingVertical: 12, marginBottom: 8,
+  },
+  accountText: { color: '#e0e0e0', fontSize: 14, flex: 1 },
+  accountRemove: { color: '#ff6b6b', fontSize: 13, fontWeight: '600' },
+  accountAddRow: { flexDirection: 'row', gap: 8, alignItems: 'center' },
+  accountInput: { flex: 1 },
+  accountAdd: {
+    backgroundColor: '#0a3d62', borderRadius: 8,
+    paddingHorizontal: 20, paddingVertical: 13,
+  },
   chip: {
     paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20,
     backgroundColor: '#1c1c1e', borderWidth: 1, borderColor: '#2c2c2e',

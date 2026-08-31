@@ -11,7 +11,7 @@
  * almost nothing is discarded locally.
  */
 
-import { FetchSpec, FetchPeriod, GameSource, Speed, FetchError } from '@types';
+import { FetchSpec, FetchAccount, FetchPeriod, GameSource, Speed, FetchError } from '@types';
 import { httpGet } from './http';
 import { splitGames } from './pgnScan';
 
@@ -36,8 +36,10 @@ class LichessSourceClass implements GameSource {
    * Months with no games cost one cheap empty response rather than needing to be known
    * in advance.
    */
-  async listPeriods(spec: FetchSpec, signal: AbortSignal): Promise<FetchPeriod[]> {
-    const user = spec.username.trim();
+  async listPeriods(
+    spec: FetchSpec, account: FetchAccount, signal: AbortSignal
+  ): Promise<FetchPeriod[]> {
+    const user = account.username.trim();
     if (!user) throw new FetchError('user-not-found', 'Enter a Lichess username.');
 
     const body = await httpGet(`${API}/user/${encodeURIComponent(user)}`, signal, {
@@ -58,7 +60,9 @@ class LichessSourceClass implements GameSource {
     return monthsBetween(first, last);
   }
 
-  async fetchPeriod(spec: FetchSpec, period: FetchPeriod, signal: AbortSignal): Promise<string[]> {
+  async fetchPeriod(
+    spec: FetchSpec, account: FetchAccount, period: FetchPeriod, signal: AbortSignal
+  ): Promise<string[]> {
     const since = Date.UTC(period.year, period.month - 1, 1);
     const until = Date.UTC(period.year, period.month, 1) - 1;
 
@@ -79,7 +83,7 @@ class LichessSourceClass implements GameSource {
     if (spec.standardOnly) params.set('variant', 'standard');
 
     const body = await httpGet(
-      `${API}/games/user/${encodeURIComponent(spec.username.trim())}?${params.toString()}`,
+      `${API}/games/user/${encodeURIComponent(account.username.trim())}?${params.toString()}`,
       signal,
       // listPeriods already proved this account exists, so a 404 here cannot mean a
       // missing user — it is Lichess throttling, and must be backed off, not reported

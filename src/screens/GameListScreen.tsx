@@ -3,7 +3,6 @@ import { View, Text, TouchableOpacity, StyleSheet, FlatList, Alert, Platform, Ac
 import { Swipeable } from 'react-native-gesture-handler';
 import { useStore } from '@store';
 import { UserGame, MasterGame } from '@types';
-import { PGNService } from '@services/pgn/PGNService';
 import { DatabaseService } from '@services/database/DatabaseService';
 import { useFocusEffect } from '@react-navigation/native';
 
@@ -15,7 +14,6 @@ type TabType = 'my-games' | 'master-games';
 
 export default function GameListScreen({ navigation }: GameListScreenProps) {
   const [activeTab, setActiveTab] = useState<TabType>('my-games');
-  const [importingFromLichess, setImportingFromLichess] = useState(false);
   const [games, setGames] = useState<(UserGame | MasterGame)[]>([]);
   const [currentPage, setCurrentPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
@@ -28,10 +26,8 @@ export default function GameListScreen({ navigation }: GameListScreenProps) {
   const deleteMasterGame = useStore(s => s.deleteMasterGame);
   const deleteAllUserGames = useStore(s => s.deleteAllUserGames);
   const deleteAllMasterGames = useStore(s => s.deleteAllMasterGames);
-  const addUserGames = useStore(s => s.addUserGames);
   const refreshUserGamesCount = useStore(s => s.refreshUserGamesCount);
   const refreshMasterGamesCount = useStore(s => s.refreshMasterGamesCount);
-  const reviewSettings = useStore(s => s.reviewSettings);
 
   const totalCount = activeTab === 'my-games' ? userGamesCount : masterGamesCount;
 
@@ -87,95 +83,6 @@ export default function GameListScreen({ navigation }: GameListScreenProps) {
     navigation.navigate('ImportPGN', { target: activeTab });
   };
 
-  const handleLichessImport = async () => {
-    const { username, importDaysBack } = reviewSettings.lichess;
-
-    if (!username || !username.trim()) {
-      const msg = 'Please configure your Lichess username in Settings first.';
-      if (Platform.OS === 'web') {
-        window.alert(msg);
-      } else {
-        Alert.alert('Configuration Required', msg);
-      }
-      return;
-    }
-
-    setImportingFromLichess(true);
-
-    try {
-      // Calculate timestamps
-      const now = Date.now();
-      const daysBackMs = importDaysBack * 24 * 60 * 60 * 1000;
-      const since = now - daysBackMs;
-
-      // Build API URL
-      const apiUrl = `https://lichess.org/api/games/user/${username}?tags=true&clocks=false&evals=false&opening=false&literate=false&since=${since}&until=${now}`;
-
-      console.log('Fetching Lichess games from:', apiUrl);
-
-      const response = await fetch(apiUrl);
-
-      if (!response.ok) {
-        throw new Error(`Lichess API returned ${response.status}: ${response.statusText}`);
-      }
-
-      const pgnText = await response.text();
-
-      if (!pgnText || !pgnText.trim()) {
-        const msg = `No games found for user "${username}" in the last ${importDaysBack} day(s).`;
-        if (Platform.OS === 'web') {
-          window.alert(msg);
-        } else {
-          Alert.alert('No Games Found', msg);
-        }
-        return;
-      }
-
-      console.log('Lichess PGN fetched, length:', pgnText.length);
-
-      // Parse games
-      const games = PGNService.parseMultipleGames(pgnText);
-      console.log('Parsed Lichess games:', games.length);
-
-      if (games.length === 0) {
-        const msg = 'No valid games found in Lichess response.';
-        if (Platform.OS === 'web') {
-          window.alert(msg);
-        } else {
-          Alert.alert('Import Failed', msg);
-        }
-        return;
-      }
-
-      // Convert to UserGame format
-      const userGames = games.map((g) => ({
-        id: Math.random().toString(36).substr(2, 9),
-        ...PGNService.toUserGame(g),
-        pgn: PGNService.toPGNString(g),
-        importedAt: new Date(),
-      }));
-
-      await addUserGames(userGames);
-      await refreshGames();
-
-      const msg = `Successfully imported ${userGames.length} game(s) from Lichess!`;
-      if (Platform.OS === 'web') {
-        window.alert(msg);
-      } else {
-        Alert.alert('Import Success', msg);
-      }
-    } catch (error: any) {
-      console.error('Lichess import error:', error);
-      const msg = `Failed to import games from Lichess: ${error.message || String(error)}`;
-      if (Platform.OS === 'web') {
-        window.alert(msg);
-      } else {
-        Alert.alert('Import Failed', msg);
-      }
-    } finally {
-      setImportingFromLichess(false);
-    }
-  };
 
   const handleGamePress = (game: UserGame | MasterGame) => {
     // Navigate to Analysis Board with this game loaded
@@ -293,19 +200,6 @@ export default function GameListScreen({ navigation }: GameListScreenProps) {
           {games.length > 0 && (
             <TouchableOpacity style={styles.deleteAllButton} onPress={handleDeleteAll}>
               <Text style={styles.deleteAllButtonText}>Delete All</Text>
-            </TouchableOpacity>
-          )}
-          {activeTab === 'my-games' && (
-            <TouchableOpacity
-              style={[styles.lichessButton, importingFromLichess && styles.lichessButtonDisabled]}
-              onPress={handleLichessImport}
-              disabled={importingFromLichess}
-            >
-              {importingFromLichess ? (
-                <ActivityIndicator size="small" color="#fff" />
-              ) : (
-                <Text style={styles.lichessButtonText}>↓ Lichess</Text>
-              )}
             </TouchableOpacity>
           )}
           <TouchableOpacity style={styles.importButton} onPress={handleImport}>

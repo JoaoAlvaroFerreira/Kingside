@@ -23,7 +23,9 @@ import { Platform } from 'react-native';
 import { Chess } from 'chess.js';
 import {
   FetchSpec,
+  FetchAccount,
   FetchPeriod,
+  periodKey,
   FetchCancelled,
   FetchError,
   BookRecord,
@@ -128,7 +130,7 @@ class BookBuilderClass {
     }
 
     const started = Date.now();
-    const source = getGameSource(spec.source);
+    const names = heroNames(spec);
     const fileName = resumeFileName
       ?? `book_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.kbook`;
     const path = `${FileSystem.documentDirectory}SQLite/${fileName}`;
@@ -149,33 +151,46 @@ class BookBuilderClass {
 
     try {
       onProgress({ phase: 'Listing months…', periodsDone: 0, periodsTotal: 0, games, plies });
-      // Newest first. A build that runs out of budget must leave behind the months a player
-      // actually prepares against; oldest-first would spend the whole budget on games from
-      // a decade ago and stop before reaching anything current.
-      const periods = (await source.listPeriods(spec, signal)).reverse();
-      const done = await this.completedPeriods(db);
 
-      for (let i = 0; i < periods.length; i++) {
-        const period = periods[i];
+      // Every account's months, newest first. A build that runs out of budget must leave
+      // behind the months a player actually prepares against; oldest-first would spend the
+      // whole budget a decade ago and stop before reaching anything current.
+      const work: Array<{ account: FetchAccount; period: FetchPeriod }> = [];
+      for (const account of spec.accounts) {
+        const source = getGameSource(account.source);
+        const done = await this.completedFor(db, spec, account);
+        const periods = await source.listPeriods(spec, account, signal);
+        for (const period of periods) {
+          if (done.has(periodKey(account, period))) continue;
+          work.push({ account, period });
+        }
+      }
+      work.sort((a, b) => b.period.id.localeCompare(a.period.id));
+
+      for (let i = 0; i < work.length; i++) {
+        const { account, period } = work[i];
         if (signal.aborted) throw new FetchCancelled();
-        if (done.has(period.id)) continue;
+        const label = spec.accounts.length > 1
+          ? `${account.username} ${period.id}`
+          : period.id;
 
         onProgress({
-          phase: `Fetching ${period.id}…`,
-          periodsDone: i, periodsTotal: periods.length, games, plies,
+          phase: `Fetching ${label}…`,
+          periodsDone: i, periodsTotal: work.length, games, plies,
         });
-        const pgns = await source.fetchPeriod(spec, period, signal);
+        const pgns = await getGameSource(account.source)
+          .fetchPeriod(spec, account, period, signal);
 
         onProgress({
-          phase: `Reading ${period.id} (${pgns.length} games)…`,
-          periodsDone: i, periodsTotal: periods.length, games, plies,
+          phase: `Reading ${label} (${pgns.length} games)…`,
+          periodsDone: i, periodsTotal: work.length, games, plies,
         });
 
         const staging: StagingRow[] = [];
         for (const pgn of pgns) {
           if (signal.aborted) throw new FetchCancelled();
           gameId += 1;
-          const outcome = this.ingestGame(pgn, spec, gameId, staging);
+          const outcome = this.ingestGame(pgn, names, gameId, staging);
           if (outcome.broke) unparsed += 1;
           plies += outcome.plies;
           games += 1;
@@ -187,17 +202,17 @@ class BookBuilderClass {
             // button alive through a long month.
             await yieldToUi();
             onProgress({
-              phase: `Reading ${period.id}…`,
-              periodsDone: i, periodsTotal: periods.length, games, plies,
+              phase: `Reading ${label}…`,
+              periodsDone: i, periodsTotal: work.length, games, plies,
             });
           }
         }
         await this.flushStaging(db, staging);
-        await this.markPeriodDone(db, period);
+        await this.markPeriodDone(db, account, period);
         await yieldToUi();
 
-        if (Date.now() - started >= BUILD_BUDGET_MS && i < periods.length - 1) {
-          remaining = periods.length - 1 - i;
+        if (Date.now() - started >= BUILD_BUDGET_MS && i < work.length - 1) {
+          remaining = work.length - 1 - i;
           break;
         }
       }
@@ -217,7 +232,7 @@ class BookBuilderClass {
 
       onProgress({
         phase: 'Aggregating positions…',
-        periodsDone: periods.length, periodsTotal: periods.length, games, plies,
+        periodsDone: work.length, periodsTotal: work.length, games, plies,
       });
       await this.aggregate(db);
 
@@ -227,7 +242,7 @@ class BookBuilderClass {
 
       onProgress({
         phase: 'Compacting…',
-        periodsDone: periods.length, periodsTotal: periods.length, games, plies,
+        periodsDone: work.length, periodsTotal: work.length, games, plies,
       });
       await db.execAsync('DROP TABLE IF EXISTS staging');
       await db.execAsync('VACUUM');
@@ -284,7 +299,7 @@ class BookBuilderClass {
     try {
       const meta = await this.readMetaMap(db);
       const spec = meta.spec ? reviveSpec(JSON.parse(meta.spec)) : null;
-      if (!spec || !spec.username || !spec.source) {
+      if (!spec || spec.accounts.length === 0) {
         throw new FetchError(
           'unsupported',
           'This book predates refresh support and has no record of how it was built. Rebuild it to enable refreshing.'
@@ -292,16 +307,23 @@ class BookBuilderClass {
       }
       // A refresh means "bring up to date", so the original end date no longer applies.
       spec.until = undefined;
+      const names = heroNames(spec);
 
-      const source = getGameSource(spec.source);
       onProgress({ phase: 'Checking for new months…', periodsDone: 0, periodsTotal: 0, games: 0, plies: 0 });
 
-      const done = await this.completedPeriods(db);
-      const periods = (await source.listPeriods(spec, signal))
-        .filter(p => !done.has(p.id))
-        .reverse();
+      const work: Array<{ account: FetchAccount; period: FetchPeriod }> = [];
+      for (const account of spec.accounts) {
+        const done = await this.completedFor(db, spec, account);
+        const periods = await getGameSource(account.source).listPeriods(spec, account, signal);
+        for (const period of periods) {
+          if (done.has(periodKey(account, period))) continue;
+          work.push({ account, period });
+        }
+      }
+      work.sort((a, b) => b.period.id.localeCompare(a.period.id));
+
       let remaining = 0;
-      if (periods.length === 0) {
+      if (work.length === 0) {
         await db.closeAsync();
         return {
           record, newGames: 0, newPositions: 0, months: 0, remaining: 0,
@@ -322,38 +344,41 @@ class BookBuilderClass {
       let games = 0;
       let plies = 0;
 
-      for (let i = 0; i < periods.length; i++) {
-        const period = periods[i];
+      for (let i = 0; i < work.length; i++) {
+        const { account, period } = work[i];
         if (signal.aborted) throw new FetchCancelled();
+        const label = spec.accounts.length > 1
+          ? `${account.username} ${period.id}`
+          : period.id;
 
-        onProgress({ phase: `Fetching ${period.id}…`, periodsDone: i, periodsTotal: periods.length, games, plies });
-        const pgns = await source.fetchPeriod(spec, period, signal);
+        onProgress({ phase: `Fetching ${label}…`, periodsDone: i, periodsTotal: work.length, games, plies });
+        const pgns = await getGameSource(account.source).fetchPeriod(spec, account, period, signal);
 
         const staging: StagingRow[] = [];
         for (const pgn of pgns) {
           if (signal.aborted) throw new FetchCancelled();
           gameId += 1;
-          const outcome = this.ingestGame(pgn, spec, gameId, staging);
+          const outcome = this.ingestGame(pgn, names, gameId, staging);
           plies += outcome.plies;
           games += 1;
           await this.insertGameRow(db, gameId, outcome);
           if (staging.length >= FLUSH_THRESHOLD) {
             await this.flushStaging(db, staging);
             await yieldToUi();
-            onProgress({ phase: `Reading ${period.id}…`, periodsDone: i, periodsTotal: periods.length, games, plies });
+            onProgress({ phase: `Reading ${label}…`, periodsDone: i, periodsTotal: work.length, games, plies });
           }
         }
         await this.flushStaging(db, staging);
-        await this.markPeriodDone(db, period);
+        await this.markPeriodDone(db, account, period);
         await yieldToUi();
 
-        if (Date.now() - started >= BUILD_BUDGET_MS && i < periods.length - 1) {
-          remaining = periods.length - 1 - i;
+        if (Date.now() - started >= BUILD_BUDGET_MS && i < work.length - 1) {
+          remaining = work.length - 1 - i;
           break;
         }
       }
 
-      onProgress({ phase: 'Merging positions…', periodsDone: periods.length, periodsTotal: periods.length, games, plies });
+      onProgress({ phase: 'Merging positions…', periodsDone: work.length, periodsTotal: work.length, games, plies });
       const newPositions = await this.mergeStaging(db, Number(meta.full_ply) || FULL_PLY);
 
       await db.runAsync(
@@ -367,7 +392,7 @@ class BookBuilderClass {
       const updated = await BookService.reregisterBook(record);
       return {
         record: updated, newGames: games, newPositions,
-        months: periods.length - remaining, remaining,
+        months: work.length - remaining, remaining,
         seconds: (Date.now() - started) / 1000, upToDate: false,
       };
     } catch (error) {
@@ -460,12 +485,12 @@ class BookBuilderClass {
   /** Replay one game into staging rows, returning what the games table needs. */
   private ingestGame(
     pgn: string,
-    spec: FetchSpec,
+    names: Set<string>,
     gameId: number,
     staging: StagingRow[]
   ): IngestedGame {
     const { headers, moves } = scanGame(pgn);
-    const heroIsWhite = heroSide(headers, spec.username);
+    const heroIsWhite = heroSide(headers, names);
     const result = RESULT_CODE[headers.Result ?? ''] ?? UNKNOWN_RESULT;
 
     const chess = new Chess();
@@ -572,11 +597,36 @@ class BookBuilderClass {
     }
   }
 
-  private async markPeriodDone(db: any, period: FetchPeriod): Promise<void> {
+  private async markPeriodDone(
+    db: any, account: FetchAccount, period: FetchPeriod
+  ): Promise<void> {
     await db.runAsync(
       'INSERT OR REPLACE INTO book_meta (key, value) VALUES (?, ?)',
-      [`period:${period.id}`, '1']
+      [`period:${periodKey(account, period)}`, '1']
     );
+  }
+
+  /**
+   * The account-months a book already covers.
+   *
+   * Books written before multi-account support marked bare months (`period:2025-01`). Those
+   * are still honoured for the book's first account, which is the only one they could have
+   * meant — dropping them would make every existing book re-fetch its whole history.
+   */
+  private async completedFor(
+    db: any, spec: FetchSpec, account: FetchAccount
+  ): Promise<Set<string>> {
+    const done = await this.completedPeriods(db);
+    const isFirst = spec.accounts[0] &&
+      spec.accounts[0].source === account.source &&
+      spec.accounts[0].username.trim().toLowerCase() === account.username.trim().toLowerCase();
+
+    const scoped = new Set<string>();
+    for (const key of done) {
+      if (key.includes(':')) scoped.add(key);
+      else if (isFirst) scoped.add(`${account.source}:${account.username.trim().toLowerCase()}:${key}`);
+    }
+    return scoped;
   }
 
   /** Collapse staging into one row per surviving (position, move). */
@@ -642,8 +692,8 @@ class BookBuilderClass {
     const entries: Array<[string, string]> = [
       ['schema_version', String(BOOK_SCHEMA_VERSION)],
       ['name', displayName],
-      ['player', spec.username.trim()],
-      ['source_file', `${spec.source}:${spec.username.trim()}`],
+      ['player', spec.accounts.map(a => a.username.trim()).join(', ')],
+      ['source_file', spec.accounts.map(a => `${a.source}:${a.username.trim()}`).join(', ')],
       ['game_count', String(games)],
       ['max_ply', String(MAX_PLY)],
       ['full_ply', String(FULL_PLY)],
@@ -667,13 +717,22 @@ interface IngestedGame {
   plies: number;
 }
 
-/** True/False if the named player is White/Black; null if this isn't their game. */
-function heroSide(headers: Record<string, string>, username: string): boolean | null {
-  const name = username.trim().toLowerCase();
-  if (!name) return null;
-  if ((headers.White ?? '').trim().toLowerCase() === name) return true;
-  if ((headers.Black ?? '').trim().toLowerCase() === name) return false;
+/**
+ * True/False if any of the book's accounts is White/Black; null if none of them played.
+ *
+ * A book can draw on several accounts belonging to the same person, so "the player" is any
+ * of those names — matching only the account a game was fetched under would score their
+ * other handle as an opponent.
+ */
+function heroSide(headers: Record<string, string>, names: Set<string>): boolean | null {
+  if (names.size === 0) return null;
+  if (names.has((headers.White ?? '').trim().toLowerCase())) return true;
+  if (names.has((headers.Black ?? '').trim().toLowerCase())) return false;
   return null;
+}
+
+function heroNames(spec: FetchSpec): Set<string> {
+  return new Set(spec.accounts.map(a => a.username.trim().toLowerCase()).filter(Boolean));
 }
 
 function toInt(value: string | undefined): number | null {
@@ -690,9 +749,22 @@ function serialiseSpec(spec: FetchSpec): any {
   };
 }
 
+/**
+ * Read a stored spec, upgrading the single-account shape written before books could draw
+ * on several. Older books hold `source` + `username`; they become a one-entry list rather
+ * than being rejected, so an existing book stays refreshable.
+ */
 export function reviveSpec(raw: any): FetchSpec {
+  const accounts: FetchAccount[] = Array.isArray(raw?.accounts)
+    ? raw.accounts
+    : (raw?.source && raw?.username ? [{ source: raw.source, username: raw.username }] : []);
+
   return {
     ...raw,
+    accounts,
+    speeds: raw?.speeds ?? [],
+    ratedOnly: !!raw?.ratedOnly,
+    standardOnly: raw?.standardOnly !== false,
     since: raw?.since ? new Date(raw.since) : undefined,
     until: raw?.until ? new Date(raw.until) : undefined,
   };

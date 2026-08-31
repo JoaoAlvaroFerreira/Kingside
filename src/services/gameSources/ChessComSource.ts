@@ -7,7 +7,7 @@
  * parsing happens.
  */
 
-import { FetchSpec, FetchPeriod, GameSource, Speed, FetchError } from '@types';
+import { FetchSpec, FetchAccount, FetchPeriod, GameSource, Speed, FetchError } from '@types';
 import { httpGet, throwIfAborted } from './http';
 
 const API = 'https://api.chess.com/pub';
@@ -33,8 +33,10 @@ interface ChessComGame {
 class ChessComSourceClass implements GameSource {
   readonly id = 'chesscom' as const;
 
-  async listPeriods(spec: FetchSpec, signal: AbortSignal): Promise<FetchPeriod[]> {
-    const user = spec.username.trim().toLowerCase();
+  async listPeriods(
+    spec: FetchSpec, account: FetchAccount, signal: AbortSignal
+  ): Promise<FetchPeriod[]> {
+    const user = account.username.trim().toLowerCase();
     if (!user) throw new FetchError('user-not-found', 'Enter a chess.com username.');
 
     const body = await httpGet(`${API}/player/${encodeURIComponent(user)}/games/archives`, signal);
@@ -58,8 +60,10 @@ class ChessComSourceClass implements GameSource {
     return periods;
   }
 
-  async fetchPeriod(spec: FetchSpec, period: FetchPeriod, signal: AbortSignal): Promise<string[]> {
-    const user = spec.username.trim().toLowerCase();
+  async fetchPeriod(
+    spec: FetchSpec, account: FetchAccount, period: FetchPeriod, signal: AbortSignal
+  ): Promise<string[]> {
+    const user = account.username.trim().toLowerCase();
     const month = String(period.month).padStart(2, '0');
     const body = await httpGet(
       `${API}/player/${encodeURIComponent(user)}/games/${period.year}/${month}`,

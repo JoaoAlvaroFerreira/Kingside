@@ -87,11 +87,6 @@ export interface EngineSettings {
   multiPV: number;          // Number of principal variations (1-5, default: 3)
 }
 
-export interface LichessSettings {
-  username: string;
-  importDaysBack: number;  // Number of days to look back (default 1 for last 24h)
-}
-
 export interface TrainingTimingSettings {
   correctDelayMs: number;       // Pause after correct move (default: 150)
   incorrectDelayMs: number;     // Pause after incorrect move (default: 500)
@@ -117,7 +112,6 @@ export interface ReviewSettings {
   showEvalBar: boolean;
   showBestMove: boolean;
   autoAdvanceDelay: number; // ms, 0 = manual
-  lichess: LichessSettings;
   training: TrainingTimingSettings;
   books: BookSettings;
 }

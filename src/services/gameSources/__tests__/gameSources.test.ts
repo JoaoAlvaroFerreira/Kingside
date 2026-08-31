@@ -6,13 +6,16 @@ import { LichessSource, monthsBetween } from '../LichessSource';
 import { FetchSpec, SPEEDS } from '@types';
 
 const spec = (over: Partial<FetchSpec> = {}): FetchSpec => ({
-  source: 'chesscom',
-  username: 'DanielNaroditsky',
+  accounts: [{ source: 'chesscom', username: 'DanielNaroditsky' }],
   speeds: [...SPEEDS],
   ratedOnly: false,
   standardOnly: true,
   ...over,
 });
+
+/** The account a call is about; sources take it explicitly now. */
+const acct = (source: 'chesscom' | 'lichess' = 'chesscom', username = 'DanielNaroditsky') =>
+  ({ source, username });
 
 const never = new AbortController().signal;
 
@@ -75,7 +78,7 @@ describe('ChessComSource', () => {
     }));
 
     const periods = await ChessComSource.listPeriods(
-      spec({ since: new Date(Date.UTC(2025, 0, 1)) }), never
+      spec({ since: new Date(Date.UTC(2025, 0, 1)) }), acct(), never
     );
     expect(periods.map(p => p.id)).toEqual(['2025-01', '2025-06']);
   });
@@ -98,6 +101,7 @@ describe('ChessComSource', () => {
 
     const pgns = await ChessComSource.fetchPeriod(
       spec({ ratedOnly: true, speeds: ['blitz'] }),
+      acct(),
       { id: '2025-01', year: 2025, month: 1 },
       never
     );
@@ -117,14 +121,14 @@ describe('ChessComSource', () => {
     }));
 
     const pgns = await ChessComSource.fetchPeriod(
-      spec({ color: 'black' }), { id: '2025-01', year: 2025, month: 1 }, never
+      spec({ color: 'black' }), acct(), { id: '2025-01', year: 2025, month: 1 }, never
     );
     expect(pgns).toEqual(['ASBLACK']);
   });
 
   it('reports a missing account rather than returning nothing', async () => {
     mockFetch(() => ({ status: 404, body: '' }));
-    await expect(ChessComSource.listPeriods(spec(), never))
+    await expect(ChessComSource.listPeriods(spec(), acct(), never))
       .rejects.toMatchObject({ reason: 'user-not-found' });
   });
 });
@@ -138,7 +142,7 @@ describe('LichessSource', () => {
   it('derives the range from the profile creation date', async () => {
     mockFetch(() => ({ body: JSON.stringify({ createdAt: Date.UTC(2025, 0, 10) }) }));
     const periods = await LichessSource.listPeriods(
-      spec({ source: 'lichess', until: new Date(Date.UTC(2025, 2, 1)) }), never
+      spec({ until: new Date(Date.UTC(2025, 2, 1)) }), acct('lichess', 'someone'), never
     );
     expect(periods.map(p => p.id)).toEqual(['2025-01', '2025-02', '2025-03']);
   });
@@ -151,7 +155,8 @@ describe('LichessSource', () => {
     });
 
     await LichessSource.fetchPeriod(
-      spec({ source: 'lichess', color: 'white', ratedOnly: true, speeds: ['blitz', 'rapid'] }),
+      spec({ color: 'white', ratedOnly: true, speeds: ['blitz', 'rapid'] }),
+      acct('lichess', 'someone'),
       { id: '2025-01', year: 2025, month: 1 },
       never
     );
@@ -170,7 +175,7 @@ describe('LichessSource', () => {
     mockFetch((url) => { requested = url; return { body: '' }; });
 
     await LichessSource.fetchPeriod(
-      spec({ source: 'lichess' }), { id: '2025-01', year: 2025, month: 1 }, never
+      spec(), acct('lichess', 'someone'), { id: '2025-01', year: 2025, month: 1 }, never
     );
     expect(requested).not.toContain('perfType');
   });

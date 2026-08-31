@@ -72,7 +72,6 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
   const addRepertoire = useStore(s => s.addRepertoire);
   const addUserGames = useStore(s => s.addUserGames);
   const addMasterGames = useStore(s => s.addMasterGames);
-  const reviewSettings = useStore(s => s.reviewSettings);
   const cancelRequestedRef = useRef(false);
   const deadlineRef = useRef(0);
 
@@ -196,14 +195,10 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
   };
 
   const handleLichessImport = async (mode: 'master' | 'user') => {
-    const username = mode === 'master'
-      ? lichessUsername.trim()
-      : reviewSettings.lichess.username?.trim();
+    const username = lichessUsername.trim();
 
     if (!username) {
-      const msg = mode === 'master'
-        ? 'Please enter a Lichess username'
-        : 'Please set your Lichess username in Settings';
+      const msg = 'Please enter a Lichess username';
       Alert.alert('Error', msg);
       return;
     }
@@ -214,15 +209,13 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
     try {
       console.log('[ImportPGN] Fetching games for username:', username);
 
-      let pgns: string[];
-      if (mode === 'master') {
-        const max = parseInt(masterGameCount, 10) || 50;
-        const daysBack = parseInt(masterDaysBack, 10) || 0;
-        pgns = await LichessService.fetchMasterGames(username, max, daysBack || undefined);
-      } else {
-        const daysBack = reviewSettings.lichess.importDaysBack;
-        pgns = await LichessService.fetchUserGames(username, 50, daysBack || undefined);
-      }
+      // Both targets take the same controls now: the username is entered here rather than
+      // read from a global setting, so one account is not silently assumed to be yours.
+      const max = parseInt(masterGameCount, 10) || 50;
+      const daysBack = parseInt(masterDaysBack, 10) || 0;
+      const pgns = mode === 'master'
+        ? await LichessService.fetchMasterGames(username, max, daysBack || undefined)
+        : await LichessService.fetchUserGames(username, max, daysBack || undefined);
 
       if (pgns.length === 0) {
         Alert.alert('No Games', `No games found for user "${username}"`);
@@ -761,17 +754,46 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
           )}
 
           {/* Lichess import (My Games) */}
-          {target === 'my-games' && reviewSettings.lichess.username && (
+          {target === 'my-games' && (
             <View style={styles.lichessSection}>
               <Text style={styles.sectionTitle}>Import from Lichess</Text>
-              <Text style={styles.label}>
-                Username: {reviewSettings.lichess.username}
-                {reviewSettings.lichess.importDaysBack > 0 && ` | Last ${reviewSettings.lichess.importDaysBack} days`}
-              </Text>
+              <TextInput
+                style={styles.input}
+                value={lichessUsername}
+                onChangeText={setLichessUsername}
+                placeholder="Enter Lichess username"
+                placeholderTextColor="#666"
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+              <View style={styles.inlineRow}>
+                <View style={styles.inlineField}>
+                  <Text style={styles.label}>Game count</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={masterGameCount}
+                    onChangeText={setMasterGameCount}
+                    placeholder="50"
+                    placeholderTextColor="#666"
+                    keyboardType="numeric"
+                  />
+                </View>
+                <View style={styles.inlineField}>
+                  <Text style={styles.label}>Days back (0 = all time)</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={masterDaysBack}
+                    onChangeText={setMasterDaysBack}
+                    placeholder="0"
+                    placeholderTextColor="#666"
+                    keyboardType="numeric"
+                  />
+                </View>
+              </View>
               <TouchableOpacity
-                style={[styles.lichessButton, isImportingLichess && styles.buttonDisabled]}
+                style={[styles.lichessButton, (!lichessUsername.trim() || isImportingLichess) && styles.buttonDisabled]}
                 onPress={() => handleLichessImport('user')}
-                disabled={isImportingLichess}
+                disabled={!lichessUsername.trim() || isImportingLichess}
               >
                 <Text style={styles.buttonText}>
                   {isImportingLichess ? 'Importing from Lichess...' : 'Import from Lichess'}
@@ -884,27 +906,6 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
             disabled={isImporting || fileSelected}
           >
             <Text style={styles.buttonText}>Select PGN File</Text>
-          </TouchableOpacity>
-
-          <Text style={styles.label}>Or paste PGN:</Text>
-
-          <TextInput
-            style={styles.textArea}
-            placeholder="1. e4 e5 2. Nf3 Nc6..."
-            placeholderTextColor="#888"
-            value={pgnText}
-            onChangeText={setPgnText}
-            multiline
-            numberOfLines={10}
-            editable={!isImporting && !fileSelected}
-          />
-
-          <TouchableOpacity
-            style={[styles.importButton, (isImporting || fileSelected || !pgnText.trim()) && styles.buttonDisabled]}
-            onPress={() => handleImport()}
-            disabled={isImporting || fileSelected || !pgnText.trim()}
-          >
-            <Text style={styles.buttonText}>Import</Text>
           </TouchableOpacity>
         </>
       )}
