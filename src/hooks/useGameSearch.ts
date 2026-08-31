@@ -12,6 +12,14 @@ export function useGameSearch(fen: string) {
   const [masterGames, setMasterGames] = useState<MasterGame[]>([]);
   const [loading, setLoading] = useState(false);
   const lastSearchedFenRef = useRef<string | null>(null);
+  // Importing or deleting a book changes the answer for a position already searched, and
+  // the FEN memo below would otherwise keep serving the stale one until the board moves.
+  const [bookRevision, setBookRevision] = useState(BookService.revision);
+
+  useEffect(() => BookService.subscribe(() => {
+    lastSearchedFenRef.current = null;
+    setBookRevision(BookService.revision);
+  }), []);
 
   useEffect(() => {
     if (!fen) return;
@@ -45,7 +53,7 @@ export function useGameSearch(fen: string) {
       }
     })();
     return () => { cancelled = true; };
-  }, [fen]);
+  }, [fen, bookRevision]);
 
   const reset = useCallback(() => {
     lastSearchedFenRef.current = null;

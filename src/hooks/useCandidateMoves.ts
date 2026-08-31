@@ -107,6 +107,10 @@ function toArrow(fen: string, candidate: MoveCandidate, color: string, weight: n
 
 export function useCandidateMoves(fen: string, source: CandidateSource): CandidateArrow[] {
   const [arrows, setArrows] = useState<CandidateArrow[]>(EMPTY);
+  // Books feed the master arrows, so installing or deleting one has to redraw them.
+  const [bookRevision, setBookRevision] = useState(BookService.revision);
+
+  useEffect(() => BookService.subscribe(() => setBookRevision(BookService.revision)), []);
 
   useEffect(() => {
     if (!fen || source === 'none') {
@@ -138,7 +142,7 @@ export function useCandidateMoves(fen: string, source: CandidateSource): Candida
     })();
 
     return () => { cancelled = true; };
-  }, [fen, source]);
+  }, [fen, source, bookRevision]);
 
   return arrows;
 }

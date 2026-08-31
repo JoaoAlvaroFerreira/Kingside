@@ -99,9 +99,25 @@ class BookServiceClass {
     return reclaimed;
   }
 
+  /**
+   * Bumped whenever the installed set changes. Position lookups memoize on the FEN, so
+   * without this an import or delete leaves the board showing the previous answer for
+   * whatever position it is already sitting on.
+   */
+  revision = 0;
+  private listeners = new Set<() => void>();
+
+  /** Subscribe to import/delete. Returns the unsubscribe function. */
+  subscribe(listener: () => void): () => void {
+    this.listeners.add(listener);
+    return () => { this.listeners.delete(listener); };
+  }
+
   /** Drop the cached registry so the next read reflects an import or delete. */
   private invalidate(): void {
     this.records = null;
+    this.revision++;
+    this.listeners.forEach(listener => listener());
   }
 
   private async connect(book: BookRecord): Promise<any | null> {

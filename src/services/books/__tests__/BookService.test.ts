@@ -250,6 +250,29 @@ describe('deleteBook', () => {
   });
 });
 
+describe('change notification', () => {
+  it('bumps the revision and notifies on import and on delete', async () => {
+    // Position lookups memoize on the FEN, so without this an import leaves the board
+    // showing the pre-import answer for whatever position it is already sitting on.
+    const seen: number[] = [];
+    const unsubscribe = BookService.subscribe(() => seen.push(BookService.revision));
+
+    mockSQLite.openDatabaseAsync.mockResolvedValue(fakeBook({}));
+    const before = BookService.revision;
+    await BookService.importBook('file:///picked/a.kbook');
+    expect(BookService.revision).toBeGreaterThan(before);
+
+    mockDb.getBookRecords.mockResolvedValue([record({ id: 'a', fileName: 'a.kbook' })]);
+    await BookService.deleteBook('a');
+
+    expect(seen).toHaveLength(2);
+    unsubscribe();
+
+    await BookService.importBook('file:///picked/b.kbook');
+    expect(seen).toHaveLength(2); // unsubscribed listeners stop hearing about it
+  });
+});
+
 describe('pruneOrphanFiles', () => {
   it('deletes book files no record points at, and leaves registered ones alone', async () => {
     mockDb.getBookRecords.mockResolvedValue([record({ id: 'a', fileName: 'keep.kbook' })]);
