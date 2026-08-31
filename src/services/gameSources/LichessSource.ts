@@ -81,7 +81,10 @@ class LichessSourceClass implements GameSource {
     const body = await httpGet(
       `${API}/games/user/${encodeURIComponent(spec.username.trim())}?${params.toString()}`,
       signal,
-      { accept: 'application/x-chess-pgn', token: spec.token }
+      // listPeriods already proved this account exists, so a 404 here cannot mean a
+      // missing user — it is Lichess throttling, and must be backed off, not reported
+      // as "account not found" halfway through a build.
+      { accept: 'application/x-chess-pgn', token: spec.token, notFound: 'throttled' }
     );
 
     if (!body.trim()) return [];

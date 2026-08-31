@@ -34,6 +34,15 @@ async function delay(ms: number, signal: AbortSignal): Promise<void> {
 export interface GetOptions {
   accept?: string;
   token?: string;
+  /**
+   * What a 404 means for this endpoint.
+   *
+   * Lichess answers unauthenticated bursts on its game-export endpoint with a 404 and its
+   * ordinary HTML page, not a JSON API error — the same status a genuinely missing account
+   * gives. Callers that already know the account exists say `'throttled'` so the request is
+   * backed off and retried instead of reported as a missing user.
+   */
+  notFound?: 'missing' | 'throttled';
 }
 
 /** GET with 429 backoff and 5xx retry. Returns the raw body. */
@@ -43,6 +52,7 @@ export async function httpGet(
   options: GetOptions = {},
   onStatus?: (message: string) => void
 ): Promise<string> {
+  let lastWasRateLimit = false;
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
     throwIfAborted(signal);
 
@@ -62,11 +72,12 @@ export async function httpGet(
       continue;
     }
 
-    if (response.status === 404) {
+    if (response.status === 404 && options.notFound !== 'throttled') {
       throw new FetchError('user-not-found', 'That account was not found.');
     }
-    if (response.status === 429) {
+    if (response.status === 429 || response.status === 404) {
       onStatus?.('Rate limited — waiting 60s…');
+      lastWasRateLimit = true;
       await delay(RATE_LIMIT_WAIT_MS, signal);
       continue;
     }
@@ -79,7 +90,12 @@ export async function httpGet(
     }
     return response.text();
   }
-  throw new FetchError('rate-limited', `Gave up on ${hostOf(url)} after repeated rate limiting.`);
+  throw new FetchError(
+    'rate-limited',
+    lastWasRateLimit
+      ? `${hostOf(url)} is rate limiting this device. Wait a few minutes and try again.`
+      : `Gave up on ${hostOf(url)} after repeated failures.`
+  );
 }
 
 function hostOf(url: string): string {

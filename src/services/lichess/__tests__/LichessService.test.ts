@@ -169,7 +169,8 @@ describe('LichessService', () => {
   });
 
   describe('error handling', () => {
-    it('throws error with username for 404 response', async () => {
+    it('reports a missing account when the profile is missing too', async () => {
+      // Games 404 and profile 404 — the account really does not exist.
       mockFetch.mockResolvedValue({
         ok: false,
         status: 404,
@@ -180,7 +181,20 @@ describe('LichessService', () => {
         .rejects.toThrow('User "nonexistent" not found on Lichess');
     });
 
-    it('throws error with status code for non-ok response', async () => {
+    it('reports rate limiting, not a missing account, when only the games call 404s', async () => {
+      // Lichess answers unauthenticated bursts on the export endpoint with a 404 and its
+      // ordinary HTML page — the same status a missing account gives. The profile endpoint
+      // is not throttled the same way, so it is what separates the two. Reporting "not
+      // found" here sends the user off checking a username that was correct all along.
+      mockFetch
+        .mockResolvedValueOnce({ ok: false, status: 404, statusText: 'Not Found' } as unknown as Response)
+        .mockResolvedValueOnce({ ok: true, status: 200 } as unknown as Response);
+
+      await expect(LichessService.fetchUserGames('realuser'))
+        .rejects.toThrow(/rate limiting/i);
+    });
+
+    it('reports rate limiting for an explicit 429', async () => {
       mockFetch.mockResolvedValue({
         ok: false,
         status: 429,
@@ -188,7 +202,7 @@ describe('LichessService', () => {
       } as unknown as Response);
 
       await expect(LichessService.fetchUserGames('ratelimited'))
-        .rejects.toThrow('Lichess API error: 429 Too Many Requests');
+        .rejects.toThrow(/rate limiting/i);
     });
   });
 

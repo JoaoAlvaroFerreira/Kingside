@@ -69,6 +69,16 @@ export interface BuildProgress {
   plies: number;
 }
 
+export interface RefreshResult {
+  record: BookRecord;
+  newGames: number;
+  newPositions: number;
+  months: number;
+  seconds: number;
+  /** True when the book already covered every month the source has. */
+  upToDate: boolean;
+}
+
 export interface BuildResult {
   record: BookRecord;
   games: number;
@@ -207,6 +217,195 @@ class BookBuilderClass {
       }
       throw error;
     }
+  }
+
+  /**
+   * Bring an existing book up to date with the months it does not have yet.
+   *
+   * Only the missing months are fetched and replayed, which is the whole point: the
+   * finished-month markers written during the original build are what make a top-up cost
+   * minutes instead of the hour a rebuild would.
+   *
+   * One deliberate approximation. The original build pruned rare deep pairs and dropped
+   * `staging`, so a pair discarded then cannot be resurrected now — the counts that would
+   * justify it are gone. New rows therefore survive if they are shallow, or repeat within
+   * this batch, or already exist in the book. A pair seen once before and once now is the
+   * case that slips through: the rarest thing the book tracks, and already below the
+   * threshold on its own.
+   */
+  async refresh(
+    record: BookRecord,
+    onProgress: (p: BuildProgress) => void,
+    signal: AbortSignal
+  ): Promise<RefreshResult> {
+    if (Platform.OS === 'web') throw new Error('Refreshing books is not supported on web.');
+
+    const started = Date.now();
+    const db = await SQLite.openDatabaseAsync(record.fileName);
+    await db.execAsync('PRAGMA journal_mode = OFF; PRAGMA synchronous = OFF;');
+
+    try {
+      const meta = await this.readMetaMap(db);
+      const spec = meta.spec ? reviveSpec(JSON.parse(meta.spec)) : null;
+      if (!spec || !spec.username || !spec.source) {
+        throw new FetchError(
+          'unsupported',
+          'This book predates refresh support and has no record of how it was built. Rebuild it to enable refreshing.'
+        );
+      }
+      // A refresh means "bring up to date", so the original end date no longer applies.
+      spec.until = undefined;
+
+      const source = getGameSource(spec.source);
+      onProgress({ phase: 'Checking for new months…', periodsDone: 0, periodsTotal: 0, games: 0, plies: 0 });
+
+      const done = await this.completedPeriods(db);
+      const periods = (await source.listPeriods(spec, signal)).filter(p => !done.has(p.id));
+      if (periods.length === 0) {
+        await db.closeAsync();
+        return { record, newGames: 0, newPositions: 0, months: 0, seconds: 0, upToDate: true };
+      }
+
+      await db.execAsync(`
+        DROP TABLE IF EXISTS staging;
+        CREATE TABLE staging (
+          fen TEXT NOT NULL, move TEXT NOT NULL, ply INTEGER NOT NULL,
+          hero INTEGER NOT NULL, result INTEGER NOT NULL, game_id INTEGER NOT NULL
+        );
+      `);
+
+      const maxRow = await db.getFirstAsync('SELECT COALESCE(MAX(id), 0) AS id FROM book_games') as any;
+      let gameId = maxRow?.id ?? 0;
+      let games = 0;
+      let plies = 0;
+
+      for (let i = 0; i < periods.length; i++) {
+        const period = periods[i];
+        if (signal.aborted) throw new FetchCancelled();
+
+        onProgress({ phase: `Fetching ${period.id}…`, periodsDone: i, periodsTotal: periods.length, games, plies });
+        const pgns = await source.fetchPeriod(spec, period, signal);
+
+        const staging: StagingRow[] = [];
+        for (const pgn of pgns) {
+          if (signal.aborted) throw new FetchCancelled();
+          gameId += 1;
+          const outcome = this.ingestGame(pgn, spec, gameId, staging);
+          plies += outcome.plies;
+          games += 1;
+          await this.insertGameRow(db, gameId, outcome);
+          if (staging.length >= FLUSH_THRESHOLD) {
+            await this.flushStaging(db, staging);
+            await yieldToUi();
+            onProgress({ phase: `Reading ${period.id}…`, periodsDone: i, periodsTotal: periods.length, games, plies });
+          }
+        }
+        await this.flushStaging(db, staging);
+        await this.markPeriodDone(db, period);
+        await yieldToUi();
+      }
+
+      onProgress({ phase: 'Merging positions…', periodsDone: periods.length, periodsTotal: periods.length, games, plies });
+      const newPositions = await this.mergeStaging(db, Number(meta.full_ply) || FULL_PLY);
+
+      await db.runAsync(
+        'INSERT OR REPLACE INTO book_meta (key, value) VALUES (?, ?)',
+        ['game_count', String((Number(meta.game_count) || 0) + games)]
+      );
+      await db.execAsync('DROP TABLE IF EXISTS staging');
+      await db.execAsync('VACUUM');
+      await db.closeAsync();
+
+      const updated = await BookService.reregisterBook(record);
+      return {
+        record: updated, newGames: games, newPositions, months: periods.length,
+        seconds: (Date.now() - started) / 1000, upToDate: false,
+      };
+    } catch (error) {
+      // The book keeps whatever months it finished; staging is scratch and goes.
+      try {
+        await db.execAsync('DROP TABLE IF EXISTS staging');
+        await db.closeAsync();
+      } catch { /* already closed */ }
+      throw error;
+    }
+  }
+
+  /** Fold the refresh's staging rows into the existing aggregate. */
+  private async mergeStaging(db: any, fullPly: number): Promise<number> {
+    const before = await db.getFirstAsync('SELECT COUNT(*) AS n FROM book_moves') as any;
+
+    await db.runAsync(
+      `INSERT INTO book_moves (fen, move, n, hero_n, white_n, draw_n, black_n, sample_games)
+       SELECT s.fen, s.move, COUNT(*), SUM(s.hero),
+              SUM(s.result = 1), SUM(s.result = 0), SUM(s.result = -1), NULL
+       FROM staging s
+       GROUP BY s.fen, s.move
+       HAVING MIN(s.ply) <= ?
+           OR COUNT(*) >= ?
+           OR EXISTS (SELECT 1 FROM book_moves b WHERE b.fen = s.fen AND b.move = s.move)
+       ON CONFLICT (fen, move) DO UPDATE SET
+         n       = n       + excluded.n,
+         hero_n  = hero_n  + excluded.hero_n,
+         white_n = white_n + excluded.white_n,
+         draw_n  = draw_n  + excluded.draw_n,
+         black_n = black_n + excluded.black_n`,
+      [fullPly, MIN_COUNT_DEEP]
+    );
+
+    await this.mergeSampleGames(db);
+
+    const after = await db.getFirstAsync('SELECT COUNT(*) AS n FROM book_moves') as any;
+    return (after?.n ?? 0) - (before?.n ?? 0);
+  }
+
+  /**
+   * Put the refresh's games at the front of each touched move's samples.
+   *
+   * Merged in JS rather than SQL because the list has to be trimmed on id boundaries. The
+   * new games go first: they come from later months, and samples are newest-first.
+   */
+  private async mergeSampleGames(db: any): Promise<void> {
+    const rows = await db.getAllAsync(
+      `WITH ranked AS (
+         SELECT s.fen, s.move, s.game_id,
+                ROW_NUMBER() OVER (
+                  PARTITION BY s.fen, s.move ORDER BY g.date DESC, g.id DESC
+                ) AS rn
+         FROM staging s
+         JOIN book_games g ON g.id = s.game_id
+       )
+       SELECT r.fen, r.move, GROUP_CONCAT(r.game_id) AS fresh, b.sample_games AS existing
+       FROM ranked r
+       JOIN book_moves b ON b.fen = r.fen AND b.move = r.move
+       WHERE r.rn <= ?
+       GROUP BY r.fen, r.move`,
+      [SAMPLE_GAMES]
+    ) as Array<{ fen: string; move: string; fresh: string | null; existing: string | null }>;
+
+    for (let i = 0; i < rows.length; i += 200) {
+      await db.withTransactionAsync(async () => {
+        for (const row of rows.slice(i, i + 200)) {
+          const fresh = (row.fresh ?? '').split(',').filter(Boolean);
+          const existing = (row.existing ?? '').split(',').filter(Boolean);
+          const merged = [...fresh, ...existing.filter(id => !fresh.includes(id))]
+            .slice(0, SAMPLE_GAMES)
+            .join(',');
+          await db.runAsync(
+            'UPDATE book_moves SET sample_games = ? WHERE fen = ? AND move = ?',
+            [merged, row.fen, row.move]
+          );
+        }
+      });
+      await yieldToUi();
+    }
+  }
+
+  private async readMetaMap(db: any): Promise<Record<string, string>> {
+    const rows = await db.getAllAsync('SELECT key, value FROM book_meta') as Array<{ key: string; value: string }>;
+    const meta: Record<string, string> = {};
+    for (const row of rows) meta[row.key] = row.value;
+    return meta;
   }
 
   /** Replay one game into staging rows, returning what the games table needs. */
@@ -401,6 +600,9 @@ class BookBuilderClass {
       ['full_ply', String(FULL_PLY)],
       ['min_count_deep', String(MIN_COUNT_DEEP)],
       ['has_games', '1'],
+      // The whole spec, so a later refresh fetches on the same terms rather than making
+      // the user re-enter filters it would then silently have to match.
+      ['spec', JSON.stringify(serialiseSpec(spec))],
       ['created_at', String(Date.now())],
     ];
     for (const [key, value] of entries) {

@@ -507,6 +507,21 @@ Things that are load-bearing:
   memoizes on `fen|playerMovesOnly|bookRevision`. Keying on the FEN alone left the board
   showing the previous answer whenever a filter changed or a book was installed under a
   stationary position — the position is only one of the things that decides the result.
+- **A book records how it was fetched, and which months it has.** `book_meta` carries the
+  fetch `spec` plus a `period:YYYY-MM` marker per covered month, which is what makes
+  *refresh* cost minutes instead of the hour a rebuild takes. `BookBuilder.refresh` fetches
+  only unmarked months and merges them into the existing aggregate with an UPSERT.
+  Two consequences worth knowing: the original build pruned rare deep pairs and dropped
+  `staging`, so a pruned pair cannot be resurrected — new rows survive only if they are
+  shallow, repeat within the batch, or already exist. And a month is **never re-fetched**,
+  because refresh has no dedupe: re-reading a month already in the book would add its games
+  a second time. A book built before this (or by an older generator) has no `spec` and says
+  so rather than guessing filters.
+- **Lichess answers throttled requests with a 404**, not a 429, on the game-export
+  endpoint — the same status a missing account gives. `httpGet`'s `notFound: 'throttled'`
+  says "this endpoint's 404 means back off"; `LichessService` instead probes the *profile*
+  endpoint, which is not throttled the same way, to tell the two apart. Reporting "user not
+  found" for a rate limit sends the user off checking a username that was correct.
 - **The registry and the files drift.** A restore swaps `kingside.db`, and with it
   `master_books`, while the book files stay on disk. `listBooks()` forgets records whose
   file is missing; `pruneOrphanFiles()` deletes files no record points at. Both run after a

@@ -14,6 +14,7 @@ import {
 import { FetchSpec, GameSourceId, Speed, SPEEDS, FetchError, FetchCancelled } from '@types';
 import { BookBuilder, BuildProgress, reviveSpec } from '@services/books/BookBuilder';
 import { BookService, PendingBuild } from '@services/books/BookService';
+import { BookRecord } from '@types';
 
 const SOURCE_LABEL: Record<GameSourceId, string> = {
   chesscom: 'Chess.com',
@@ -32,9 +33,11 @@ const SPEED_LABEL: Record<Speed, string> = {
 
 interface Props {
   navigation: any;
+  route?: { params?: { refreshBookId?: string } };
 }
 
-export default function BuildBookScreen({ navigation }: Props) {
+export default function BuildBookScreen({ navigation, route }: Props) {
+  const refreshBookId = route?.params?.refreshBookId;
   const [source, setSource] = useState<GameSourceId>('chesscom');
   const [username, setUsername] = useState('');
   const [speeds, setSpeeds] = useState<Speed[]>(['bullet', 'blitz', 'rapid', 'classical']);
@@ -51,6 +54,57 @@ export default function BuildBookScreen({ navigation }: Props) {
   useEffect(() => {
     BookService.getPendingBuild().then(setPending);
   }, []);
+
+  // Arriving with a book id means "top this one up", not "build a new one".
+  useEffect(() => {
+    if (!refreshBookId) return;
+    let cancelled = false;
+    BookService.listBooks().then(books => {
+      const book = books.find(b => b.id === refreshBookId);
+      if (book && !cancelled) runRefresh(book);
+    });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshBookId]);
+
+  const runRefresh = async (book: BookRecord) => {
+    const controller = new AbortController();
+    abortRef.current = controller;
+    setBuilding(true);
+    setProgress({ phase: 'Starting…', periodsDone: 0, periodsTotal: 0, games: 0, plies: 0 });
+
+    try {
+      const result = await BookBuilder.refresh(book, setProgress, controller.signal);
+      setBuilding(false);
+      Alert.alert(
+        result.upToDate ? 'Already Up To Date' : 'Book Refreshed',
+        result.upToDate
+          ? `${book.name} already covers every month available.`
+          : [
+              book.name,
+              '',
+              `${result.months} new month${result.months === 1 ? '' : 's'}`,
+              `${result.newGames.toLocaleString()} games added`,
+              `${result.newPositions.toLocaleString()} new positions`,
+              `${Math.round(result.seconds)}s`,
+            ].join('\n'),
+        [{ text: 'OK', onPress: () => navigation.goBack() }]
+      );
+    } catch (error: any) {
+      setBuilding(false);
+      if (error instanceof FetchCancelled) {
+        // Finished months were marked as they completed, so the next refresh resumes here.
+        Alert.alert('Refresh Paused', 'The months already fetched are kept in the book.');
+        navigation.goBack();
+        return;
+      }
+      Alert.alert(
+        'Refresh Failed',
+        error instanceof FetchError ? error.message : `${error?.message ?? error}`
+      );
+      navigation.goBack();
+    }
+  };
 
   const toggleSpeed = (speed: Speed) => {
     setSpeeds(current =>

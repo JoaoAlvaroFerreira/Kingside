@@ -22,6 +22,32 @@ class LichessServiceClass {
   private readonly BASE_URL = 'https://lichess.org/api';
 
   /**
+   * Turn a 404 from the game-export endpoint into an accurate message.
+   *
+   * Lichess answers unauthenticated bursts there with a 404 and its ordinary HTML page —
+   * indistinguishable by status from a genuinely missing account. The profile endpoint is
+   * not throttled the same way, so it settles which happened: profile present means the
+   * account is fine and we are being rate limited, and telling the user "not found" for
+   * that sends them off checking a username that was correct all along.
+   */
+  private async explain404(username: string): Promise<Error> {
+    try {
+      const probe = await fetch(`${this.BASE_URL}/user/${encodeURIComponent(username)}`, {
+        headers: { Accept: 'application/json' },
+      });
+      if (probe.ok) {
+        return new Error(
+          `Lichess is rate limiting this device, so "${username}"'s games could not be ` +
+          'fetched right now. Wait a minute and try again.'
+        );
+      }
+    } catch {
+      // Probe itself failed — fall through to the plain message rather than guess.
+    }
+    return new Error(`User "${username}" not found on Lichess`);
+  }
+
+  /**
    * Fetch games for a user from Lichess
    * @param username Lichess username
    * @param max Maximum number of games to fetch (default 50)
@@ -49,7 +75,12 @@ class LichessServiceClass {
 
     if (!response.ok) {
       if (response.status === 404) {
-        throw new Error(`User "${username}" not found on Lichess`);
+        throw await this.explain404(username);
+      }
+      if (response.status === 429) {
+        throw new Error(
+          'Lichess is rate limiting this device. Wait a minute and try again.'
+        );
       }
       throw new Error(`Lichess API error: ${response.status} ${response.statusText}`);
     }
@@ -113,6 +144,11 @@ class LichessServiceClass {
     if (!response.ok) {
       if (response.status === 404) {
         throw new Error(`Study "${studyId}" not found. Make sure the study is public.`);
+      }
+      if (response.status === 429) {
+        throw new Error(
+          'Lichess is rate limiting this device. Wait a minute and try again.'
+        );
       }
       throw new Error(`Lichess API error: ${response.status} ${response.statusText}`);
     }

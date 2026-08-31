@@ -610,13 +610,22 @@ ${msg}`)) void runRestore();
                     <Text style={styles.bookMeta}>Player: {book.player}</Text>
                   )}
                 </View>
-                <TouchableOpacity
-                  style={styles.bookDelete}
-                  onPress={() => handleDeleteBook(book.id, book.name)}
-                  disabled={bookBusy}
-                >
-                  <Text style={styles.bookDeleteText}>Delete</Text>
-                </TouchableOpacity>
+                <View style={styles.bookActions}>
+                  <TouchableOpacity
+                    style={styles.bookRefresh}
+                    onPress={() => navigation.navigate('BuildBook', { refreshBookId: book.id })}
+                    disabled={bookBusy}
+                  >
+                    <Text style={styles.bookRefreshText}>Refresh</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.bookDelete}
+                    onPress={() => handleDeleteBook(book.id, book.name)}
+                    disabled={bookBusy}
+                  >
+                    <Text style={styles.bookDeleteText}>Delete</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             ))
           )}
@@ -639,8 +648,8 @@ ${msg}`)) void runRestore();
           </View>
 
           <Text style={styles.hint}>
-            Books are not included in backups — they are large and can be rebuilt from
-            their source PGN.
+            Refresh fetches only the months a book does not have yet. Books are not
+            included in backups — they are large and can be rebuilt from their source.
           </Text>
         </View>
 
@@ -740,6 +749,21 @@ const styles = StyleSheet.create({
   bookMeta: {
     color: '#888',
     fontSize: 12,
+  },
+  bookActions: {
+    alignItems: 'flex-end',
+    gap: 6,
+  },
+  bookRefresh: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 6,
+    backgroundColor: '#1f3a4d',
+  },
+  bookRefreshText: {
+    color: '#4a9eff',
+    fontSize: 13,
+    fontWeight: '600',
   },
   bookDelete: {
     paddingHorizontal: 12,

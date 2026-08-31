@@ -314,6 +314,32 @@ class BookServiceClass {
   }
 
   /**
+   * Re-read a book's stats after its file changed underneath us (a refresh added months).
+   * The id and display name are kept: the user's library entry is the same book.
+   */
+  async reregisterBook(record: BookRecord): Promise<BookRecord> {
+    await this.disconnect(record.id);
+    const db = await SQLite.openDatabaseAsync(record.fileName);
+    try {
+      const meta = await this.readMeta(db);
+      const info = await FileSystem.getInfoAsync(this.bookPath(record.fileName));
+      const updated: BookRecord = {
+        ...record,
+        gameCount: Number(meta.game_count) || record.gameCount,
+        positionCount: await this.countPositions(db),
+        sizeBytes: (info as any).size ?? record.sizeBytes,
+      };
+      await DatabaseService.addBookRecord(updated);
+      this.connections.set(record.id, db);
+      this.invalidate();
+      return updated;
+    } catch (e) {
+      try { await db.closeAsync(); } catch { /* ignore */ }
+      throw e;
+    }
+  }
+
+  /**
    * An interrupted build keeps its file, because the finished-month markers inside it are
    * what make resuming cheap. Recording it here stops pruneOrphanFiles from deleting the
    * very thing a resume needs.
