@@ -46,6 +46,7 @@ interface ChessAnalysisLayoutProps {
 
   // Game search results (from useGameSearch hook)
   userGames: UserGame[];
+  userHasMore?: boolean;
   masterGames: MasterGame[];
   /** Book samples are capped, so the master count may understate what exists. */
   masterHasMore?: boolean;
@@ -76,6 +77,7 @@ export function ChessAnalysisLayout({
   screenKey,
   orientationOverride,
   userGames,
+  userHasMore,
   masterGames,
   masterHasMore,
   loadingGames,
@@ -152,7 +154,7 @@ export function ChessAnalysisLayout({
 
   const TABS: { key: AnalysisTab; label: string }[] = [
     { key: 'moves', label: 'Moves' },
-    ...(visibleTabs.yourGames ? [{ key: 'yourGames' as const, label: `Your Games (${userGames.length})` }] : []),
+    ...(visibleTabs.yourGames ? [{ key: 'yourGames' as const, label: `Your Games (${formatCount(userGames.length, userHasMore)})` }] : []),
     ...(visibleTabs.masterGames ? [{ key: 'masterGames' as const, label: `Master (${formatCount(masterGames.length, masterHasMore)})` }] : []),
     ...(visibleTabs.findPosition ? [{ key: 'findPosition' as const, label: `Find Position (${repertoireMatches.length})` }] : []),
   ];
@@ -186,6 +188,7 @@ export function ChessAnalysisLayout({
                   <GameList
                     title="Your Games"
                     games={userGames}
+                    hasMore={userHasMore}
                     onSelect={onSelectGame}
                     defaultCollapsed={false}
                     loading={loadingGames}
@@ -277,6 +280,7 @@ export function ChessAnalysisLayout({
               <GameList
                 title="Your Games"
                 games={userGames}
+                hasMore={userHasMore}
                 onSelect={onSelectGame}
                 defaultCollapsed={false}
                 loading={false}

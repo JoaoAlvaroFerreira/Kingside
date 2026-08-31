@@ -25,7 +25,7 @@ export default function AnalysisBoardScreen({ route, navigation }: AnalysisBoard
 
   const currentFen = moveTree.getCurrentFen();
   const currentNodeId = moveTree.getCurrentNode()?.id || null;
-  const { userGames, masterGames, masterHasMore, loading: loadingGames, reset: resetGames } = useGameSearch(currentFen);
+  const { userGames, userHasMore, masterGames, masterHasMore, loading: loadingGames, reset: resetGames } = useGameSearch(currentFen);
 
   // Load game if provided via navigation
   const justLoadedRef = useRef(false);
@@ -144,6 +144,7 @@ export default function AnalysisBoardScreen({ route, navigation }: AnalysisBoard
       onDeleteMove={handleDelete}
       screenKey="analysis"
       userGames={userGames}
+      userHasMore={userHasMore}
       masterGames={masterGames}
       masterHasMore={masterHasMore}
       loadingGames={loadingGames}

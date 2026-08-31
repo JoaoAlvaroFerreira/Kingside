@@ -32,6 +32,17 @@ const CANDIDATE_MOVE_LIMIT = 4;
 const SCHEMA_VERSION = 7; // Bump when schema changes
 const INDEX_BATCH_SIZE = 10; // Games per batch during background indexing
 
+/**
+ * Games reaching a position, and whether the cap hid any.
+ *
+ * Position matches are capped because an early position matches most of the database, so
+ * the count is a ceiling rather than a total and a bare number would misreport it.
+ */
+export interface PositionGames<T> {
+  games: T[];
+  hasMore: boolean;
+}
+
 interface PaginatedResult<T> {
   items: T[];
   totalCount: number;
@@ -1583,7 +1594,7 @@ class DatabaseServiceClass {
   /**
    * Search user games that contain a specific FEN position (SQL index lookup)
    */
-  async searchUserGamesByFEN(fen: string): Promise<UserGame[]> {
+  async searchUserGamesByFEN(fen: string): Promise<PositionGames<UserGame>> {
     if (this.isWeb) return WebDatabaseService.searchUserGamesByFEN(fen);
     if (!this.db) throw new Error('Database not initialized');
 
@@ -1592,27 +1603,35 @@ class DatabaseServiceClass {
     // If still indexing, fall back to brute-force
     if (this.isIndexing) {
       const allGames = await this.getAllUserGames();
-      return allGames
+      const matches = allGames
         .filter(game => this.gameContainsFen(game.pgn, normalized))
-        .sort((a, b) => (b.date || '').localeCompare(a.date || ''))
-        .slice(0, POSITION_MATCH_LIMIT);
+        .sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+      return {
+        games: matches.slice(0, POSITION_MATCH_LIMIT),
+        hasMore: matches.length > POSITION_MATCH_LIMIT,
+      };
     }
 
+    // One row past the cap, so truncation is known without a second COUNT over the join —
+    // which at an early position would scan most of the index to answer.
     const rows = await this.db.getAllAsync(
       `SELECT DISTINCT ug.* FROM user_games ug
        INNER JOIN game_positions gp ON ug.id = gp.game_id AND gp.game_type = 'user'
        WHERE gp.normalized_fen = ?
        ORDER BY ug.date DESC
        LIMIT ?`,
-      [normalized, POSITION_MATCH_LIMIT]
-    );
-    return (rows as any[]).map((row: any) => this.rowToUserGame(row));
+      [normalized, POSITION_MATCH_LIMIT + 1]
+    ) as any[];
+    return {
+      games: rows.slice(0, POSITION_MATCH_LIMIT).map((row: any) => this.rowToUserGame(row)),
+      hasMore: rows.length > POSITION_MATCH_LIMIT,
+    };
   }
 
   /**
    * Search master games that contain a specific FEN position (SQL index lookup)
    */
-  async searchMasterGamesByFEN(fen: string): Promise<MasterGame[]> {
+  async searchMasterGamesByFEN(fen: string): Promise<PositionGames<MasterGame>> {
     if (this.isWeb) return WebDatabaseService.searchMasterGamesByFEN(fen);
     if (!this.db) throw new Error('Database not initialized');
 
@@ -1620,10 +1639,13 @@ class DatabaseServiceClass {
 
     if (this.isIndexing) {
       const allGames = await this.getAllMasterGames();
-      return allGames
+      const matches = allGames
         .filter(game => this.gameContainsFen(game.pgn, normalized))
-        .sort((a, b) => (b.date || '').localeCompare(a.date || ''))
-        .slice(0, POSITION_MATCH_LIMIT);
+        .sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+      return {
+        games: matches.slice(0, POSITION_MATCH_LIMIT),
+        hasMore: matches.length > POSITION_MATCH_LIMIT,
+      };
     }
 
     const rows = await this.db.getAllAsync(
@@ -1632,9 +1654,12 @@ class DatabaseServiceClass {
        WHERE gp.normalized_fen = ?
        ORDER BY mg.date DESC
        LIMIT ?`,
-      [normalized, POSITION_MATCH_LIMIT]
-    );
-    return (rows as any[]).map((row: any) => this.rowToMasterGame(row));
+      [normalized, POSITION_MATCH_LIMIT + 1]
+    ) as any[];
+    return {
+      games: rows.slice(0, POSITION_MATCH_LIMIT).map((row: any) => this.rowToMasterGame(row)),
+      hasMore: rows.length > POSITION_MATCH_LIMIT,
+    };
   }
 }
 

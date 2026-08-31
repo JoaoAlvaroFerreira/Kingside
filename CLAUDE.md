@@ -492,7 +492,11 @@ Things that are load-bearing:
   here" needs a row per game per ply — the 13M-row table being avoided. Each move instead
   carries a bounded set of recent games, so drill-down is a *sample*, by construction. The
   UI shows `50+` rather than `50` for exactly this reason: the count is a sample size, and
-  a bare number reads as a total.
+  a bare number reads as a total. The same applies to the local game sources, which are
+  capped by `POSITION_MATCH_LIMIT`: `searchUserGamesByFEN`/`searchMasterGamesByFEN` return
+  `PositionGames<T>` and select one row **past** the cap, so truncation is known without a
+  second `COUNT(*)` over the join — which at an early position would scan most of the index
+  just to produce a number.
 - **Samples rank by game date, never by id.** Ids follow file order, and chess.com writes
   newest-first while other exports run oldest-first — ranking on id silently picked 2010
   games out of a 2025 archive.

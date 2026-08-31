@@ -557,11 +557,11 @@ class WebDatabaseServiceClass {
 
   // ==================== FEN-BASED SEARCH ====================
 
-  async searchUserGamesByFEN(_fen: string): Promise<UserGame[]> {
+  async searchUserGamesByFEN(_fen: string): Promise<{ games: UserGame[]; hasMore: boolean }> {
     throw new Error('FEN search not supported on web platform');
   }
 
-  async searchMasterGamesByFEN(_fen: string): Promise<MasterGame[]> {
+  async searchMasterGamesByFEN(_fen: string): Promise<{ games: MasterGame[]; hasMore: boolean }> {
     throw new Error('FEN search not supported on web platform');
   }
 

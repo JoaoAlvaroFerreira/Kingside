@@ -835,4 +835,54 @@ describe('DatabaseService', () => {
       ]));
     });
   });
+
+  describe('position search truncation', () => {
+    beforeEach(() => DatabaseService.initialize());
+
+    const row = (i: number) => ({
+      id: `g${i}`, white: 'W', black: 'B', result: '1-0', date: '2025.01.01',
+      event: '', site: '', eco: '', pgn: '', moves: '[]', imported_at: 0,
+    });
+
+    it('asks for one row past the cap so truncation is known without a COUNT', async () => {
+      mockDb.getAllAsync.mockResolvedValueOnce([]);
+      await DatabaseService.searchMasterGamesByFEN('8/8/8/8/8/8/8/K6k w - -');
+
+      const call = mockDb.getAllAsync.mock.calls.find(([sql]: [string]) =>
+        /FROM master_games/.test(sql)
+      );
+      // A second COUNT(*) over the join would scan most of the index at an early position.
+      expect(call![1][1]).toBe(101);
+    });
+
+    it('reports hasMore and trims back to the cap when the cap is exceeded', async () => {
+      mockDb.getAllAsync.mockResolvedValueOnce(
+        Array.from({ length: 101 }, (_, i) => row(i))
+      );
+      const result = await DatabaseService.searchMasterGamesByFEN('8/8/8/8/8/8/8/K6k w - -');
+
+      expect(result.games).toHaveLength(100);
+      expect(result.hasMore).toBe(true);
+    });
+
+    it('does not claim more when the results fit', async () => {
+      mockDb.getAllAsync.mockResolvedValueOnce(
+        Array.from({ length: 7 }, (_, i) => row(i))
+      );
+      const result = await DatabaseService.searchUserGamesByFEN('8/8/8/8/8/8/8/K6k w - -');
+
+      expect(result.games).toHaveLength(7);
+      expect(result.hasMore).toBe(false);
+    });
+
+    it('orders by date so the cap keeps the most recent, not an arbitrary slice', async () => {
+      mockDb.getAllAsync.mockResolvedValueOnce([]);
+      await DatabaseService.searchUserGamesByFEN('8/8/8/8/8/8/8/K6k w - -');
+
+      const call = mockDb.getAllAsync.mock.calls.find(([sql]: [string]) =>
+        /FROM user_games/.test(sql)
+      );
+      expect(call![0]).toMatch(/ORDER BY ug\.date DESC/);
+    });
+  });
 });

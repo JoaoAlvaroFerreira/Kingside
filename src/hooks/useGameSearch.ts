@@ -11,8 +11,9 @@ import { useStore } from '@store';
 export function useGameSearch(fen: string) {
   const [userGames, setUserGames] = useState<UserGame[]>([]);
   const [masterGames, setMasterGames] = useState<MasterGame[]>([]);
-  // The book's per-move game samples are capped, so the count is a sample size rather than
-  // a total and the UI has to say so.
+  // Every source here is capped — books by their per-move sample, local games by
+  // POSITION_MATCH_LIMIT — so both counts are ceilings and the UI has to say so.
+  const [userHasMore, setUserHasMore] = useState(false);
   const [masterHasMore, setMasterHasMore] = useState(false);
   const [loading, setLoading] = useState(false);
   const playerMovesOnly = useStore(s => s.reviewSettings.books.playerMovesOnly);
@@ -47,15 +48,18 @@ export function useGameSearch(fen: string) {
           BookService.getGamesAtPosition(normalized, playerMovesOnly),
         ]);
         if (!cancelled) {
-          setUserGames(uGames);
-          setMasterGames([...mGames, ...bookGames.games]);
-          setMasterHasMore(bookGames.hasMore);
+          setUserGames(uGames.games);
+          setUserHasMore(uGames.hasMore);
+          setMasterGames([...mGames.games, ...bookGames.games]);
+          // Either source being truncated means the master count understates the position.
+          setMasterHasMore(mGames.hasMore || bookGames.hasMore);
           lastSearchedRef.current = searchKey;
         }
       } catch {
         if (!cancelled) {
           setUserGames([]);
           setMasterGames([]);
+          setUserHasMore(false);
           setMasterHasMore(false);
         }
       } finally {
@@ -69,8 +73,9 @@ export function useGameSearch(fen: string) {
     lastSearchedRef.current = null;
     setUserGames([]);
     setMasterGames([]);
+    setUserHasMore(false);
     setMasterHasMore(false);
   }, []);
 
-  return { userGames, masterGames, masterHasMore, loading, reset };
+  return { userGames, userHasMore, masterGames, masterHasMore, loading, reset };
 }

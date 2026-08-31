@@ -59,7 +59,7 @@ export default function RepertoireStudyScreen({ navigation, route }: RepertoireS
   const currentFen = moveTree?.getCurrentFen() || '';
   const currentNodeId = moveTree?.getCurrentNode()?.id || null;
 
-  const { userGames, masterGames, masterHasMore, loading: loadingGames } = useGameSearch(currentFen);
+  const { userGames, userHasMore, masterGames, masterHasMore, loading: loadingGames } = useGameSearch(currentFen);
 
   const handleSelectGame = (game: UserGame | MasterGame) => {
     navigation.navigate('Analysis', { game });
@@ -177,6 +177,7 @@ export default function RepertoireStudyScreen({ navigation, route }: RepertoireS
         screenKey="repertoire"
         orientationOverride={repertoire.color}
         userGames={userGames}
+      userHasMore={userHasMore}
         masterGames={masterGames}
       masterHasMore={masterHasMore}
         loadingGames={loadingGames}

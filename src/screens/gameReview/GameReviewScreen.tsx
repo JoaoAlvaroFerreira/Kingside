@@ -61,7 +61,7 @@ export default function GameReviewScreen({ navigation, route: _route }: GameRevi
     if (lastSearchedFenUser === fen) return;
     setLoadingUserGames(true);
     try {
-      const games = await DatabaseService.searchUserGamesByFEN(fen);
+      const { games } = await DatabaseService.searchUserGamesByFEN(fen);
       setFenUserGames(games);
       setLastSearchedFenUser(fen);
     } catch {
@@ -75,7 +75,7 @@ export default function GameReviewScreen({ navigation, route: _route }: GameRevi
     if (lastSearchedFenMaster === fen) return;
     setLoadingMasterGames(true);
     try {
-      const games = await DatabaseService.searchMasterGamesByFEN(fen);
+      const { games } = await DatabaseService.searchMasterGamesByFEN(fen);
       setFenMasterGames(games);
       setLastSearchedFenMaster(fen);
     } catch {
