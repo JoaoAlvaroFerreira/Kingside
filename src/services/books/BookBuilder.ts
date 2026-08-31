@@ -241,6 +241,12 @@ class BookBuilderClass {
     if (Platform.OS === 'web') throw new Error('Refreshing books is not supported on web.');
 
     const started = Date.now();
+    // expo-sqlite caches connections by database name, so opening this book here can hand
+    // back the very object BookService holds for board queries — and closing it at the end
+    // would leave that cache pointing at a closed connection. Release it first; the board
+    // reopens lazily, and by then the file has changed anyway.
+    await BookService.closeAll();
+
     const db = await SQLite.openDatabaseAsync(record.fileName);
     await db.execAsync('PRAGMA journal_mode = OFF; PRAGMA synchronous = OFF;');
 
