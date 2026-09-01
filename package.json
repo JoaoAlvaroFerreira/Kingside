@@ -1,6 +1,6 @@
 {
   "name": "kingside",
-  "version": "1.0.0-beta.5",
+  "version": "1.0.0-beta.6",
   "description": "Chess opening trainer with spaced repetition",
   "main": "node_modules/expo/AppEntry.js",
   "scripts": {
