@@ -24,7 +24,7 @@ import { CandidateSource } from '@hooks/useCandidateMoves';
 const WIDE_GAME_LIST_HEIGHT = 180;
 const EMPTY_MATCHES: ChapterFenMatch[] = [];
 
-type AnalysisTab = 'moves' | 'yourGames' | 'masterGames' | 'findPosition';
+type AnalysisTab = 'moves' | 'yourGames' | 'masterGames' | 'opponent' | 'findPosition';
 
 interface ChessAnalysisLayoutProps {
   // MoveTree state (owned by parent screen)
@@ -50,6 +50,11 @@ interface ChessAnalysisLayoutProps {
   masterGames: MasterGame[];
   /** Book samples are capped, so the master count may understate what exists. */
   masterHasMore?: boolean;
+  /** Set only when preparing against someone: their games, and the name for the tab. */
+  opponentGames?: MasterGame[];
+  opponentHasMore?: boolean;
+  opponentName?: string;
+  opponentBookId?: string;
   loadingGames: boolean;
   onSelectGame: (game: UserGame | MasterGame) => void;
   onSelectRepertoireMatch: (match: ChapterFenMatch) => void;
@@ -80,6 +85,10 @@ export function ChessAnalysisLayout({
   userHasMore,
   masterGames,
   masterHasMore,
+  opponentGames,
+  opponentHasMore,
+  opponentName,
+  opponentBookId,
   loadingGames,
   onSelectGame,
   onSelectRepertoireMatch,
@@ -156,6 +165,9 @@ export function ChessAnalysisLayout({
     { key: 'moves', label: 'Moves' },
     ...(visibleTabs.yourGames ? [{ key: 'yourGames' as const, label: `Your Games (${formatCount(userGames.length, userHasMore)})` }] : []),
     ...(visibleTabs.masterGames ? [{ key: 'masterGames' as const, label: `Master (${formatCount(masterGames.length, masterHasMore)})` }] : []),
+    // Only present while preparing against someone, so it never competes for space
+    // in ordinary analysis.
+    ...(opponentName ? [{ key: 'opponent' as const, label: `${opponentName} (${formatCount((opponentGames ?? []).length, opponentHasMore)})` }] : []),
     ...(visibleTabs.findPosition ? [{ key: 'findPosition' as const, label: `Find Position (${repertoireMatches.length})` }] : []),
   ];
   const effectiveActiveTab: AnalysisTab = TABS.some(t => t.key === activeTab) ? activeTab : 'moves';
@@ -166,6 +178,7 @@ export function ChessAnalysisLayout({
   const candidateSource: CandidateSource =
     effectiveActiveTab === 'findPosition' ? 'repertoire'
     : effectiveActiveTab === 'yourGames' ? 'user'
+    : effectiveActiveTab === 'opponent' ? 'opponent'
     : effectiveActiveTab === 'masterGames' ? 'master'
     : 'none';
 
@@ -233,6 +246,7 @@ export function ChessAnalysisLayout({
         showMoveHistory={false}
         showSettingsGear={false}
         candidateSource={candidateSource}
+          opponentBookId={opponentBookId}
       />
 
       {/* Tab Bar */}
@@ -281,6 +295,26 @@ export function ChessAnalysisLayout({
                 title="Your Games"
                 games={userGames}
                 hasMore={userHasMore}
+                onSelect={onSelectGame}
+                defaultCollapsed={false}
+                loading={false}
+              />
+            )}
+          </View>
+        )}
+
+        {effectiveActiveTab === 'opponent' && (
+          <View style={styles.tabGameList}>
+            {loadingGames ? (
+              <View style={styles.tabLoading}>
+                <ActivityIndicator size="small" color="#4a9eff" />
+                <Text style={styles.tabLoadingText}>Searching games...</Text>
+              </View>
+            ) : (
+              <GameList
+                title={`${opponentName} here`}
+                games={opponentGames ?? []}
+                hasMore={opponentHasMore}
                 onSelect={onSelectGame}
                 defaultCollapsed={false}
                 loading={false}

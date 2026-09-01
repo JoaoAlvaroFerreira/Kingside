@@ -29,11 +29,12 @@ import {
   FetchCancelled,
   FetchError,
   BookRecord,
+  BookKind,
   normalizeFen,
   BOOK_SCHEMA_VERSION,
 } from '@types';
 import { getGameSource } from '@services/gameSources';
-import { scanGame } from '@services/gameSources/pgnScan';
+import { scanGame, splitGames } from '@services/gameSources/pgnScan';
 import { BookService } from './BookService';
 import * as FileSystem from 'expo-file-system';
 
@@ -123,7 +124,8 @@ class BookBuilderClass {
     displayName: string,
     onProgress: (p: BuildProgress) => void,
     signal: AbortSignal,
-    resumeFileName?: string
+    resumeFileName?: string,
+    kind: BookKind = 'master'
   ): Promise<BuildResult> {
     if (Platform.OS === 'web') {
       throw new Error('Building books is not supported on web.');
@@ -141,7 +143,7 @@ class BookBuilderClass {
     const db = await SQLite.openDatabaseAsync(fileName);
     await db.execAsync('PRAGMA journal_mode = OFF; PRAGMA synchronous = OFF;');
     await this.createSchema(db);
-    await BookService.setPendingBuild({ fileName, displayName, spec: serialiseSpec(spec) });
+    await BookService.setPendingBuild({ fileName, displayName, kind, spec: serialiseSpec(spec) });
 
     let games = 0;
     let plies = 0;
@@ -248,7 +250,7 @@ class BookBuilderClass {
       await db.execAsync('VACUUM');
       await db.closeAsync();
 
-      const record = await BookService.registerBuiltBook(fileName, displayName);
+      const record = await BookService.registerBuiltBook(fileName, displayName, kind);
       return {
         record, games, positions, unparsed, remaining,
         seconds: (Date.now() - started) / 1000,
@@ -397,6 +399,112 @@ class BookBuilderClass {
       };
     } catch (error) {
       // The book keeps whatever months it finished; staging is scratch and goes.
+      try {
+        await db.execAsync('DROP TABLE IF EXISTS staging');
+        await db.closeAsync();
+      } catch { /* already closed */ }
+      throw error;
+    }
+  }
+
+  /**
+   * Add games from a PGN file into an existing book.
+   *
+   * This is how OTB games reach an opponent's profile: the online APIs only know online
+   * play, and no public API hands you an arbitrary player's over-the-board games, so those
+   * arrive as a file the user already has. They merge into the same book rather than
+   * becoming a separate entity — one opponent is one profile whatever the games' origin.
+   *
+   * The file's content hash is recorded and re-importing it is refused, which is the same
+   * rule that stops a month being fetched twice: without a marker there is nothing to stop
+   * the same games being counted again.
+   */
+  async addGamesFromPgn(
+    record: BookRecord,
+    pgnText: string,
+    onProgress: (p: BuildProgress) => void,
+    signal: AbortSignal
+  ): Promise<RefreshResult> {
+    if (Platform.OS === 'web') throw new Error('Adding games is not supported on web.');
+
+    const started = Date.now();
+    await BookService.closeAll();
+    const db = await SQLite.openDatabaseAsync(record.fileName);
+    await db.execAsync('PRAGMA journal_mode = OFF; PRAGMA synchronous = OFF;');
+
+    try {
+      const meta = await this.readMetaMap(db);
+      const marker = `pgn:${hashText(pgnText)}`;
+      if (meta[marker]) {
+        throw new FetchError(
+          'unsupported',
+          'These games are already in this book — importing them again would count them twice.'
+        );
+      }
+
+      const spec = meta.spec ? reviveSpec(JSON.parse(meta.spec)) : null;
+      // A PGN carries no account, so "their moves" is decided by the book's own player
+      // names; without them every mover looks like an opponent.
+      const names = spec
+        ? heroNames(spec)
+        : new Set((meta.player ?? '').split(',').map(n => n.trim().toLowerCase()).filter(Boolean));
+
+      await db.execAsync(`
+        DROP TABLE IF EXISTS staging;
+        CREATE TABLE staging (
+          fen TEXT NOT NULL, move TEXT NOT NULL, ply INTEGER NOT NULL,
+          hero INTEGER NOT NULL, result INTEGER NOT NULL, game_id INTEGER NOT NULL
+        );
+      `);
+
+      const maxRow = await db.getFirstAsync('SELECT COALESCE(MAX(id), 0) AS id FROM book_games') as any;
+      let gameId = maxRow?.id ?? 0;
+      let games = 0;
+      let plies = 0;
+
+      const pgns = splitGames(pgnText);
+      onProgress({ phase: `Reading ${pgns.length} games…`, periodsDone: 0, periodsTotal: 1, games, plies });
+
+      const staging: StagingRow[] = [];
+      for (const pgn of pgns) {
+        if (signal.aborted) throw new FetchCancelled();
+        gameId += 1;
+        const outcome = this.ingestGame(pgn, names, gameId, staging);
+        plies += outcome.plies;
+        games += 1;
+        await this.insertGameRow(db, gameId, outcome);
+        if (staging.length >= FLUSH_THRESHOLD) {
+          await this.flushStaging(db, staging);
+          await yieldToUi();
+          onProgress({ phase: 'Reading games…', periodsDone: 0, periodsTotal: 1, games, plies });
+        }
+      }
+      await this.flushStaging(db, staging);
+
+      if (games === 0) {
+        await db.execAsync('DROP TABLE IF EXISTS staging');
+        await db.closeAsync();
+        throw new FetchError('unsupported', 'No games were found in that file.');
+      }
+
+      onProgress({ phase: 'Merging positions…', periodsDone: 1, periodsTotal: 1, games, plies });
+      const newPositions = await this.mergeStaging(db, Number(meta.full_ply) || FULL_PLY);
+
+      await db.runAsync('INSERT OR REPLACE INTO book_meta (key, value) VALUES (?, ?)', [marker, '1']);
+      await db.runAsync(
+        'INSERT OR REPLACE INTO book_meta (key, value) VALUES (?, ?)',
+        ['game_count', String((Number(meta.game_count) || 0) + games)]
+      );
+      await db.execAsync('DROP TABLE IF EXISTS staging');
+      await db.execAsync('VACUUM');
+      await db.closeAsync();
+
+      const updated = await BookService.reregisterBook(record);
+      return {
+        record: updated, newGames: games, newPositions, months: 0, remaining: 0,
+        seconds: (Date.now() - started) / 1000, upToDate: false,
+      };
+    } catch (error) {
       try {
         await db.execAsync('DROP TABLE IF EXISTS staging');
         await db.closeAsync();
@@ -768,6 +876,21 @@ export function reviveSpec(raw: any): FetchSpec {
     since: raw?.since ? new Date(raw.since) : undefined,
     until: raw?.until ? new Date(raw.until) : undefined,
   };
+}
+
+/**
+ * A stable fingerprint of a PGN file, so the same games are not merged twice.
+ *
+ * FNV-1a: not cryptographic, and it does not need to be — it only has to differ between
+ * files the user might import, and a collision costs one skipped import, not corruption.
+ */
+function hashText(text: string): string {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < text.length; i++) {
+    hash ^= text.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193) >>> 0;
+  }
+  return `${hash.toString(16)}-${text.length}`;
 }
 
 /** Hand the thread back so React can paint and the cancel button can be pressed. */

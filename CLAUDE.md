@@ -339,6 +339,30 @@ hidden/debug settings toggle is enough — the underlying `BookService.importBoo
 what `registerBuiltBook` validates through, so removing the *service* would break the
 public path too.
 
+## Prepare Against
+
+An opponent profile is an opening book with `kind = 'opponent'`. Two rules make it
+preparation rather than just another book, and both are load-bearing:
+
+- **Opponent books never join the Master arrows.** `getMoveCandidates` with no `bookId`
+  reads `listBooks('master')` only. Letting one player's blitz history into "master games"
+  would quietly redefine that statistic — the board would show a club player's habits
+  labelled as master practice.
+- **They are always read hero-only.** For preparation you want what *they* chose, not the
+  blend with whatever their opponents replied. This is inherent to the query, not the
+  global Player Moves Only toggle, which still governs the Master source.
+
+The board gains one tab, present only when opened from Prepare Against, beside the Find
+Position tab that already says which of your own chapters cover the position — which is the
+whole point: their move and your preparation for it, on the same screen.
+
+**OTB games arrive as a PGN, deliberately.** No public API hands you an arbitrary player's
+over-the-board games — ChessBase and chesstempo have no open game export, and TWIC-scale
+downloads would just be rebuilding Caissabase. `addGamesFromPgn` merges a file into the
+*same* profile, so one opponent stays one profile whatever the games' origin. The file's
+content hash is stored and re-importing it is refused: exactly the rule that stops a month
+being fetched twice, for exactly the same reason.
+
 ## Import is bounded by time, not by months
 
 `BUILD_BUDGET_MS` (120s) stops a build or refresh at the next month boundary and hands back

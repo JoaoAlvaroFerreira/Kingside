@@ -7,9 +7,19 @@
  * main database stores only a BookRecord saying one is installed.
  */
 
+/**
+ * What a book is for.
+ *
+ * `opponent` books are preparation against one player and must never join the Master
+ * arrows: mixing one club player's blitz into "master games" would quietly turn that
+ * statistic into something else entirely.
+ */
+export type BookKind = 'master' | 'opponent';
+
 /** An installed book, as tracked in the main database's `master_books` table. */
 export interface BookRecord {
   id: string;
+  kind: BookKind;
   /** Display name, from the book's own metadata. */
   name: string;
   /** Whose games these are; blank for a mixed corpus. Drives the "their moves" split. */

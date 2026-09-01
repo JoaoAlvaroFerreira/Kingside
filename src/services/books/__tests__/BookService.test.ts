@@ -54,7 +54,7 @@ function fakeBook(options: {
 
 function record(over: Partial<BookRecord> = {}): BookRecord {
   return {
-    id: 'book_1', name: 'Test Book', player: 'Someone', sourceFile: 'test.pgn',
+    id: 'book_1', kind: 'master', name: 'Test Book', player: 'Someone', sourceFile: 'test.pgn',
     fileName: 'book_1.kbook', gameCount: 1000, positionCount: 500,
     sizeBytes: 1024, maxPly: 30, hasGames: true, importedAt: new Date(0),
     ...over,
@@ -213,6 +213,60 @@ describe('getMoveCandidates', () => {
     mockDb.getBookRecords.mockResolvedValue([]);
     expect(await BookService.getMoveCandidates(START)).toEqual([]);
     expect(mockSQLite.openDatabaseAsync).not.toHaveBeenCalled();
+  });
+});
+
+describe('book isolation', () => {
+  it('keeps opponent books out of the Master arrows', async () => {
+    // An opponent book is one player's blitz history. Letting it join the unscoped query
+    // would quietly redefine what "master games" means on the board.
+    mockDb.getBookRecords.mockResolvedValue([
+      record({ id: 'm', fileName: 'm.kbook', kind: 'master' }),
+      record({ id: 'o', fileName: 'o.kbook', kind: 'opponent' }),
+    ]);
+    const master = fakeBook({ moves: [
+      { move: 'e4', n: 10, hero_n: 5, white_n: 5, draw_n: 0, black_n: 5, sample_games: null },
+    ]});
+    const opponent = fakeBook({ moves: [
+      { move: 'd4', n: 99, hero_n: 99, white_n: 99, draw_n: 0, black_n: 0, sample_games: null },
+    ]});
+    mockSQLite.openDatabaseAsync.mockImplementation(async (name: string) =>
+      name.startsWith('m') ? master : opponent
+    );
+
+    const candidates = await BookService.getMoveCandidates(START);
+
+    expect(candidates.map(c => c.move)).toEqual(['e4']);
+  });
+
+  it('reads only the named book when one is given', async () => {
+    mockDb.getBookRecords.mockResolvedValue([
+      record({ id: 'm', fileName: 'm.kbook', kind: 'master' }),
+      record({ id: 'o', fileName: 'o.kbook', kind: 'opponent' }),
+    ]);
+    const master = fakeBook({ moves: [
+      { move: 'e4', n: 10, hero_n: 5, white_n: 5, draw_n: 0, black_n: 5, sample_games: null },
+    ]});
+    const opponent = fakeBook({ moves: [
+      { move: 'd4', n: 99, hero_n: 99, white_n: 99, draw_n: 0, black_n: 0, sample_games: null },
+    ]});
+    mockSQLite.openDatabaseAsync.mockImplementation(async (name: string) =>
+      name.startsWith('m') ? master : opponent
+    );
+
+    // Preparing against someone shows their moves and nobody else's.
+    const candidates = await BookService.getMoveCandidates(START, 4, true, 'o');
+    expect(candidates.map(c => c.move)).toEqual(['d4']);
+  });
+
+  it('lists books of one kind', async () => {
+    mockDb.getBookRecords.mockResolvedValue([
+      record({ id: 'm', fileName: 'm.kbook', kind: 'master' }),
+      record({ id: 'o', fileName: 'o.kbook', kind: 'opponent' }),
+    ]);
+    expect((await BookService.listBooks('opponent')).map(b => b.id)).toEqual(['o']);
+    expect((await BookService.listBooks('master')).map(b => b.id)).toEqual(['m']);
+    expect((await BookService.listBooks()).map(b => b.id)).toEqual(['m', 'o']);
   });
 });
 

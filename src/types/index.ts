@@ -68,6 +68,7 @@ export type {
 export type {
   // Opening book types
   BookRecord,
+  BookKind,
   BookMoveCandidate,
   BookGame,
   BookImportFailure,

@@ -71,6 +71,8 @@ interface ChessWorkspaceProps {
   // Which source draws candidate-move arrows on the board. Driven by the active tab so
   // only one kind of arrow is ever on the board at once; 'none' leaves just the engine's.
   candidateSource?: CandidateSource;
+  /** The opponent book the arrows read when candidateSource is 'opponent'. */
+  opponentBookId?: string;
 
   // Hard cap on board size (px). Used when ChessWorkspace is placed inside a
   // constrained container whose width is smaller than what useWindowDimensions reports.
@@ -92,6 +94,7 @@ export const ChessWorkspace: React.FC<ChessWorkspaceProps> = ({
   onPromoteToMainLine,
   onDeleteMove,
   candidateSource = 'none',
+  opponentBookId,
   currentEval,
   moveEvals = [],
   keyMoves = [],
@@ -181,7 +184,7 @@ export const ChessWorkspace: React.FC<ChessWorkspaceProps> = ({
 
   const currentNode = moveTree?.getCurrentNode();
   const pgnarrows = currentNode?.arrows;
-  const candidateArrows = useCandidateMoves(fen, candidateSource);
+  const candidateArrows = useCandidateMoves(fen, candidateSource, opponentBookId);
 
   const nagBadge = useMemo(() => {
     if (!currentNode?.nags?.length) return undefined;

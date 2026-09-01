@@ -8,6 +8,7 @@ import RepertoireScreen from '@screens/RepertoireScreen';
 import GameListScreen from '@screens/GameListScreen';
 import ImportPGNScreen from '@screens/ImportPGNScreen';
 import BuildBookScreen from '@screens/BuildBookScreen';
+import PrepareAgainstScreen from '@screens/PrepareAgainstScreen';
 import RepertoireStudyScreen from '@screens/RepertoireStudyScreen';
 import TrainingDashboardScreen from '@screens/training/TrainingDashboardScreen';
 import TrainingSessionScreen from '@screens/training/TrainingSessionScreen';
@@ -18,7 +19,7 @@ import DrawerContent from '@components/navigation/DrawerContent';
 
 export type RootStackParamList = {
   Main: undefined;
-  Analysis: undefined;
+  Analysis: { opponentBookId?: string; opponentName?: string } | undefined;
   Repertoire: undefined;
   /** `fromFen` preselects "drill from this position", handed over from the Analysis Board. */
   Training: { fromFen?: string } | undefined;
@@ -80,6 +81,11 @@ function DrawerNavigator() {
         name="Training"
         component={TrainingDashboardScreen}
         options={{ title: 'Training' }}
+      />
+      <Drawer.Screen
+        name="PrepareAgainst"
+        component={PrepareAgainstScreen}
+        options={{ title: 'Prepare Against' }}
       />
       <Drawer.Screen
         name="Games"

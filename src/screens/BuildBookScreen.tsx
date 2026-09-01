@@ -33,11 +33,13 @@ const SPEED_LABEL: Record<Speed, string> = {
 
 interface Props {
   navigation: any;
-  route?: { params?: { refreshBookId?: string } };
+  route?: { params?: { refreshBookId?: string; kind?: 'master' | 'opponent' } };
 }
 
 export default function BuildBookScreen({ navigation, route }: Props) {
   const refreshBookId = route?.params?.refreshBookId;
+  const kind = route?.params?.kind ?? 'master';
+  const preparing = kind === 'opponent';
   const [source, setSource] = useState<GameSourceId>('chesscom');
   const [username, setUsername] = useState('');
   /** Accounts already added. One player is often several handles across both sites. */
@@ -170,7 +172,7 @@ export default function BuildBookScreen({ navigation, route }: Props) {
 
     try {
       const result = await BookBuilder.build(
-        spec, displayName, setProgress, controller.signal, resumeFile
+        spec, displayName, setProgress, controller.signal, resumeFile, kind
       );
       setBuilding(false);
       setPending(null);
@@ -203,7 +205,7 @@ export default function BuildBookScreen({ navigation, route }: Props) {
       Alert.alert('Build Failed', message);
       setPending(await BookService.getPendingBuild());
     }
-  }, [navigation]);
+  }, [navigation, kind]);
 
   const handleBuild = () => {
     const spec = buildSpec();
@@ -261,10 +263,11 @@ export default function BuildBookScreen({ navigation, route }: Props) {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>Build Opening Book</Text>
+      <Text style={styles.title}>{preparing ? 'Add Opponent' : 'Build Opening Book'}</Text>
       <Text style={styles.subtitle}>
-        Fetches an account&apos;s games and indexes what gets played from each position.
-        Nothing is downloaded to your computer first.
+        {preparing
+          ? 'Fetches this player’s games and indexes what they play from each position. Their moves then appear on the board beside your own repertoire.'
+          : 'Fetches an account’s games and indexes what gets played from each position. Nothing is downloaded to your computer first.'}
       </Text>
 
       {!!pending && (

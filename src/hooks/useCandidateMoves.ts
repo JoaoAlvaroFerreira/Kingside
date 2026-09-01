@@ -13,7 +13,7 @@ import { DatabaseService, MoveCandidate } from '@services/database/DatabaseServi
 import { BookService } from '@services/books/BookService';
 import { useStore } from '@store';
 
-export type CandidateSource = 'none' | 'repertoire' | 'user' | 'master';
+export type CandidateSource = 'none' | 'repertoire' | 'user' | 'master' | 'opponent';
 
 export interface CandidateArrow {
   from: string;
@@ -30,6 +30,7 @@ export const CANDIDATE_ARROW_COLORS: Record<Exclude<CandidateSource, 'none'>, st
   repertoire: '#7eb8e8',
   user: '#27ae60',
   master: '#b07ee8',
+  opponent: '#e8834a',
 };
 
 const EMPTY: CandidateArrow[] = [];
@@ -43,10 +44,20 @@ const EMPTY: CandidateArrow[] = [];
  * strongest candidate here, so a large book raises the ceiling instead of drowning it.
  */
 async function gameCandidates(
-  source: 'user' | 'master',
+  source: 'user' | 'master' | 'opponent',
   fen: string,
-  playerMovesOnly: boolean
+  playerMovesOnly: boolean,
+  opponentBookId?: string
 ): Promise<MoveCandidate[]> {
+  // Preparation reads one book and only that player's own choices: what their opponents
+  // replied is not what you are preparing against, and the global toggle is about the
+  // Master source, not this.
+  if (source === 'opponent') {
+    if (!opponentBookId) return [];
+    const book = await BookService.getMoveCandidates(fen, 4, true, opponentBookId);
+    return book.map(c => ({ move: c.move, count: c.heroCount }));
+  }
+
   const local = await DatabaseService.getGameMoveCandidates(source, fen);
   if (source !== 'master') return local;
 
@@ -112,7 +123,9 @@ function toArrow(fen: string, candidate: MoveCandidate, color: string, weight: n
   }
 }
 
-export function useCandidateMoves(fen: string, source: CandidateSource): CandidateArrow[] {
+export function useCandidateMoves(
+  fen: string, source: CandidateSource, opponentBookId?: string
+): CandidateArrow[] {
   const [arrows, setArrows] = useState<CandidateArrow[]>(EMPTY);
   // Books feed the master arrows, so installing or deleting one has to redraw them.
   const [bookRevision, setBookRevision] = useState(BookService.revision);
@@ -130,7 +143,7 @@ export function useCandidateMoves(fen: string, source: CandidateSource): Candida
     (async () => {
       const candidates = source === 'repertoire'
         ? await DatabaseService.getRepertoireMoveCandidates(fen)
-        : await gameCandidates(source, fen, playerMovesOnly);
+        : await gameCandidates(source, fen, playerMovesOnly, opponentBookId);
 
       if (cancelled) return;
       if (candidates.length === 0) {
@@ -150,7 +163,7 @@ export function useCandidateMoves(fen: string, source: CandidateSource): Candida
     })();
 
     return () => { cancelled = true; };
-  }, [fen, source, bookRevision, playerMovesOnly]);
+  }, [fen, source, bookRevision, playerMovesOnly, opponentBookId]);
 
   return arrows;
 }

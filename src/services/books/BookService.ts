@@ -13,6 +13,7 @@ import { Platform } from 'react-native';
 import * as FileSystem from 'expo-file-system';
 import {
   BookRecord,
+  BookKind,
   BookMoveCandidate,
   BookGame,
   BookImportError,
@@ -38,6 +39,7 @@ const PENDING_BUILD_KEY = 'book_build_pending';
 export interface PendingBuild {
   fileName: string;
   displayName: string;
+  kind?: BookKind;
   /** The spec, serialised — dates come back as ISO strings. */
   spec: any;
 }
@@ -80,7 +82,12 @@ class BookServiceClass {
    * stay put. A record whose file is missing is dropped rather than left to fail on every
    * board query.
    */
-  async listBooks(): Promise<BookRecord[]> {
+  async listBooks(kind?: BookKind): Promise<BookRecord[]> {
+    const all = await this.allBooks();
+    return kind ? all.filter(b => b.kind === kind) : all;
+  }
+
+  private async allBooks(): Promise<BookRecord[]> {
     if (this.isWeb) return [];
     if (this.records) return this.records;
 
@@ -105,7 +112,7 @@ class BookServiceClass {
    */
   async pruneOrphanFiles(): Promise<number> {
     if (this.isWeb) return 0;
-    const known = new Set((await this.listBooks()).map(b => b.fileName));
+    const known = new Set((await this.allBooks()).map(b => b.fileName));
     // An interrupted build is not an orphan — it is a resume point.
     const pending = await this.getPendingBuild();
     if (pending) known.add(pending.fileName);
@@ -185,7 +192,7 @@ class BookServiceClass {
    * The file is copied, never read into memory: a book can be 100MB+, and reading one as
    * a string is exactly the failure that made importing the source PGN impossible.
    */
-  async importBook(uri: string, displayName?: string): Promise<BookRecord> {
+  async importBook(uri: string, displayName?: string, kind: BookKind = 'master'): Promise<BookRecord> {
     if (this.isWeb) {
       throw new BookImportError('copy-failed', 'Opening books are not supported on web.');
     }
@@ -211,6 +218,7 @@ class BookServiceClass {
 
       const record: BookRecord = {
         id,
+        kind,
         name: displayName || meta.name || 'Opening book',
         player: meta.player || '',
         sourceFile: meta.source_file || '',
@@ -283,7 +291,9 @@ class BookServiceClass {
    * like an imported one — if the builder ever writes something the reader cannot handle,
    * it fails here rather than on the board.
    */
-  async registerBuiltBook(fileName: string, displayName: string): Promise<BookRecord> {
+  async registerBuiltBook(
+    fileName: string, displayName: string, kind: BookKind = 'master'
+  ): Promise<BookRecord> {
     const destination = this.bookPath(fileName);
     const db = await SQLite.openDatabaseAsync(fileName);
     try {
@@ -291,6 +301,7 @@ class BookServiceClass {
       const info = await FileSystem.getInfoAsync(destination);
       const record: BookRecord = {
         id: fileName.replace(BOOK_EXTENSION, ''),
+        kind,
         name: displayName || meta.name || 'Opening book',
         player: meta.player || '',
         sourceFile: meta.source_file || '',
@@ -373,7 +384,7 @@ class BookServiceClass {
   /** Remove a book: close it, delete its file, forget it. */
   async deleteBook(id: string): Promise<void> {
     if (this.isWeb) return;
-    const books = await this.listBooks();
+    const books = await this.allBooks();
     const book = books.find(b => b.id === id);
 
     await this.disconnect(id);
@@ -400,10 +411,16 @@ class BookServiceClass {
   async getMoveCandidates(
     fen: string,
     limit: number = CANDIDATE_MOVE_LIMIT,
-    playerMovesOnly = false
+    playerMovesOnly = false,
+    bookId?: string
   ): Promise<BookMoveCandidate[]> {
     if (this.isWeb) return [];
-    const books = await this.listBooks();
+    // Without a bookId this is the Master source, which must see only master books: an
+    // opponent's blitz history is not a master statistic, and merging it would silently
+    // change what the Master arrows mean.
+    const books = bookId
+      ? (await this.allBooks()).filter(b => b.id === bookId)
+      : await this.listBooks('master');
     if (books.length === 0) return [];
 
     const normalized = normalizeFen(fen);
@@ -466,14 +483,16 @@ class BookServiceClass {
   }
 
   /** Full move list for the position panel — same data, less truncation. */
-  async getPositionMoves(fen: string, playerMovesOnly = false): Promise<BookMoveCandidate[]> {
-    return this.getMoveCandidates(fen, MOVE_LIST_LIMIT, playerMovesOnly);
+  async getPositionMoves(
+    fen: string, playerMovesOnly = false, bookId?: string
+  ): Promise<BookMoveCandidate[]> {
+    return this.getMoveCandidates(fen, MOVE_LIST_LIMIT, playerMovesOnly, bookId);
   }
 
   /** Fetch specific games out of one book, for drill-down from a move. */
   async getGames(bookId: string, ids: number[]): Promise<BookGame[]> {
     if (this.isWeb || ids.length === 0) return [];
-    const books = await this.listBooks();
+    const books = await this.allBooks();
     const book = books.find(b => b.id === bookId);
     if (!book || !book.hasGames) return [];
 
@@ -509,11 +528,12 @@ class BookServiceClass {
   async getGamesAtPosition(
     fen: string,
     playerMovesOnly = false,
-    limit: number = POSITION_SAMPLE_LIMIT
+    limit: number = POSITION_SAMPLE_LIMIT,
+    bookId?: string
   ): Promise<BookGamesResult> {
     if (this.isWeb) return EMPTY_GAMES;
 
-    const candidates = await this.getPositionMoves(fen, playerMovesOnly);
+    const candidates = await this.getPositionMoves(fen, playerMovesOnly, bookId);
     if (candidates.length === 0) return EMPTY_GAMES;
 
     // Walk the moves in rank order so the most-played continuations contribute their games

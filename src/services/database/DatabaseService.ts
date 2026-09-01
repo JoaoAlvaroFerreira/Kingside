@@ -45,7 +45,7 @@ const CANDIDATE_MOVE_LIMIT = 4;
  * findable. Raise it if middlegame search matters more than the space.
  */
 const POSITION_INDEX_MAX_PLY = 40;
-const SCHEMA_VERSION = 8; // Bump when schema changes
+const SCHEMA_VERSION = 9; // Bump when schema changes
 const INDEX_BATCH_SIZE = 10; // Games per batch during background indexing
 
 /**
@@ -79,6 +79,8 @@ export interface MoveCandidate {
 function toBookRecord(row: any): BookRecord {
   return {
     id: row.id,
+    // Rows written before books had a kind are master books; that is what they were.
+    kind: row.kind === 'opponent' ? 'opponent' : 'master',
     name: row.name,
     player: row.player,
     sourceFile: row.source_file,
@@ -324,6 +326,7 @@ class DatabaseServiceClass {
         -- one is installed lives here, so a 100MB book never enters the backup copy.
         CREATE TABLE IF NOT EXISTS master_books (
           id             TEXT PRIMARY KEY,
+          kind           TEXT NOT NULL DEFAULT 'master',
           name           TEXT NOT NULL,
           player         TEXT NOT NULL,
           source_file    TEXT NOT NULL,
@@ -463,6 +466,17 @@ class DatabaseServiceClass {
         await this.db!.execAsync(`ALTER TABLE ${table} ADD COLUMN evals TEXT`);
         console.log(`[DatabaseService] Migrated to schema v8 (${table}.evals)`);
       }
+    }
+
+    // V9: books know what they are for. Existing rows are master books.
+    const bookCols = await this.db!.getAllAsync(
+      'PRAGMA table_info(master_books)'
+    ) as Array<{ name: string }>;
+    if (bookCols.length > 0 && !bookCols.some(c => c.name === 'kind')) {
+      await this.db!.execAsync(
+        "ALTER TABLE master_books ADD COLUMN kind TEXT NOT NULL DEFAULT 'master'"
+      );
+      console.log('[DatabaseService] Migrated to schema v9 (master_books.kind)');
     }
 
     if (currentVersion < SCHEMA_VERSION) {
@@ -1608,11 +1622,11 @@ class DatabaseServiceClass {
     if (this.isWeb || !this.db) return;
     await this.db.runAsync(
       `INSERT OR REPLACE INTO master_books
-       (id, name, player, source_file, file_name, game_count, position_count,
+       (id, kind, name, player, source_file, file_name, game_count, position_count,
         size_bytes, max_ply, has_games, imported_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        book.id, book.name, book.player, book.sourceFile, book.fileName,
+        book.id, book.kind, book.name, book.player, book.sourceFile, book.fileName,
         book.gameCount, book.positionCount, book.sizeBytes, book.maxPly,
         book.hasGames ? 1 : 0, book.importedAt.getTime(),
       ]

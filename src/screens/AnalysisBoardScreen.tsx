@@ -14,6 +14,9 @@ interface AnalysisBoardScreenProps {
       game?: UserGame | MasterGame;
       /** A bare move sequence to load, e.g. a line just drilled in training. */
       line?: { moves: string[]; startFen?: string };
+      /** Set when opened from Prepare Against: adds a tab for that opponent's play. */
+      opponentBookId?: string;
+      opponentName?: string;
     };
   };
   navigation?: any;
@@ -25,7 +28,12 @@ export default function AnalysisBoardScreen({ route, navigation }: AnalysisBoard
 
   const currentFen = moveTree.getCurrentFen();
   const currentNodeId = moveTree.getCurrentNode()?.id || null;
-  const { userGames, userHasMore, masterGames, masterHasMore, loading: loadingGames, reset: resetGames } = useGameSearch(currentFen);
+  const opponentBookId = route?.params?.opponentBookId;
+  const opponentName = route?.params?.opponentName;
+  const {
+    userGames, userHasMore, masterGames, masterHasMore,
+    opponentGames, opponentHasMore, loading: loadingGames, reset: resetGames,
+  } = useGameSearch(currentFen, opponentBookId);
 
   // Load game if provided via navigation
   const justLoadedRef = useRef(false);
@@ -147,6 +155,10 @@ export default function AnalysisBoardScreen({ route, navigation }: AnalysisBoard
       userHasMore={userHasMore}
       masterGames={masterGames}
       masterHasMore={masterHasMore}
+      opponentGames={opponentGames}
+      opponentHasMore={opponentHasMore}
+      opponentName={opponentName}
+      opponentBookId={opponentBookId}
       loadingGames={loadingGames}
       onSelectGame={handleSelectGame}
       onSelectRepertoireMatch={handleSelectRepertoireMatch}

@@ -36,7 +36,7 @@ import { BookBuilder } from '../BookBuilder';
 import { BookRecord } from '@types';
 
 const record: BookRecord = {
-  id: 'book_1', name: 'Test', player: 'someone', sourceFile: 'chesscom:someone',
+  id: 'book_1', kind: 'master', name: 'Test', player: 'someone', sourceFile: 'chesscom:someone',
   fileName: 'book_1.kbook', gameCount: 100, positionCount: 500, sizeBytes: 2048,
   maxPly: 30, hasGames: true, importedAt: new Date(0),
 };
