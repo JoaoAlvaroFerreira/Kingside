@@ -77,6 +77,26 @@ Kingside is a React Native/Expo chess training app. Personal tool for a 2000+ ra
 - **Mistake-Driven Training**: Game Review flags deviations; training hasn't been wired to boost those line priorities yet
 
 ### 📋 TODO
+
+- **Open a game and a repertoire *at the position you came from*.** Not urgent, but both
+  halves are the same bug: you tap something from a position on the board, and what opens
+  has thrown that position away.
+
+  *Games.* Tapping a game in Your Games / Master / an opponent tab should switch to the
+  **Moves** tab and select the move that reaches the position you were just looking at —
+  falling back to the first move when the game somehow does not contain it. Today
+  `AnalysisBoardScreen` loads via `route.params.game` (or `.line`) and calls
+  `newTree.goToStart()` on both paths, so it *should* land at move 0; the report from the
+  device is that it shows the last move, so confirm which is actually happening before
+  changing anything — the entry point may not be the one it looks like. Either way neither
+  end of the game is what is wanted: the point of tapping that game was this position.
+
+  *Repertoires.* `Find Position` lists the chapters containing the current FEN and then
+  navigates with `{ repertoireId, chapterId }` only — **the FEN is dropped**. A big chapter
+  therefore opens at its root and the line you were looking for is somewhere inside a tree
+  with hundreds of nodes, which is exactly the search the tab just did for you. Pass the
+  normalized FEN through and have `RepertoireStudyScreen` walk its MoveTree to the first
+  node whose stored `fen` matches, then select it.
 - **Wire Review → Training**: When Game Review flags a deviation, reset/boost that line's SM2 interval in `lineStats`
 - **Position Browser**: "Your games / Master games from this position" panel on Analysis Board (DB layer done, needs UI)
 - **Decision Tree Visualization**: Show branching points explicitly in repertoire study
