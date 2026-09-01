@@ -578,6 +578,33 @@ Things worth knowing about the individual values:
   skips the SM2 rating; `semi-learn` does not — it is still a test, and its ratings are what
   feed `recommended`.
 
+## "Alternatives": the branches a drill did not take
+
+Mid-drill you often want to know what your repertoire says against their *other* replies to
+the move you just played. Depth-first will not reach those branches for a long time, so the
+session header has an **Alternatives** button beside End Session.
+
+- **The anchor is the position the line branched from** — where the move *before* your
+  current one was played, which is normally their reply. Alternatives are every other move
+  from that position, each followed by the answer prepared for it.
+- **One user move deep, never more.** It is a detour, not a second session; a line that runs
+  twenty plies past the branch contributes only its next answer.
+- **Searched across all the session's chapters.** A repertoire files the opponent's other
+  replies as separate chapters, so restricting to the current chapter would find nothing —
+  drilling the Sicilian and asking what meets 1...e5 is the case it was built for.
+- **Nothing is written to SM-2.** The fragments carry synthetic `alt:` ids: crediting a whole
+  line's schedule for two moves of it would push out a line that was never drilled. So a
+  detour line finishes by advancing, with no rating prompt.
+- **The interrupted session is untouched**, because it is simply held in screen state while
+  a second session object is drilled — `TrainingService` mutates whichever session it is
+  handed. It resumes at the same position when the detour ends or you press Resume Line.
+
+Fixed alongside it: `completeLineAndAdvance` now records the finished line's progress.
+`processUserMove` answers the *last* move of a line with `line-complete` and so never reaches
+`advanceWidthFirst`, which is what normally writes progress — leaving the width-first search
+to find the line unfinished and ask its final move again. With one-move detour lines that
+loop was immediate.
+
 ## Opening Books (`.kbook`)
 
 A book answers "what gets played from this position, and how often" for a corpus that

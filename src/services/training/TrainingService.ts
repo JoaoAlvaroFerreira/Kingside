@@ -116,6 +116,92 @@ export const TrainingService = {
   },
 
   /**
+   * The branches this line did not take, one user move each.
+   *
+   * Depth-first commits to one continuation and does not come back to the position it
+   * branched from until much later, so "what does my repertoire say against their other
+   * replies?" is a question the drill cannot answer at the moment it occurs to you. These
+   * are those replies: every other move from the position this line branched at, followed
+   * by the answer prepared for it, and nothing deeper — it is a detour, not a session.
+   *
+   * Alternatives are searched across all the session's chapters, not just the current
+   * one, because a repertoire usually files the opponent's other replies as separate
+   * chapters: drilling the Sicilian and asking what meets 1...e5 is exactly the case.
+   */
+  alternativesAtCurrentPosition(session: TrainingSession, repertoire: Repertoire): Line[] {
+    const line = session.lines[session.currentLineIndex];
+    if (!line) return [];
+    const current = line.moves.filter(m => m.isUserMove)[session.currentMoveIndex];
+    if (!current) return [];
+
+    const index = line.moves.findIndex(m => m.nodeId === current.nodeId);
+    const previous = index > 0 ? line.moves[index - 1] : null;
+    // Nothing led into this position within the line, so nothing branched away from it.
+    if (!previous) return [];
+
+    const anchor = normalizeFen(previous.preFen);
+    const chapters = session.chapterIds.length
+      ? repertoire.chapters.filter(ch => session.chapterIds.includes(ch.id))
+      : repertoire.chapters;
+
+    const seen = new Set<string>();
+    const alternatives: Line[] = [];
+    for (const chapter of chapters) {
+      const lines = LineExtractor.extractLines(
+        chapter.moveTree, repertoire.id, chapter.id, repertoire.color,
+        session.maxDepth ?? undefined
+      );
+      for (const candidate of lines) {
+        const tail = this.trimLineToPosition(candidate, anchor);
+        if (!tail || tail.moves.length === 0) continue;
+        // The reply you are already being drilled on is not an alternative to itself.
+        if (tail.moves[0].san === previous.san) continue;
+        const answer = tail.moves.findIndex(m => m.isUserMove);
+        if (answer === -1) continue;
+
+        const moves = tail.moves.slice(0, answer + 1);
+        // Lines sharing a reply differ only past the answer, which this cut discards.
+        const key = moves.map(m => m.san).join(' ');
+        if (seen.has(key)) continue;
+        seen.add(key);
+        // A synthetic id: these are two-move fragments, and crediting a whole line's SM-2
+        // schedule for one of them would push out a line that was never drilled.
+        alternatives.push({ ...tail, id: `alt:${key}`, moves, depth: moves.length });
+      }
+    }
+    return alternatives;
+  },
+
+  /** A detour session over those alternatives, or null when the line branches nowhere. */
+  startAlternativesSession(
+    session: TrainingSession,
+    repertoire: Repertoire
+  ): TrainingSession | null {
+    const lines = this.alternativesAtCurrentPosition(session, repertoire);
+    if (lines.length === 0) return null;
+
+    return {
+      ...session,
+      id: this.generateSessionId(),
+      // Width-first is what "all of them, one move each" means once the lines are cut.
+      order: 'width-first',
+      lines,
+      holdbackLines: [],
+      totalLineCount: lines.length,
+      currentLineIndex: 0,
+      currentMoveIndex: 0,
+      currentDepth: 0,
+      lineProgress: {},
+      linesCompleted: 0,
+      completedLineIds: [],
+      totalMistakes: 0,
+      startedAt: new Date(),
+      isComplete: false,
+      awaitingRating: false,
+    };
+  },
+
+  /**
    * Process a user move during training
    */
   processUserMove(session: TrainingSession, from: string, to: string): DrillResult {
@@ -365,6 +451,13 @@ export const TrainingService = {
   ): { updatedStats: LineStats; alsoCompleted: LineStats[]; hasMore: boolean } {
     const currentLine = session.lines[session.currentLineIndex];
     const updatedStats = this.applyRating(currentLine, quality, existingStats, session.totalMistakes);
+
+    // Record the line as fully drilled. Progress is normally written by advanceWidthFirst,
+    // but the *last* move of a line never reaches it: processUserMove answers that move
+    // with 'line-complete' instead of advancing. The width-first searches below go by
+    // progress alone, so without this the line still looks unfinished and its final move
+    // is asked again — for a one-move line, immediately and forever.
+    session.lineProgress[currentLine.id] = currentLine.moves.filter(m => m.isUserMove).length;
 
     // Reset mistake counter for next line
     session.totalMistakes = 0;

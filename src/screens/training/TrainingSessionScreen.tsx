@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -35,6 +35,13 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
   const { width, height } = useWindowDimensions();
 
   const [session, setSession] = useState<TrainingSession | null>(null);
+  /**
+   * The line you stepped off to try its alternatives. Holding it here is what makes the
+   * detour a detour: no flag on the session, and the drill it interrupted is untouched
+   * because TrainingService mutates whichever session object it is handed.
+   */
+  const [pausedSession, setPausedSession] = useState<TrainingSession | null>(null);
+  const inAlternatives = pausedSession !== null;
   const [currentFen, setCurrentFen] = useState<string>(new Chess().fen());
   const [feedback, setFeedback] = useState<'correct' | 'incorrect' | 'alternative' | null>(null);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -370,6 +377,65 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
     updateComment(session);
   };
 
+  const handleTestAlternatives = () => {
+    if (!session || isAnimating || session.awaitingRating) return;
+    const repertoire = repertoires.find(r => r.id === session.repertoireId);
+    if (!repertoire) return;
+
+    const detour = TrainingService.startAlternativesSession(session, repertoire);
+    if (!detour) {
+      const msg = 'Nothing else is prepared against the move that led here.';
+      if (Platform.OS === 'web') window.alert(msg);
+      else Alert.alert('No Alternatives', msg);
+      return;
+    }
+
+    setPausedSession(session);
+    setSession(detour);
+    setFeedback(null);
+    setHintArrowUci(undefined);
+    const position = TrainingService.getCurrentPosition(detour);
+    if (position) {
+      setCurrentFen(position.fen);
+      setExpectedMove(position.expectedMove);
+    }
+    updateComment(detour);
+  };
+
+  const resumeMainSession = useCallback(() => {
+    const main = pausedSession;
+    if (!main) return;
+    setPausedSession(null);
+    setSession(main);
+    setFeedback(null);
+    setHintArrowUci(undefined);
+    const position = TrainingService.getCurrentPosition(main);
+    if (position) {
+      setCurrentFen(position.fen);
+      setExpectedMove(position.expectedMove);
+    }
+    updateComment(main);
+  }, [pausedSession]);
+
+  // A detour line finishes by advancing, never by asking for a rating: these are two-move
+  // fragments, and SM-2 evidence about the whole line is not what answering one of them
+  // is. Runs before paint so the rating panel never flashes.
+  useLayoutEffect(() => {
+    if (!session || !inAlternatives || !session.awaitingRating) return;
+    const { hasMore } = TrainingService.completeLineAndAdvance(session, 4, []);
+    if (!hasMore) {
+      resumeMainSession();
+      return;
+    }
+    setSession({ ...session });
+    const position = TrainingService.getCurrentPosition(session);
+    if (position) {
+      setCurrentFen(position.fen);
+      setExpectedMove(position.expectedMove);
+    }
+    updateComment(session);
+  }, [session, inAlternatives, resumeMainSession]);
+
   const handleEndSession = () => {
     const msg = 'Are you sure you want to end this training session?';
     if (Platform.OS === 'web') {
@@ -485,9 +551,15 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
       {/* Progress Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <View style={[styles.modeBadge, showsComments && styles.modeBadgeLearn]}>
+          <View style={[
+            styles.modeBadge,
+            showsComments && styles.modeBadgeLearn,
+            inAlternatives && styles.modeBadgeAlt,
+          ]}>
             <Text style={styles.modeBadgeText}>
-              {guidance === 'learn' ? 'Learn' : guidance === 'semi-learn' ? 'Semi' : 'Drill'}
+              {inAlternatives ? 'Alts'
+                : guidance === 'learn' ? 'Learn'
+                : guidance === 'semi-learn' ? 'Semi' : 'Drill'}
             </Text>
           </View>
           <View>
@@ -500,9 +572,27 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
             </Text>
           </View>
         </View>
-        <TouchableOpacity onPress={handleEndSession} style={styles.endButton}>
-          <Text style={styles.endButtonText}>End Session</Text>
-        </TouchableOpacity>
+        <View style={styles.headerRight}>
+          {inAlternatives ? (
+            <TouchableOpacity onPress={resumeMainSession} style={styles.altButton}>
+              <Text style={styles.altButtonText}>Resume Line</Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              onPress={handleTestAlternatives}
+              disabled={isAnimating || session.awaitingRating}
+              style={[
+                styles.altButton,
+                (isAnimating || session.awaitingRating) && styles.altButtonDisabled,
+              ]}
+            >
+              <Text style={styles.altButtonText}>Alternatives</Text>
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity onPress={handleEndSession} style={styles.endButton}>
+            <Text style={styles.endButtonText}>End Session</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView
@@ -593,7 +683,7 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
         )}
 
         {/* Rating Buttons — directly below board so it's always visible */}
-        {session.awaitingRating && (
+        {session.awaitingRating && !inAlternatives && (
           <View style={styles.ratingContainer}>
             {guidance === 'learn' ? (
               <>
@@ -731,6 +821,28 @@ const styles = StyleSheet.create({
     color: '#bbb',
     fontSize: 12,
     marginTop: 1,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  altButton: {
+    backgroundColor: '#455a64',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 4,
+  },
+  altButtonDisabled: {
+    opacity: 0.4,
+  },
+  altButtonText: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  modeBadgeAlt: {
+    backgroundColor: '#455a64',
   },
   endButton: {
     backgroundColor: '#d32f2f',

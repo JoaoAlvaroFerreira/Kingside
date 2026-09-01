@@ -181,3 +181,24 @@ describe('width-first drilling', () => {
     }
   });
 });
+
+describe('a line that finished on its last move', () => {
+  it('is not asked again, and the session ends', () => {
+    // The screen's path, not the harness's: processUserMove answers the final move of a
+    // line with 'line-complete' and never calls advanceWidthFirst, so nothing had written
+    // that line's progress. The search then found it unfinished and re-asked its last
+    // move — with one-move lines, in a loop that never ends.
+    const session = makeSession([
+      lineFromUserMoves('a', ['e4']),
+      lineFromUserMoves('b', ['d4']),
+    ]);
+
+    const first = TrainingService.completeLineAndAdvance(session, 4, []);
+    expect(first.hasMore).toBe(true);
+    expect(session.lines[session.currentLineIndex].id).toBe('b');
+
+    const second = TrainingService.completeLineAndAdvance(session, 4, []);
+    expect(second.hasMore).toBe(false);
+    expect(session.isComplete).toBe(true);
+  });
+});
