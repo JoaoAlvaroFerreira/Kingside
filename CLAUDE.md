@@ -388,6 +388,31 @@ downloads would just be rebuilding Caissabase. `addGamesFromPgn` merges a file i
 content hash is stored and re-importing it is refused: exactly the rule that stops a month
 being fetched twice, for exactly the same reason.
 
+## Opening a position on a board
+
+Every "open this elsewhere" action carries the position it was fired from, because all of
+them previously landed somewhere the reader had to correct by hand:
+
+- **A game tapped from the games list keeps the board where it is.** `handleSelectGame`
+  records the current node before appending the continuation and navigates back to it —
+  `addMove` advances the cursor, so appending 50 moves otherwise left the board on the
+  game's *final* position, the one place the reader did not ask about.
+- **A game opened from another screen takes `atFen`.** `RepertoireStudyScreen` passes the
+  position it was showing; without it the game opens at move one.
+- **Find Position passes `atFen` to `RepertoireStudy`.** A chapter runs to hundreds of
+  moves, so opening at its root discards the very thing the lookup just found. Missing the
+  position falls back to the root: the index can lag an edit.
+- The seek uses `MoveTree.findNodeIdByFen`, breadth-first over normalized FENs — shallowest
+  match wins, and transpositions match despite differing move counters.
+- Loading anything **switches to the Moves tab** via `showMovesSignal`, a counter (not a
+  boolean) on `ChessAnalysisLayout` so a second load from the same list switches back again.
+
+**The opponent tab is screen state, not a route param.** `AnalysisBoardScreen` copies
+`opponentBookId`/`opponentName` into state on arrival and clears the params immediately.
+A drawer route keeps its params, so reading them directly left an opponent's tab on the
+board for every later visit; the focus reset that rebuilds the board clears the opponent
+with it.
+
 ## Import is bounded by time, not by months
 
 `BUILD_BUDGET_MS` (120s) stops a build or refresh at the next month boundary and hands back

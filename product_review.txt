@@ -1,0 +1,20 @@
+The following is the updated checklist from last time, together with some new task ideas. Included are also some notes for a useful side project regarding fetching user or master games from chess.com/lichess api in bulk (thousands) to analyse frequency, but it does not need to be directly integrated into Kingside
+
+[X] Error handling dos import pgns, canceling, idle, timeouts, etc
+[X] Retirar version e voltar para beta, só vai ser 1.0.0 quando for para a app store
+[ ] Adicionar previsao do lance ao analysis board a partir da lista de capítulos/jogos das tabs (por exemplo, se estivermos com 1. E4 E5, ter setas com Nc3 se tivermos um jogo com Vienna e Nf3 se tivermos um jogo com Italiana. Podem ser mais carregadas dependendo da frequência, mas a lista de jogos e capítulos devia ser limitada de qualquer forma)
+[X] Load scrolling nas listas todas. Temos listas demasiado longas e deviam carregar progressivamente
+[X] Lidar com os casos de exemplo dos repertórios que já temos 
+[ ] Por exemplo, capítulos com (#1, #2, #3) são todos sub-variantes do mesmo capítulo, e em geral devia haver mais merge de capítulos para não termos 1200+ capítulos como no KID 2
+[ ] Random line training from specific repertoires, from the start or from specific positions 
+[ ] Random line training from user or master games based on frequency (training useless sidelines should be less frequent)
+[ ] Semi-learn mode where the "learn mode arrows" on training appear but only for the first time the move is taught. In separate lines, if the same move has already been seen, it would not have an arrow.
+[ ] Try to rehabilitate desktop version
+[ ] Automatically rate line difficulty based on how many errors the user made. 
+[ ] Script to extract every danya Speedrun game as pgn with commentary. Maybe download videos? Also take note of his example games. His virus are very structured and tagged by chapters with analysis. Test by playlist.
+[ ] Ligação a chess.com/Lichess tipo movetree
+[ ] Rework the master games feature, make it lighter but less parsable, progressive loads. We will have large databases (fitting in a Mega DB connection would be incredible, but it's secondary) and we would like to be able to "build a repertoire like a specific player" based on their chess.com or Lichess account, or even by feeding a PGN archive. 
+[ ] Analysis board needs a new set of arrows with a different color for variations present in chapters and master/user games. Let's explore this topic.
+[X] Tooltips explaining what the options do, because I already forgot most of them (what is "mainline only for my move?")
+[X] Make mainline in the analysis board isn't perfect, it doesn't work to erase the first move
+[X] Sometimes I'm curious of how the engine evaluates a line after I train it, or I want to check

@@ -23,12 +23,14 @@ interface RepertoireStudyScreenProps {
     params: {
       repertoireId: string;
       chapterId: string;
+      /** Open the chapter at this position rather than at its root. */
+      atFen?: string;
     };
   };
 }
 
 export default function RepertoireStudyScreen({ navigation, route }: RepertoireStudyScreenProps) {
-  const { repertoireId, chapterId } = route.params;
+  const { repertoireId, chapterId, atFen } = route.params;
   const repertoires = useStore(s => s.repertoires);
   const { width, height } = useWindowDimensions();
   const isWide = width > 700 && width > height;
@@ -44,17 +46,28 @@ export default function RepertoireStudyScreen({ navigation, route }: RepertoireS
   const [leftPanelVisible, setLeftPanelVisible] = useState(false);
   const [chapterModalVisible, setChapterModalVisible] = useState(false);
 
+  useEffect(() => { setSelectedChapterId(chapterId); }, [chapterId]);
+
   const currentChapter = useMemo(
     () => repertoire?.chapters.find(c => c.id === selectedChapterId),
     [repertoire, selectedChapterId]
   );
 
+  // Rebuild on chapter change, and re-seek when only the position changes — arriving from
+  // Find Position twice within one chapter must still move the board the second time.
   useEffect(() => {
-    if (currentChapter) {
-      const tree = MoveTree.fromJSON(currentChapter.moveTree);
-      setMoveTree(tree);
+    if (!currentChapter) return;
+    const tree = MoveTree.fromJSON(currentChapter.moveTree);
+    // A chapter can run to hundreds of moves, so landing at the root leaves the reader to
+    // hunt for the line Find Position just identified. Falling back to the root when the
+    // position is absent is fine: the index said this chapter has it, but the index can
+    // lag an edit.
+    if (atFen) {
+      const nodeId = tree.findNodeIdByFen(atFen);
+      if (nodeId) tree.navigateToNode(nodeId);
     }
-  }, [currentChapter]);
+    setMoveTree(tree);
+  }, [currentChapter, atFen]);
 
   const currentFen = moveTree?.getCurrentFen() || '';
   const currentNodeId = moveTree?.getCurrentNode()?.id || null;
@@ -62,11 +75,15 @@ export default function RepertoireStudyScreen({ navigation, route }: RepertoireS
   const { userGames, userHasMore, masterGames, masterHasMore, loading: loadingGames } = useGameSearch(currentFen);
 
   const handleSelectGame = (game: UserGame | MasterGame) => {
-    navigation.navigate('Analysis', { game });
+    navigation.navigate('Analysis', { game, atFen: currentFen });
   };
 
   const handleSelectRepertoireMatch = (match: ChapterFenMatch) => {
-    navigation.navigate('RepertoireStudy', { repertoireId: match.repertoireId, chapterId: match.chapterId });
+    navigation.navigate('RepertoireStudy', {
+      repertoireId: match.repertoireId,
+      chapterId: match.chapterId,
+      atFen: currentFen,
+    });
   };
 
   const handleMove = (from: string, to: string) => {

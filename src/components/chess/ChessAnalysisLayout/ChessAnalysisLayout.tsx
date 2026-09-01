@@ -70,6 +70,12 @@ interface ChessAnalysisLayoutProps {
   loadingGames: boolean;
   onSelectGame: (game: UserGame | MasterGame) => void;
   onSelectRepertoireMatch: (match: ChapterFenMatch) => void;
+  /**
+   * Bumped by the screen to ask for the Moves tab. A counter rather than a boolean so
+   * repeated requests each register — loading a second game from the same list has to
+   * switch back again.
+   */
+  showMovesSignal?: number;
   /** Hand the current position to the training dashboard. Omit to hide the action. */
   onDrillFromPosition?: () => void;
 
@@ -106,6 +112,7 @@ export function ChessAnalysisLayout({
   loadingGames,
   onSelectGame,
   onSelectRepertoireMatch,
+  showMovesSignal,
   onDrillFromPosition,
   wideLeftPanel,
   narrowHeader,
@@ -117,6 +124,10 @@ export function ChessAnalysisLayout({
 
   const [activeTab, setActiveTab] = useState<AnalysisTab>('moves');
   const [settingsVisible, setSettingsVisible] = useState(false);
+
+  useEffect(() => {
+    if (showMovesSignal) setActiveTab('moves');
+  }, [showMovesSignal]);
 
   const visibleTabs = screenSettings[screenKey].visibleTabs;
 

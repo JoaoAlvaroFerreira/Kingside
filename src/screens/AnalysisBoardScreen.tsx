@@ -12,6 +12,8 @@ interface AnalysisBoardScreenProps {
   route?: {
     params?: {
       game?: UserGame | MasterGame;
+      /** Position the game was opened from, so it loads there instead of at move one. */
+      atFen?: string;
       /** A bare move sequence to load, e.g. a line just drilled in training. */
       line?: { moves: string[]; startFen?: string };
       /** Set when opened from Prepare Against: adds a tab for that opponent's play. */
@@ -28,8 +30,13 @@ export default function AnalysisBoardScreen({ route, navigation }: AnalysisBoard
 
   const currentFen = moveTree.getCurrentFen();
   const currentNodeId = moveTree.getCurrentNode()?.id || null;
-  const opponentBookId = route?.params?.opponentBookId;
-  const opponentName = route?.params?.opponentName;
+  // Held in state, not read from params: a drawer route keeps its params, so reading them
+  // directly would leave an opponent's tab on the board long after you navigated away from
+  // Prepare Against and came back for ordinary analysis.
+  const [opponent, setOpponent] = useState<{ id: string; name: string } | null>(null);
+  const [showMoves, setShowMoves] = useState(0);
+  const opponentBookId = opponent?.id;
+  const opponentName = opponent?.name;
   const {
     userGames, userHasMore, masterGames, masterHasMore,
     opponentGames, opponentHasMore, opponentTotal, masterTotal,
@@ -38,6 +45,14 @@ export default function AnalysisBoardScreen({ route, navigation }: AnalysisBoard
 
   // Load game if provided via navigation
   const justLoadedRef = useRef(false);
+
+  useEffect(() => {
+    const id = route?.params?.opponentBookId;
+    if (!id) return;
+    setOpponent({ id, name: route?.params?.opponentName ?? 'Opponent' });
+    justLoadedRef.current = true;
+    navigation?.setParams?.({ opponentBookId: undefined, opponentName: undefined });
+  }, [route?.params?.opponentBookId, route?.params?.opponentName, navigation]);
 
   useEffect(() => {
     const game = route?.params?.game;
@@ -59,11 +74,19 @@ export default function AnalysisBoardScreen({ route, navigation }: AnalysisBoard
       } else {
         newTree = new MoveTree();
       }
+      // Start of the game, unless the caller said which position it was opened from —
+      // a game reached from a position is being read from that position.
       newTree.goToStart();
+      const atFen = route?.params?.atFen;
+      if (atFen) {
+        const nodeId = newTree.findNodeIdByFen(atFen);
+        if (nodeId) newTree.navigateToNode(nodeId);
+      }
       setMoveTree(newTree);
+      setShowMoves(n => n + 1);
       forceUpdate(n => n + 1);
       justLoadedRef.current = true;
-      navigation?.setParams?.({ game: undefined });
+      navigation?.setParams?.({ game: undefined, atFen: undefined });
     }
   }, [route?.params?.game, navigation]);
 
@@ -74,6 +97,7 @@ export default function AnalysisBoardScreen({ route, navigation }: AnalysisBoard
     for (const san of line.moves) newTree.addMove(san);
     newTree.goToStart();
     setMoveTree(newTree);
+    setShowMoves(n => n + 1);
     forceUpdate(n => n + 1);
     justLoadedRef.current = true;
     navigation?.setParams?.({ line: undefined });
@@ -87,6 +111,8 @@ export default function AnalysisBoardScreen({ route, navigation }: AnalysisBoard
         return;
       }
       setMoveTree(new MoveTree());
+      // Arriving any other way is ordinary analysis, so the opponent goes with the board.
+      setOpponent(null);
       forceUpdate(n => n + 1);
       resetGames();
     }, [resetGames])
@@ -99,16 +125,32 @@ export default function AnalysisBoardScreen({ route, navigation }: AnalysisBoard
     const posIndex = gameFens.indexOf(normalized);
     if (posIndex === -1) return;
 
+    // Remember where we are before appending: addMove advances the cursor, so adding a
+    // whole continuation would leave the board on the game's final move — the one position
+    // the reader did not ask for. They tapped this game *from here*, so this is where they
+    // stay; the continuation is now theirs to step through.
+    const cameFrom = moveTree.getCurrentNode()?.id ?? null;
+
     const continuation = game.moves.slice(posIndex);
     for (const san of continuation) {
       moveTree.addMove(san);
     }
+    moveTree.navigateToNode(cameFrom);
+
+    // The moves are the point of the tap; leaving the games list up hides them.
+    setShowMoves(n => n + 1);
     forceUpdate(n => n + 1);
   }, [moveTree, currentFen]);
 
   const handleSelectRepertoireMatch = useCallback((match: ChapterFenMatch) => {
-    navigation?.navigate?.('RepertoireStudy', { repertoireId: match.repertoireId, chapterId: match.chapterId });
-  }, [navigation]);
+    // Carry the position across. Without it the chapter opens at its root and the reader
+    // has to re-find, by hand, the line this tab just located for them.
+    navigation?.navigate?.('RepertoireStudy', {
+      repertoireId: match.repertoireId,
+      chapterId: match.chapterId,
+      atFen: currentFen,
+    });
+  }, [navigation, currentFen]);
 
   const triggerUpdate = useCallback(() => forceUpdate(n => n + 1), []);
 
@@ -160,6 +202,7 @@ export default function AnalysisBoardScreen({ route, navigation }: AnalysisBoard
       opponentHasMore={opponentHasMore}
       opponentTotal={opponentTotal}
       masterTotal={masterTotal}
+      showMovesSignal={showMoves}
       opponentName={opponentName}
       opponentBookId={opponentBookId}
       loadingGames={loadingGames}

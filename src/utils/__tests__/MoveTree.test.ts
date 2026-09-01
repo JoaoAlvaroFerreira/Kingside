@@ -426,4 +426,50 @@ describe('MoveTree', () => {
       expect(tree.isAtStart()).toBe(true);
     });
   });
+  describe('findNodeIdByFen', () => {
+    it('finds the node holding a position', () => {
+      const tree = new MoveTree();
+      ['e4', 'e5', 'Nf3'].forEach(m => tree.addMove(m));
+      const target = tree.getCurrentFen();
+      tree.goToStart();
+
+      const id = tree.findNodeIdByFen(target);
+      expect(id).not.toBeNull();
+      tree.navigateToNode(id);
+      expect(tree.getCurrentNode()?.san).toBe('Nf3');
+    });
+
+    it('matches across a transposition, where the move counters differ', () => {
+      const viaKnight = new MoveTree();
+      ['Nf3', 'd5', 'd4'].forEach(m => viaKnight.addMove(m));
+      const target = viaKnight.getCurrentFen();
+
+      const viaPawn = new MoveTree();
+      ['d4', 'd5', 'Nf3'].forEach(m => viaPawn.addMove(m));
+
+      expect(viaPawn.findNodeIdByFen(target)).toBe(viaPawn.getCurrentNode()?.id);
+    });
+
+    it('prefers the shallowest occurrence', () => {
+      // The same position on the main line and deep in a sideline: the reader means the
+      // one they can actually see near the top of the chapter.
+      const tree = new MoveTree();
+      ['e4', 'e5', 'Nf3'].forEach(m => tree.addMove(m));
+      const target = tree.getCurrentFen();
+      const mainId = tree.getCurrentNode()!.id;
+
+      tree.goToStart();
+      ['Nf3', 'e5', 'e4'].forEach(m => tree.addMove(m));
+
+      expect(tree.findNodeIdByFen(target)).toBe(mainId);
+    });
+
+    it('returns null for a position the tree does not contain', () => {
+      const tree = new MoveTree();
+      tree.addMove('e4');
+      const other = new MoveTree();
+      other.addMove('d4');
+      expect(tree.findNodeIdByFen(other.getCurrentFen())).toBeNull();
+    });
+  });
 });

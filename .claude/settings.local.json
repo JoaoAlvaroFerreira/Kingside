@@ -68,5 +68,8 @@
       "Bash(./gradlew assembleRelease:*)"
     ],
     "defaultMode": "bypassPermissions"
-  }
+  },
+  "enabledMcpjsonServers": [
+    "mobile-mcp"
+  ]
 }

@@ -29,7 +29,7 @@ export type RootStackParamList = {
   Home?: undefined;
   ImportPGN: { target: 'repertoire' | 'my-games' | 'master-games' };
   BuildBook: { refreshBookId?: string } | undefined;
-  RepertoireStudy: { repertoireId: string; chapterId: string };
+  RepertoireStudy: { repertoireId: string; chapterId: string; atFen?: string };
   TrainingSession: {
     repertoireId: string;
     chapterId?: string;

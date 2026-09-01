@@ -4,6 +4,7 @@
 
 import { Chess, Move } from 'chess.js';
 import { PGNArrow, PGNHighlight } from '@/types/annotation.types';
+import { normalizeFen } from '@/types/repertoire.types';
 
 export interface MoveNode {
   id: string;
@@ -128,6 +129,25 @@ export class MoveTree {
   /**
    * Navigate to a specific node by ID
    */
+  /**
+   * The first node whose position matches, searched breadth-first.
+   *
+   * Breadth-first on purpose: a position usually appears on the main line and again deep
+   * inside some sideline, and the shallowest occurrence is the one a reader means. Compares
+   * normalized FENs so the move counters, which differ between transpositions, do not stop
+   * a match.
+   */
+  findNodeIdByFen(targetFen: string): string | null {
+    const target = normalizeFen(targetFen);
+    const queue: MoveNode[] = [...this.rootMoves];
+    while (queue.length > 0) {
+      const node = queue.shift()!;
+      if (node.fen && normalizeFen(node.fen) === target) return node.id;
+      queue.push(...node.children);
+    }
+    return null;
+  }
+
   navigateToNode(nodeId: string | null): boolean {
     if (nodeId === null) {
       this.currentNode = null;
