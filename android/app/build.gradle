@@ -97,8 +97,8 @@ android {
         applicationId 'com.kingside.app'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1000034
-        versionName "1.0.0-beta.4"
+        versionCode 1000035
+        versionName "1.0.0-beta.5"
     }
     signingConfigs {
         debug {
