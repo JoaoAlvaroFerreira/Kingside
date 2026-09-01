@@ -18,6 +18,7 @@ import {
 import { useStore } from '@store';
 import { BackupService } from '@services/backup/BackupService';
 import { BookService } from '@services/books/BookService';
+import { BookBuilder } from '@services/books/BookBuilder';
 import { BookRecord } from '@types';
 
 interface SettingsScreenProps {
@@ -124,6 +125,37 @@ ${message}`);
   };
 
   useEffect(() => { refreshBooks(); }, []);
+
+  /** Re-index a book from the games it already stores; nothing is downloaded. */
+  const handleRebuild = (book: BookRecord) => {
+    Alert.alert(
+      'Rebuild Index?',
+      `Re-reads the ${book.gameCount.toLocaleString()} games already stored in "${book.name}". ` +
+      'Nothing is downloaded. Large books take several minutes.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Rebuild',
+          onPress: async () => {
+            setBookBusy(true);
+            try {
+              const controller = new AbortController();
+              const result = await BookBuilder.rebuildIndex(book, () => {}, controller.signal);
+              await refreshBooks();
+              Alert.alert(
+                'Index Rebuilt',
+                `${result.newPositions.toLocaleString()} positions · ${Math.round(result.seconds)}s`
+              );
+            } catch (e: any) {
+              Alert.alert('Rebuild Failed', `${e?.message ?? e}`);
+            } finally {
+              setBookBusy(false);
+            }
+          },
+        },
+      ]
+    );
+  };
 
   const handleDeleteBook = (id: string, name: string) => {
     Alert.alert(
@@ -560,6 +592,13 @@ ${msg}`)) void runRestore();
                     disabled={bookBusy}
                   >
                     <Text style={styles.bookRefreshText}>Refresh</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.bookRefresh}
+                    onPress={() => handleRebuild(book)}
+                    disabled={bookBusy}
+                  >
+                    <Text style={styles.bookRefreshText}>Rebuild</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={styles.bookDelete}

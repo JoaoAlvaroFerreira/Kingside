@@ -81,6 +81,43 @@ export default function PrepareAgainstScreen({ navigation }: Props) {
     }
   };
 
+  /**
+   * Re-index from the games already stored, so improvements to how books are built reach an
+   * existing profile without fetching the account again.
+   */
+  const rebuild = (book: BookRecord) => {
+    Alert.alert(
+      'Rebuild Index?',
+      `Re-reads the ${book.gameCount.toLocaleString()} games already stored for ${book.name}. ` +
+      'Nothing is downloaded. Larger profiles take a few minutes.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Rebuild',
+          onPress: async () => {
+            setBusy(book.id);
+            try {
+              const controller = new AbortController();
+              const result = await BookBuilder.rebuildIndex(book, () => {}, controller.signal);
+              setBusy(null);
+              load();
+              Alert.alert(
+                'Index Rebuilt',
+                `${result.newPositions.toLocaleString()} positions · ${Math.round(result.seconds)}s`
+              );
+            } catch (error: any) {
+              setBusy(null);
+              Alert.alert(
+                'Rebuild Failed',
+                error instanceof FetchError ? error.message : `${error?.message ?? error}`
+              );
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const removeOpponent = (book: BookRecord) => {
     Alert.alert('Remove Opponent', `Delete the preparation for "${book.name}"?`, [
       { text: 'Cancel', style: 'cancel' },
@@ -134,6 +171,9 @@ export default function PrepareAgainstScreen({ navigation }: Props) {
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.action} onPress={() => addOtbGames(book)}>
                     <Text style={styles.actionText}>Add OTB PGN</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.action} onPress={() => rebuild(book)}>
+                    <Text style={styles.actionText}>Rebuild</Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.remove} onPress={() => removeOpponent(book)}>
                     <Text style={styles.removeText}>Delete</Text>

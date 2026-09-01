@@ -580,10 +580,15 @@ Things that are load-bearing:
   139,513-game book that was 160; for an opponent with three first moves it was **24**,
   which reads as "that is all they played". So the tab and list show the true count from
   the aggregate's own `n`/`hero_n` ("51+ of 2,000"), which needs no rebuild, and
-  `SAMPLE_GAMES` is **32**, not 8. Raising it is nearly free: measured on a real
-  593,450-pair book only 1.2% of pairs even have 32 games, so id text grows 8.0MB → 10.2MB
-  on a 121MB book. Existing books keep whatever cap they were built with until rebuilt; a
-  refresh only re-samples the pairs it touches.
+  `SAMPLE_GAMES` is **50**, matching `POSITION_SAMPLE_LIMIT` so one move can fill the list
+  on its own. Raising it is nearly free: measured on a real 593,450-pair book only 0.8% of
+  pairs even have 50 games, so id text grows 8.0MB → 10.9MB on a 121MB book.
+- **`rebuildIndex` re-indexes from the games a book already holds.** `book_games` keeps
+  every game's moves, so build-time choices — the sample cap, the prune thresholds — can be
+  improved on an existing book without fetching the account again. Cost is the original
+  build's replay: seconds for a small profile, an hour for a very large one, so where a
+  source PGN still exists on a desktop, regenerating there is faster. A *refresh* is not a
+  substitute: it only re-samples the pairs its new months touch.
 - **`sample_games` replaces a full position index.** Answering "every game that reached
   here" needs a row per game per ply — the 13M-row table being avoided. Each move instead
   carries a bounded set of recent games, so drill-down is a *sample*, by construction. The

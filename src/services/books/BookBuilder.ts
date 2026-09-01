@@ -55,11 +55,15 @@ const MIN_COUNT_DEEP = 2;
  * this`. At 8 the starting position of a 139,513-game book offered 160, and an opponent
  * with three first moves offered 24 — which reads as "that is all they played".
  *
- * Raising it is nearly free. Measured on a real 593,450-pair book, only 1.2% of pairs even
- * have 32 games to sample, so the id text grows 8.0MB -> 10.2MB on a 121MB book; the cost
- * is dominated by the pairs with a handful of games, which are unchanged.
+ * Set to match POSITION_SAMPLE_LIMIT, the number the list will show: at this value a single
+ * move can fill the list on its own, so a position is never short of games because its play
+ * was concentrated in one continuation.
+ *
+ * Raising it is nearly free. Measured on a real 593,450-pair book, only 0.8% of pairs even
+ * have 50 games to sample, so the id text grows 8.0MB -> 10.9MB on a 121MB book; the size is
+ * dominated by the pairs with a handful of games, which are unchanged.
  */
-const SAMPLE_GAMES = 32;
+const SAMPLE_GAMES = 50;
 
 /**
  * Rows per multi-row INSERT, derived from the column count rather than hardcoded: SQLite
@@ -524,6 +528,108 @@ class BookBuilderClass {
     }
   }
 
+  /**
+   * Rebuild a book's index from the games it already holds.
+   *
+   * `book_games` keeps every game's moves, so nothing has to be fetched again — which
+   * matters because the index bakes in build-time choices (`SAMPLE_GAMES`, the prune
+   * thresholds) that a later version may improve. Without this the only way to benefit is
+   * to re-download an entire account.
+   *
+   * The replay is the same cost as the original build's, so this is minutes for an
+   * ordinary account and much longer for a very large one; where a source PGN still exists
+   * on a desktop, regenerating there is faster. Months and spec are left untouched: the
+   * book still covers exactly what it covered.
+   */
+  async rebuildIndex(
+    record: BookRecord,
+    onProgress: (p: BuildProgress) => void,
+    signal: AbortSignal
+  ): Promise<RefreshResult> {
+    if (Platform.OS === 'web') throw new Error('Rebuilding is not supported on web.');
+
+    const started = Date.now();
+    await BookService.closeAll();
+    const db = await SQLite.openDatabaseAsync(record.fileName);
+    await db.execAsync('PRAGMA journal_mode = OFF; PRAGMA synchronous = OFF;');
+
+    try {
+      const meta = await this.readMetaMap(db);
+      const spec = meta.spec ? reviveSpec(JSON.parse(meta.spec)) : null;
+      const names = spec
+        ? heroNames(spec)
+        : new Set((meta.player ?? '').split(',').map(n => n.trim().toLowerCase()).filter(Boolean));
+
+      const totalRow = await db.getFirstAsync('SELECT COUNT(*) AS n FROM book_games') as any;
+      const total = totalRow?.n ?? 0;
+      if (total === 0) {
+        throw new FetchError(
+          'unsupported',
+          'This book stores counts only, so its index cannot be rebuilt without the games.'
+        );
+      }
+
+      await db.execAsync(`
+        DROP TABLE IF EXISTS staging;
+        CREATE TABLE staging (
+          fen TEXT NOT NULL, move TEXT NOT NULL, ply INTEGER NOT NULL,
+          hero INTEGER NOT NULL, result INTEGER NOT NULL, game_id INTEGER NOT NULL
+        );
+      `);
+
+      let done = 0;
+      let plies = 0;
+      const staging: StagingRow[] = [];
+      const PAGE = 500;
+
+      for (let offset = 0; ; offset += PAGE) {
+        if (signal.aborted) throw new FetchCancelled();
+        const rows = await db.getAllAsync(
+          'SELECT id, white, black, result, moves FROM book_games ORDER BY id LIMIT ? OFFSET ?',
+          [PAGE, offset]
+        ) as Array<{ id: number; white: string; black: string; result: string; moves: string }>;
+        if (rows.length === 0) break;
+
+        for (const row of rows) {
+          const moves = (row.moves ?? '').split(' ').filter(Boolean);
+          const outcome = this.ingestScanned(
+            { White: row.white, Black: row.black, Result: row.result },
+            moves, names, row.id, staging
+          );
+          plies += outcome.plies;
+          done += 1;
+        }
+
+        await this.flushStaging(db, staging);
+        await yieldToUi();
+        onProgress({
+          phase: `Reindexing ${done.toLocaleString()} of ${total.toLocaleString()} games…`,
+          periodsDone: done, periodsTotal: total, games: done, plies,
+        });
+      }
+
+      onProgress({ phase: 'Aggregating positions…', periodsDone: total, periodsTotal: total, games: done, plies });
+      await this.aggregate(db);
+      const positionRow = await db.getFirstAsync('SELECT COUNT(*) AS n FROM book_moves') as any;
+
+      await db.execAsync('DROP TABLE IF EXISTS staging');
+      await db.execAsync('VACUUM');
+      await db.closeAsync();
+
+      const updated = await BookService.reregisterBook(record);
+      return {
+        record: updated, newGames: 0, newPositions: positionRow?.n ?? 0,
+        months: 0, remaining: 0, seconds: (Date.now() - started) / 1000, upToDate: false,
+      };
+    } catch (error) {
+      try {
+        await db.execAsync('DROP TABLE IF EXISTS staging');
+        await db.closeAsync();
+      } catch { /* already closed */ }
+      throw error;
+    }
+  }
+
   /** Fold the refresh's staging rows into the existing aggregate. */
   private async mergeStaging(db: any, fullPly: number): Promise<number> {
     const before = await db.getFirstAsync('SELECT COUNT(*) AS n FROM book_moves') as any;
@@ -609,6 +715,17 @@ class BookBuilderClass {
     staging: StagingRow[]
   ): IngestedGame {
     const { headers, moves } = scanGame(pgn);
+    return this.ingestScanned(headers, moves, names, gameId, staging);
+  }
+
+  /** The replay itself, for games that are already split into headers and SAN. */
+  private ingestScanned(
+    headers: Record<string, string>,
+    moves: string[],
+    names: Set<string>,
+    gameId: number,
+    staging: StagingRow[]
+  ): IngestedGame {
     const heroIsWhite = heroSide(headers, names);
     const result = RESULT_CODE[headers.Result ?? ''] ?? UNKNOWN_RESULT;
 
