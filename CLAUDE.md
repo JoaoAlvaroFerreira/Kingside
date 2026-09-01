@@ -339,6 +339,11 @@ hidden/debug settings toggle is enough — the underlying `BookService.importBoo
 what `registerBuiltBook` validates through, so removing the *service* would break the
 public path too.
 
+**Everything else here is public-facing and stays**, including Prepare Against and Build
+From Account. Note that `BuildBookScreen` is now reached from two entry points — Import
+Master Games and Prepare Against's *Add Opponent* — so hiding the `.kbook` button must not
+touch the screen or the route, only that one button in `ImportPGNScreen`.
+
 ## Prepare Against
 
 An opponent profile is an opening book with `kind = 'opponent'`. Two rules make it
