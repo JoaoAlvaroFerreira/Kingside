@@ -14,6 +14,12 @@
  * arrows: mixing one club player's blitz into "master games" would quietly turn that
  * statistic into something else entirely.
  */
+/**
+ * Which side the book's own player had. Preparation is against one colour of theirs: a
+ * player's choices as White say nothing about how to meet them when they are Black.
+ */
+export type HeroColor = 'w' | 'b';
+
 export type BookKind = 'master' | 'opponent';
 
 /** An installed book, as tracked in the main database's `master_books` table. */

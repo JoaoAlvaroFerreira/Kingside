@@ -14,6 +14,7 @@ import * as FileSystem from 'expo-file-system';
 import {
   BookRecord,
   BookKind,
+  HeroColor,
   BookMoveCandidate,
   BookGame,
   BookImportError,
@@ -534,18 +535,32 @@ class BookServiceClass {
     fen: string,
     playerMovesOnly = false,
     limit: number = POSITION_SAMPLE_LIMIT,
-    bookId?: string
+    bookId?: string,
+    heroColor?: HeroColor
   ): Promise<BookGamesResult> {
     if (this.isWeb) return EMPTY_GAMES;
 
-    const candidates = await this.getPositionMoves(fen, playerMovesOnly, bookId);
+    // Preparation is against one colour of theirs. Their move is only recorded as a hero
+    // move on the plies they moved, so the hero filter answers this position only when it
+    // is their turn; on the other plies every game here is a candidate and the colour has
+    // to be settled per game, after the rows come back.
+    const heroToMove = heroColor ? sideToMove(fen) === heroColor : false;
+    const filterToHeroMoves = heroColor ? heroToMove : playerMovesOnly;
+
+    const candidates = await this.getPositionMoves(fen, filterToHeroMoves, bookId);
     if (candidates.length === 0) return EMPTY_GAMES;
 
     // Every game through this position played one of these moves, so summing them is the
-    // true count — independent of how many are retrievable.
-    const totalGames = candidates.reduce(
-      (sum, c) => sum + (playerMovesOnly ? c.heroCount : c.count), 0
+    // true count — independent of how many are retrievable. Under a colour filter that
+    // holds only when they were the one to move; otherwise the split between their White
+    // and Black games at this position is not something the book records, and 0 leaves the
+    // UI showing the sample size rather than a number that would be wrong.
+    const totalGames = heroColor && !heroToMove ? 0 : candidates.reduce(
+      (sum, c) => sum + (filterToHeroMoves ? c.heroCount : c.count), 0
     );
+
+    // Over-fetch when a colour filter will thin the result, so the list still fills.
+    const gather = heroColor ? limit * 3 : limit;
 
     // Walk the moves in rank order so the most-played continuations contribute their games
     // first, and the cap trims the rarest rather than an arbitrary slice.
@@ -559,7 +574,7 @@ class BookServiceClass {
         if (seen.has(key)) continue;
         seen.add(key);
         available++;
-        if (taken >= limit) continue; // keep counting, so hasMore is accurate
+        if (taken >= gather) continue; // keep counting, so hasMore is accurate
         const ids = byBook.get(candidate.bookId) ?? [];
         ids.push(gameId);
         byBook.set(candidate.bookId, ids);
@@ -568,21 +583,49 @@ class BookServiceClass {
     }
 
     const games: MasterGame[] = [];
-    for (const [bookId, ids] of byBook) {
-      const found = await this.getGames(bookId, ids);
-      games.push(...found.map(toMasterGame));
+    for (const [id, ids] of byBook) {
+      const found = await this.getGames(id, ids);
+      const names = heroColor ? await this.heroNamesOf(id) : null;
+      const wanted = names ? found.filter(g => heroPlayed(g, names, heroColor!)) : found;
+      games.push(...wanted.map(toMasterGame));
     }
 
     // Each book returned its own games in rank order; sort across books so the combined
     // list still reads newest-first.
     games.sort(byDateDescending);
-    return { games, hasMore: available > taken, totalGames };
+    const hasMore = games.length > limit || available > taken;
+    return { games: games.slice(0, limit), hasMore, totalGames };
+  }
+
+  /** The book's own player, lowercased, for deciding which side they had in a game. */
+  private async heroNamesOf(bookId: string): Promise<Set<string>> {
+    const book = (await this.allBooks()).find(b => b.id === bookId);
+    return new Set(
+      (book?.player ?? '').split(',').map(n => n.trim().toLowerCase()).filter(Boolean)
+    );
   }
 
   /** True when at least one book is installed — cheap enough to call from render paths. */
   async hasBooks(): Promise<boolean> {
     return (await this.listBooks()).length > 0;
   }
+}
+
+/** Which side is to move in a FEN. */
+function sideToMove(fen: string): HeroColor {
+  return fen.split(' ')[1] === 'b' ? 'b' : 'w';
+}
+
+/**
+ * Did the book's player have this colour in this game?
+ *
+ * A book with no player recorded cannot answer, and says yes rather than emptying the list
+ * of an older book that predates the field.
+ */
+function heroPlayed(game: BookGame, heroNames: Set<string>, color: HeroColor): boolean {
+  if (heroNames.size === 0) return true;
+  const name = (color === 'w' ? game.white : game.black) ?? '';
+  return heroNames.has(name.toLowerCase());
 }
 
 /**

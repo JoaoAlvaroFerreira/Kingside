@@ -67,6 +67,7 @@ export type {
 
 export type {
   // Opening book types
+  HeroColor,
   BookRecord,
   BookKind,
   BookMoveCandidate,

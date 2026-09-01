@@ -14,7 +14,7 @@ import { EvalBar, KeyMoveMarker } from '@components/chess/EvalBar/EvalBar';
 import { EngineLines } from '@components/chess/EngineLines/EngineLines';
 import { MoveTree } from '@utils/MoveTree';
 import { NAG_SYMBOLS } from '@utils/nagSymbols';
-import { EngineEvaluation, ScreenKey } from '@types';
+import { EngineEvaluation, ScreenKey, HeroColor } from '@types';
 import { SettingsModal } from './SettingsModal';
 import { useStore } from '@store';
 import { useEngine } from '@hooks/useEngine';
@@ -73,6 +73,9 @@ interface ChessWorkspaceProps {
   candidateSource?: CandidateSource;
   /** The opponent book the arrows read when candidateSource is 'opponent'. */
   opponentBookId?: string;
+  /** The colour that opponent is being prepared against with; gates their arrows to
+   *  the plies they actually move on. */
+  opponentColor?: HeroColor;
 
   // Hard cap on board size (px). Used when ChessWorkspace is placed inside a
   // constrained container whose width is smaller than what useWindowDimensions reports.
@@ -95,6 +98,7 @@ export const ChessWorkspace: React.FC<ChessWorkspaceProps> = ({
   onDeleteMove,
   candidateSource = 'none',
   opponentBookId,
+  opponentColor,
   currentEval,
   moveEvals = [],
   keyMoves = [],
@@ -184,7 +188,7 @@ export const ChessWorkspace: React.FC<ChessWorkspaceProps> = ({
 
   const currentNode = moveTree?.getCurrentNode();
   const pgnarrows = currentNode?.arrows;
-  const candidateArrows = useCandidateMoves(fen, candidateSource, opponentBookId);
+  const candidateArrows = useCandidateMoves(fen, candidateSource, opponentBookId, opponentColor);
 
   const nagBadge = useMemo(() => {
     if (!currentNode?.nags?.length) return undefined;

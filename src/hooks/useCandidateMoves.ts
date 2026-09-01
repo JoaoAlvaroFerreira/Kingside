@@ -12,6 +12,7 @@ import { Chess } from 'chess.js';
 import { DatabaseService, MoveCandidate } from '@services/database/DatabaseService';
 import { BookService } from '@services/books/BookService';
 import { useStore } from '@store';
+import { HeroColor } from '@types';
 
 export type CandidateSource = 'none' | 'repertoire' | 'user' | 'master' | 'opponent';
 
@@ -43,17 +44,30 @@ const EMPTY: CandidateArrow[] = [];
  * book usually dwarfs the local master DB in volume, but arrow weight is relative to the
  * strongest candidate here, so a large book raises the ceiling instead of drowning it.
  */
+/**
+ * Does the player being prepared against have a move here?
+ *
+ * Their book holds both of their colours, so without this the arrows alternate every ply
+ * between what they open with as White and what they answer as Black — preparation for two
+ * different opponents at once. With no colour chosen every ply is theirs, as before.
+ */
+export function opponentMovesHere(fen: string, opponentColor?: HeroColor): boolean {
+  return !opponentColor || fen.split(' ')[1] === opponentColor;
+}
+
 async function gameCandidates(
   source: 'user' | 'master' | 'opponent',
   fen: string,
   playerMovesOnly: boolean,
-  opponentBookId?: string
+  opponentBookId?: string,
+  opponentColor?: HeroColor
 ): Promise<MoveCandidate[]> {
   // Preparation reads one book and only that player's own choices: what their opponents
   // replied is not what you are preparing against, and the global toggle is about the
   // Master source, not this.
   if (source === 'opponent') {
     if (!opponentBookId) return [];
+    if (!opponentMovesHere(fen, opponentColor)) return [];
     const book = await BookService.getMoveCandidates(fen, 4, true, opponentBookId);
     return book.map(c => ({ move: c.move, count: c.heroCount }));
   }
@@ -124,7 +138,7 @@ function toArrow(fen: string, candidate: MoveCandidate, color: string, weight: n
 }
 
 export function useCandidateMoves(
-  fen: string, source: CandidateSource, opponentBookId?: string
+  fen: string, source: CandidateSource, opponentBookId?: string, opponentColor?: HeroColor
 ): CandidateArrow[] {
   const [arrows, setArrows] = useState<CandidateArrow[]>(EMPTY);
   // Books feed the master arrows, so installing or deleting one has to redraw them.
@@ -143,7 +157,7 @@ export function useCandidateMoves(
     (async () => {
       const candidates = source === 'repertoire'
         ? await DatabaseService.getRepertoireMoveCandidates(fen)
-        : await gameCandidates(source, fen, playerMovesOnly, opponentBookId);
+        : await gameCandidates(source, fen, playerMovesOnly, opponentBookId, opponentColor);
 
       if (cancelled) return;
       if (candidates.length === 0) {
@@ -163,7 +177,7 @@ export function useCandidateMoves(
     })();
 
     return () => { cancelled = true; };
-  }, [fen, source, bookRevision, playerMovesOnly, opponentBookId]);
+  }, [fen, source, bookRevision, playerMovesOnly, opponentBookId, opponentColor]);
 
   return arrows;
 }

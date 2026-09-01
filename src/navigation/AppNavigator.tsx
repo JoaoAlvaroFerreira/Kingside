@@ -1,4 +1,4 @@
-import { LineSelection, LineOrder, Guidance } from '@types';
+import { LineSelection, LineOrder, Guidance, HeroColor } from '@types';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { createStackNavigator } from '@react-navigation/stack';
 import { NavigationContainer } from '@react-navigation/native';
@@ -19,7 +19,7 @@ import DrawerContent from '@components/navigation/DrawerContent';
 
 export type RootStackParamList = {
   Main: undefined;
-  Analysis: { opponentBookId?: string; opponentName?: string } | undefined;
+  Analysis: { opponentBookId?: string; opponentName?: string; opponentColor?: HeroColor } | undefined;
   Repertoire: undefined;
   /** `fromFen` preselects "drill from this position", handed over from the Analysis Board. */
   Training: { fromFen?: string } | undefined;

@@ -27,7 +27,7 @@ import { RepertoireMatchList } from '@components/repertoire/RepertoireMatchList'
 import { MoveTree } from '@utils/MoveTree';
 import { ChapterFenMatch } from '@utils/extractRepertoirePositions';
 import { DatabaseService } from '@services/database/DatabaseService';
-import { UserGame, MasterGame, ScreenKey, normalizeFen } from '@types';
+import { UserGame, MasterGame, ScreenKey, HeroColor, normalizeFen } from '@types';
 import { useStore } from '@store';
 import { CandidateSource } from '@hooks/useCandidateMoves';
 
@@ -67,6 +67,8 @@ interface ChessAnalysisLayoutProps {
   masterTotal?: number;
   opponentName?: string;
   opponentBookId?: string;
+  /** The colour they are being prepared against with, i.e. the colour they had. */
+  opponentColor?: HeroColor;
   loadingGames: boolean;
   onSelectGame: (game: UserGame | MasterGame) => void;
   onSelectRepertoireMatch: (match: ChapterFenMatch) => void;
@@ -109,6 +111,7 @@ export function ChessAnalysisLayout({
   masterTotal,
   opponentName,
   opponentBookId,
+  opponentColor,
   loadingGames,
   onSelectGame,
   onSelectRepertoireMatch,
@@ -272,7 +275,8 @@ export function ChessAnalysisLayout({
         showMoveHistory={false}
         showSettingsGear={false}
         candidateSource={candidateSource}
-          opponentBookId={opponentBookId}
+        opponentBookId={opponentBookId}
+        opponentColor={opponentColor}
       />
 
       {/* Tab Bar */}
@@ -337,8 +341,16 @@ export function ChessAnalysisLayout({
                 <Text style={styles.tabLoadingText}>Searching games...</Text>
               </View>
             ) : (
+              <>
+              {opponentColor && normalizeFen(currentFen).split(' ')[1] !== opponentColor && (
+                <Text style={styles.opponentHint}>
+                  Your move — their replies show once you play one.
+                </Text>
+              )}
               <GameList
-                title={`${opponentName} here`}
+                title={opponentColor
+                  ? `${opponentName} as ${opponentColor === 'w' ? 'White' : 'Black'} here`
+                  : `${opponentName} here`}
                 games={opponentGames ?? []}
                 hasMore={opponentHasMore}
                 total={opponentTotal}
@@ -346,6 +358,7 @@ export function ChessAnalysisLayout({
                 defaultCollapsed={false}
                 loading={false}
               />
+              </>
             )}
           </View>
         )}
@@ -475,6 +488,9 @@ const styles = StyleSheet.create({
   tabLoading: {
     alignItems: 'center',
     padding: 12,
+  },
+  opponentHint: {
+    color: '#888', fontSize: 12, paddingHorizontal: 4, paddingBottom: 8,
   },
   tabLoadingText: {
     color: '#bbb',

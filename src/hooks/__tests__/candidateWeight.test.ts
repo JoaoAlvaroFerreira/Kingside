@@ -4,7 +4,7 @@ jest.mock('@services/database/DatabaseService', () => ({ DatabaseService: {} }))
 jest.mock('@services/books/BookService', () => ({ BookService: {} }));
 jest.mock('@store', () => ({ useStore: () => false }));
 
-import { candidateWeight } from '@hooks/useCandidateMoves';
+import { candidateWeight, opponentMovesHere } from '@hooks/useCandidateMoves';
 
 const c = (count: number, varDepth?: number) => ({ move: 'Nf3', count, varDepth });
 
@@ -41,5 +41,24 @@ describe('candidateWeight', () => {
   it('stays within [0,1] and survives a zero max count', () => {
     expect(candidateWeight(c(0, 0), 0)).toBe(1);
     expect(candidateWeight(c(99, 0), 1)).toBe(1);
+  });
+});
+
+const WHITE_TO_MOVE = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+const BLACK_TO_MOVE = 'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1';
+
+describe('opponentMovesHere', () => {
+  it('has them to move only on their own plies', () => {
+    expect(opponentMovesHere(BLACK_TO_MOVE, 'b')).toBe(true);
+    expect(opponentMovesHere(WHITE_TO_MOVE, 'b')).toBe(false);
+    expect(opponentMovesHere(WHITE_TO_MOVE, 'w')).toBe(true);
+    expect(opponentMovesHere(BLACK_TO_MOVE, 'w')).toBe(false);
+  });
+
+  it('treats every ply as theirs when no colour was chosen', () => {
+    // The alternating arrows this exists to stop: with both colours in one book, every
+    // other ply showed their play as the colour you are not preparing against.
+    expect(opponentMovesHere(WHITE_TO_MOVE)).toBe(true);
+    expect(opponentMovesHere(BLACK_TO_MOVE)).toBe(true);
   });
 });

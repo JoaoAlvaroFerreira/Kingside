@@ -376,6 +376,20 @@ preparation rather than just another book, and both are load-bearing:
 - **They are always read hero-only.** For preparation you want what *they* chose, not the
   blend with whatever their opponents replied. This is inherent to the query, not the
   global Player Moves Only toggle, which still governs the Master source.
+- **A colour is picked when the board opens, not inferred.** A player's book holds both of
+  their colours, and hero-only alone alternates every ply — their openings as White, then
+  their answers as Black — which is preparation against two different opponents at once.
+  Prepare Against therefore opens with *Prepare as White* / *Prepare as Black*, and passes
+  `opponentColor` (the colour *they* had); the board turns to face you.
+
+  Two things follow from that colour, and they differ because the book stores different
+  things about the two cases:
+  - **Their arrows appear only on the plies they move** (`opponentMovesHere`). On your own
+    ply they made no choice to prepare for.
+  - **Their games are filtered per game**, by which side the book's `player` had. On their
+    ply the hero counts are already the per-colour counts, so the total is exact; on your
+    ply the book does not record how its games split by colour, so `totalGames` is 0 and
+    the list shows its own size rather than a number that would be wrong.
 
 The board gains one tab, present only when opened from Prepare Against, beside the Find
 Position tab that already says which of your own chapters cover the position — which is the

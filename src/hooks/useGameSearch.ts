@@ -3,12 +3,12 @@
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { normalizeFen, UserGame, MasterGame } from '@types';
+import { normalizeFen, UserGame, MasterGame, HeroColor } from '@types';
 import { DatabaseService } from '@services/database/DatabaseService';
 import { BookService } from '@services/books/BookService';
 import { useStore } from '@store';
 
-export function useGameSearch(fen: string, opponentBookId?: string) {
+export function useGameSearch(fen: string, opponentBookId?: string, opponentColor?: HeroColor) {
   const [userGames, setUserGames] = useState<UserGame[]>([]);
   const [masterGames, setMasterGames] = useState<MasterGame[]>([]);
   // Every source here is capped — books by their per-move sample, local games by
@@ -37,7 +37,7 @@ export function useGameSearch(fen: string, opponentBookId?: string) {
   useEffect(() => {
     if (!fen) return;
     const normalized = normalizeFen(fen);
-    const searchKey = `${normalized}|${playerMovesOnly}|${bookRevision}|${opponentBookId ?? ''}`;
+    const searchKey = `${normalized}|${playerMovesOnly}|${bookRevision}|${opponentBookId ?? ''}|${opponentColor ?? ''}`;
     if (searchKey === lastSearchedRef.current) return;
 
     let cancelled = false;
@@ -51,9 +51,11 @@ export function useGameSearch(fen: string, opponentBookId?: string) {
           // they come last: the locally imported games are complete for this position and
           // should be what the user sees first.
           BookService.getGamesAtPosition(normalized, playerMovesOnly),
-          // Scoped to the opponent's own book, and to their moves only.
+          // Scoped to the opponent's own book, to their moves only, and to the colour
+          // being prepared against — their games with the other colour are a different
+          // opponent as far as this preparation is concerned.
           opponentBookId
-            ? BookService.getGamesAtPosition(normalized, true, undefined, opponentBookId)
+            ? BookService.getGamesAtPosition(normalized, true, undefined, opponentBookId, opponentColor)
             : Promise.resolve({ games: [] as MasterGame[], hasMore: false, totalGames: 0 }),
         ]);
         if (!cancelled) {
@@ -84,7 +86,7 @@ export function useGameSearch(fen: string, opponentBookId?: string) {
       }
     })();
     return () => { cancelled = true; };
-  }, [fen, bookRevision, playerMovesOnly, opponentBookId]);
+  }, [fen, bookRevision, playerMovesOnly, opponentBookId, opponentColor]);
 
   const reset = useCallback(() => {
     lastSearchedRef.current = null;

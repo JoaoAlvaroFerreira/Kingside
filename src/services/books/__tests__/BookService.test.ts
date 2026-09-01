@@ -402,6 +402,71 @@ describe('getGamesAtPosition', () => {
   });
 });
 
+describe('getGamesAtPosition, preparing against one colour', () => {
+  // A player book holds both of their colours, so a colour has to be picked or the board
+  // alternates between two different opponents every ply.
+  const BLACK_TO_MOVE = 'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3';
+
+  const theirBook = (moves: any[], games: any[]) => {
+    mockDb.getBookRecords.mockResolvedValue([
+      record({ id: 'a', fileName: 'a.kbook', kind: 'opponent', player: 'Someone' }),
+    ]);
+    const db = fakeBook({ moves, games });
+    mockSQLite.openDatabaseAsync.mockResolvedValue(db);
+    return db;
+  };
+
+  it('drops the games where they had the other colour', async () => {
+    theirBook(
+      [{ move: 'c5', n: 10, hero_n: 6, white_n: 4, draw_n: 2, black_n: 4, sample_games: '1,2,3' }],
+      [
+        { id: 1, white: 'Rival', black: 'Someone', result: '0-1', date: '2025.01.03', moves: 'e4 c5' },
+        { id: 2, white: 'Someone', black: 'Rival', result: '1-0', date: '2025.01.02', moves: 'e4 c5' },
+        { id: 3, white: 'Rival', black: 'Someone', result: '1-0', date: '2025.01.01', moves: 'e4 c5' },
+      ]
+    );
+
+    const result = await BookService.getGamesAtPosition(BLACK_TO_MOVE, true, 50, 'a', 'b');
+
+    // Their games as White are a different opponent as far as this preparation goes.
+    expect(result.games.map(g => g.id)).toEqual(['book:a:1', 'book:a:3']);
+  });
+
+  it('counts their games with that colour when the move is theirs', async () => {
+    theirBook(
+      [{ move: 'c5', n: 10, hero_n: 6, white_n: 4, draw_n: 2, black_n: 4, sample_games: '1' }],
+      [{ id: 1, white: 'Rival', black: 'Someone', result: '0-1', date: '2025.01.01', moves: 'e4 c5' }]
+    );
+
+    const result = await BookService.getGamesAtPosition(BLACK_TO_MOVE, true, 50, 'a', 'b');
+
+    // On their own ply the hero counts already are the per-colour counts.
+    expect(result.totalGames).toBe(6);
+  });
+
+  it('still lists their games on your own move, without inventing a total', async () => {
+    const db = theirBook(
+      [{ move: 'e4', n: 10, hero_n: 4, white_n: 4, draw_n: 2, black_n: 4, sample_games: '1,2' }],
+      [
+        { id: 1, white: 'Rival', black: 'Someone', result: '0-1', date: '2025.01.02', moves: 'e4' },
+        { id: 2, white: 'Someone', black: 'Rival', result: '1-0', date: '2025.01.01', moves: 'e4' },
+      ]
+    );
+
+    const result = await BookService.getGamesAtPosition(START, true, 50, 'a', 'b');
+
+    // hero_n on a white-to-move ply counts their games as White — the wrong colour — so
+    // the filter must come off and the games be settled per game instead.
+    const [sql] = db.getAllAsync.mock.calls
+      .find((c: any[]) => String(c[0]).includes('book_moves'))!;
+    expect(sql).not.toContain('hero_n > 0');
+    expect(result.games.map(g => g.id)).toEqual(['book:a:1']);
+    // The book does not record how its games split by colour at a position they did not
+    // move in, so the list shows its own size rather than a number that would be wrong.
+    expect(result.totalGames).toBe(0);
+  });
+});
+
 describe('deleteBook', () => {
   it('removes the file with its sidecars and forgets the record', async () => {
     mockDb.getBookRecords.mockResolvedValue([record({ id: 'a', fileName: 'a.kbook' })]);

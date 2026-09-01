@@ -15,7 +15,7 @@ import {
 import { useFocusEffect } from '@react-navigation/native';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system';
-import { BookRecord, FetchError } from '@types';
+import { BookRecord, FetchError, HeroColor } from '@types';
 import { BookService } from '@services/books/BookService';
 import { BookBuilder } from '@services/books/BookBuilder';
 
@@ -38,10 +38,19 @@ export default function PrepareAgainstScreen({ navigation }: Props) {
     navigation.navigate('BuildBook', { kind: 'opponent' });
   };
 
-  const openOpponent = (book: BookRecord) => {
+  /**
+   * Open the board prepared for one colour.
+   *
+   * The colour is chosen here rather than inferred on the board, because a player's book
+   * holds both of their colours: without picking one, their arrows alternate every ply
+   * between what they play as White and what they answer as Black, which is preparation
+   * for two different opponents at once. `opponentColour` is the colour *they* had, so
+   * you take the other one.
+   */
+  const openOpponent = (book: BookRecord, opponentColor: HeroColor) => {
     navigation.navigate('Main', {
       screen: 'Analysis',
-      params: { opponentBookId: book.id, opponentName: book.name },
+      params: { opponentBookId: book.id, opponentName: book.name, opponentColor },
     });
   };
 
@@ -136,8 +145,8 @@ export default function PrepareAgainstScreen({ navigation }: Props) {
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Text style={styles.title}>Prepare Against</Text>
       <Text style={styles.subtitle}>
-        Saved preparation for specific opponents. Open one to study the board with their
-        moves from each position beside your own repertoire.
+        Saved preparation for specific opponents. Pick the colour you will have — their
+        moves from each position then show beside your own repertoire.
       </Text>
 
       {opponents.length === 0 ? (
@@ -151,13 +160,27 @@ export default function PrepareAgainstScreen({ navigation }: Props) {
       ) : (
         opponents.map(book => (
           <View key={book.id} style={styles.card}>
-            <TouchableOpacity style={styles.cardMain} onPress={() => openOpponent(book)}>
+            <View style={styles.cardMain}>
               <Text style={styles.cardName}>{book.name}</Text>
               <Text style={styles.cardMeta}>
                 {book.gameCount.toLocaleString()} games ·{' '}
                 {book.positionCount.toLocaleString()} positions
               </Text>
-            </TouchableOpacity>
+            </View>
+            <View style={styles.prepRow}>
+              <TouchableOpacity
+                style={[styles.prep, styles.prepWhite]}
+                onPress={() => openOpponent(book, 'b')}
+              >
+                <Text style={styles.prepWhiteText}>Prepare as White</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.prep, styles.prepBlack]}
+                onPress={() => openOpponent(book, 'w')}
+              >
+                <Text style={styles.prepBlackText}>Prepare as Black</Text>
+              </TouchableOpacity>
+            </View>
             <View style={styles.cardActions}>
               {busy === book.id ? (
                 <ActivityIndicator size="small" color="#4a9eff" />
@@ -208,6 +231,12 @@ const styles = StyleSheet.create({
     borderLeftWidth: 3, borderLeftColor: '#e8834a',
   },
   cardMain: { marginBottom: 12 },
+  prepRow: { flexDirection: 'row', gap: 8, marginBottom: 12 },
+  prep: { flex: 1, borderRadius: 6, paddingVertical: 12, alignItems: 'center' },
+  prepWhite: { backgroundColor: '#e8e6e3' },
+  prepWhiteText: { color: '#1c1c1e', fontSize: 14, fontWeight: '600' },
+  prepBlack: { backgroundColor: '#2c2c2e', borderWidth: 1, borderColor: '#4a4a4c' },
+  prepBlackText: { color: '#e8e6e3', fontSize: 14, fontWeight: '600' },
   cardName: { color: '#fff', fontSize: 17, fontWeight: '600', marginBottom: 4 },
   cardMeta: { color: '#888', fontSize: 13 },
   cardActions: { flexDirection: 'row', gap: 8, alignItems: 'center' },

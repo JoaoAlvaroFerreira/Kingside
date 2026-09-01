@@ -3,7 +3,7 @@ import { Chess } from 'chess.js';
 import { useFocusEffect } from '@react-navigation/native';
 import { ChessAnalysisLayout } from '@components/chess/ChessAnalysisLayout/ChessAnalysisLayout';
 import { MoveTree } from '@utils/MoveTree';
-import { UserGame, MasterGame, computeFensFromMoves, normalizeFen } from '@types';
+import { UserGame, MasterGame, HeroColor, computeFensFromMoves, normalizeFen } from '@types';
 import { PGNService } from '@services/pgn/PGNService';
 import { useGameSearch } from '@hooks/useGameSearch';
 import { ChapterFenMatch } from '@utils/extractRepertoirePositions';
@@ -19,6 +19,8 @@ interface AnalysisBoardScreenProps {
       /** Set when opened from Prepare Against: adds a tab for that opponent's play. */
       opponentBookId?: string;
       opponentName?: string;
+      /** The colour they are being prepared against with — the colour they had. */
+      opponentColor?: HeroColor;
     };
   };
   navigation?: any;
@@ -33,15 +35,20 @@ export default function AnalysisBoardScreen({ route, navigation }: AnalysisBoard
   // Held in state, not read from params: a drawer route keeps its params, so reading them
   // directly would leave an opponent's tab on the board long after you navigated away from
   // Prepare Against and came back for ordinary analysis.
-  const [opponent, setOpponent] = useState<{ id: string; name: string } | null>(null);
+  const [opponent, setOpponent] = useState<
+    { id: string; name: string; color?: HeroColor } | null
+  >(null);
   const [showMoves, setShowMoves] = useState(0);
   const opponentBookId = opponent?.id;
   const opponentName = opponent?.name;
+  const opponentColor = opponent?.color;
+  // You are the other side, so the board turns to face you.
+  const orientation = opponentColor ? (opponentColor === 'w' ? 'black' : 'white') : undefined;
   const {
     userGames, userHasMore, masterGames, masterHasMore,
     opponentGames, opponentHasMore, opponentTotal, masterTotal,
     loading: loadingGames, reset: resetGames,
-  } = useGameSearch(currentFen, opponentBookId);
+  } = useGameSearch(currentFen, opponentBookId, opponentColor);
 
   // Load game if provided via navigation
   const justLoadedRef = useRef(false);
@@ -49,10 +56,24 @@ export default function AnalysisBoardScreen({ route, navigation }: AnalysisBoard
   useEffect(() => {
     const id = route?.params?.opponentBookId;
     if (!id) return;
-    setOpponent({ id, name: route?.params?.opponentName ?? 'Opponent' });
+    setOpponent({
+      id,
+      name: route?.params?.opponentName ?? 'Opponent',
+      color: route?.params?.opponentColor,
+    });
+    // A new preparation starts from the initial position: the focus reset that would
+    // normally do that is suppressed here, because it also clears the opponent.
+    setMoveTree(new MoveTree());
+    resetGames();
+    forceUpdate(n => n + 1);
     justLoadedRef.current = true;
-    navigation?.setParams?.({ opponentBookId: undefined, opponentName: undefined });
-  }, [route?.params?.opponentBookId, route?.params?.opponentName, navigation]);
+    navigation?.setParams?.({
+      opponentBookId: undefined, opponentName: undefined, opponentColor: undefined,
+    });
+  }, [
+    route?.params?.opponentBookId, route?.params?.opponentName,
+    route?.params?.opponentColor, navigation, resetGames,
+  ]);
 
   useEffect(() => {
     const game = route?.params?.game;
@@ -202,6 +223,8 @@ export default function AnalysisBoardScreen({ route, navigation }: AnalysisBoard
       opponentHasMore={opponentHasMore}
       opponentTotal={opponentTotal}
       masterTotal={masterTotal}
+      opponentColor={opponentColor}
+      orientationOverride={orientation}
       showMovesSignal={showMoves}
       opponentName={opponentName}
       opponentBookId={opponentBookId}
