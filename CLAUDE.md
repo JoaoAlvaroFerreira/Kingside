@@ -574,6 +574,16 @@ Things that are load-bearing:
   Nf3 ahead of d4 at the start position, which is the real answer to "what does he open
   with". On a position where the opponent is to move it yields nothing, which is honest
   rather than falling back to everyone's moves.
+- **A position's game count and its openable games are different numbers.** Each move keeps
+  at most `SAMPLE_GAMES` ids, so what can be opened at a position is `distinct moves x
+  SAMPLE_GAMES` — never the position's real total. At the starting position of a
+  139,513-game book that was 160; for an opponent with three first moves it was **24**,
+  which reads as "that is all they played". So the tab and list show the true count from
+  the aggregate's own `n`/`hero_n` ("51+ of 2,000"), which needs no rebuild, and
+  `SAMPLE_GAMES` is **32**, not 8. Raising it is nearly free: measured on a real
+  593,450-pair book only 1.2% of pairs even have 32 games, so id text grows 8.0MB → 10.2MB
+  on a 121MB book. Existing books keep whatever cap they were built with until rebuilt; a
+  refresh only re-samples the pairs it touches.
 - **`sample_games` replaces a full position index.** Answering "every game that reached
   here" needs a row per game per ply — the 13M-row table being avoided. Each move instead
   carries a bounded set of recent games, so drill-down is a *sample*, by construction. The

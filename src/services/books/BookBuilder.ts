@@ -48,7 +48,18 @@ const MAX_PLY = 30;
 /** Keep every pair to here; beyond it a pair needs MIN_COUNT_DEEP occurrences. */
 const FULL_PLY = 16;
 const MIN_COUNT_DEEP = 2;
-const SAMPLE_GAMES = 8;
+/**
+ * Game ids kept per (position, move).
+ *
+ * This is the ceiling on how many games can be opened at a position: `distinct moves x
+ * this`. At 8 the starting position of a 139,513-game book offered 160, and an opponent
+ * with three first moves offered 24 — which reads as "that is all they played".
+ *
+ * Raising it is nearly free. Measured on a real 593,450-pair book, only 1.2% of pairs even
+ * have 32 games to sample, so the id text grows 8.0MB -> 10.2MB on a 121MB book; the cost
+ * is dominated by the pairs with a handful of games, which are unchanged.
+ */
+const SAMPLE_GAMES = 32;
 
 /**
  * Rows per multi-row INSERT, derived from the column count rather than hardcoded: SQLite

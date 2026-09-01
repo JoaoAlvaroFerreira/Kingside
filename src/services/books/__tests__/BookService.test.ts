@@ -347,6 +347,43 @@ describe('getGamesAtPosition', () => {
     expect(result.hasMore).toBe(true);
   });
 
+  it('reports how many games really reached the position, not how many it kept', async () => {
+    // The two differ by orders of magnitude at shallow positions: each move keeps a
+    // bounded sample, so "how many can I open" is not "how often have they been here".
+    // Showing only the sample size reads as "that is all they played".
+    mockDb.getBookRecords.mockResolvedValue([record({ id: 'a', fileName: 'a.kbook' })]);
+    mockSQLite.openDatabaseAsync.mockResolvedValue(fakeBook({
+      moves: [
+        { move: 'e4', n: 500, hero_n: 300, white_n: 250, draw_n: 100, black_n: 150, sample_games: '1,2' },
+        { move: 'd4', n: 221, hero_n: 100, white_n: 100, draw_n: 50, black_n: 71, sample_games: '3' },
+      ],
+      games: [
+        { id: 1, white: 'W', black: 'B', result: '1-0', date: '2025.01.01', moves: 'e4' },
+        { id: 2, white: 'W', black: 'B', result: '1-0', date: '2025.01.02', moves: 'e4' },
+        { id: 3, white: 'W', black: 'B', result: '0-1', date: '2025.01.03', moves: 'd4' },
+      ],
+    }));
+
+    const result = await BookService.getGamesAtPosition(START);
+
+    expect(result.games).toHaveLength(3);
+    expect(result.totalGames).toBe(721);
+  });
+
+  it('counts only the player when reading their own book', async () => {
+    mockDb.getBookRecords.mockResolvedValue([record({ id: 'a', fileName: 'a.kbook' })]);
+    mockSQLite.openDatabaseAsync.mockResolvedValue(fakeBook({
+      moves: [
+        { move: 'e4', n: 500, hero_n: 300, white_n: 250, draw_n: 100, black_n: 150, sample_games: '1' },
+      ],
+      games: [{ id: 1, white: 'W', black: 'B', result: '1-0', date: '2025.01.01', moves: 'e4' }],
+    }));
+
+    // Preparation asks how often *they* have been here, so their own count is the total.
+    const result = await BookService.getGamesAtPosition(START, true);
+    expect(result.totalGames).toBe(300);
+  });
+
   it('does not claim more when everything fits', async () => {
     mockDb.getBookRecords.mockResolvedValue([record({ id: 'a', fileName: 'a.kbook' })]);
     mockSQLite.openDatabaseAsync.mockResolvedValue(fakeBook({

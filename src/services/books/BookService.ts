@@ -47,17 +47,22 @@ export interface PendingBuild {
 const POSITION_SAMPLE_LIMIT = 50;
 
 /**
- * Games from a position, and whether the cap hid any.
+ * Games from a position: the ones that can be opened, and how many there really are.
  *
- * `hasMore` exists because the count is a sample size, not a total: a bare "50" reads as
- * "there are exactly 50 games here" when the real number is usually far larger.
+ * These are very different numbers and conflating them is misleading. Each move keeps at
+ * most `SAMPLE_GAMES` game ids, so what can be opened at a position is
+ * `distinct moves x samples` — at the starting position of a 139,513-game book that is 160,
+ * shown as 50. `totalGames` comes from the aggregate's own counts and is the honest answer
+ * to "how many of their games reached here".
  */
 export interface BookGamesResult {
   games: MasterGame[];
   hasMore: boolean;
+  /** Games that actually reach this position, not the number that can be opened. */
+  totalGames: number;
 }
 
-const EMPTY_GAMES: BookGamesResult = { games: [], hasMore: false };
+const EMPTY_GAMES: BookGamesResult = { games: [], hasMore: false, totalGames: 0 };
 
 class BookServiceClass {
   private isWeb = Platform.OS === 'web';
@@ -536,6 +541,12 @@ class BookServiceClass {
     const candidates = await this.getPositionMoves(fen, playerMovesOnly, bookId);
     if (candidates.length === 0) return EMPTY_GAMES;
 
+    // Every game through this position played one of these moves, so summing them is the
+    // true count — independent of how many are retrievable.
+    const totalGames = candidates.reduce(
+      (sum, c) => sum + (playerMovesOnly ? c.heroCount : c.count), 0
+    );
+
     // Walk the moves in rank order so the most-played continuations contribute their games
     // first, and the cap trims the rarest rather than an arbitrary slice.
     const byBook = new Map<string, number[]>();
@@ -565,7 +576,7 @@ class BookServiceClass {
     // Each book returned its own games in rank order; sort across books so the combined
     // list still reads newest-first.
     games.sort(byDateDescending);
-    return { games, hasMore: available > taken };
+    return { games, hasMore: available > taken, totalGames };
   }
 
   /** True when at least one book is installed — cheap enough to call from render paths. */

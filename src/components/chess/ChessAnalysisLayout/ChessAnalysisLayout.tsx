@@ -13,6 +13,16 @@ import { ChessWorkspace } from '@components/chess/ChessWorkspace/ChessWorkspace'
 import { MoveHistory } from '@components/chess/MoveHistory/MoveHistory';
 import { SettingsModal } from '@components/chess/ChessWorkspace/SettingsModal';
 import { GameList, formatCount } from '@components/repertoire/GameList';
+
+/**
+ * The number on a tab is how many games reached the position, not how many the book kept
+ * a handle on. The two differ by orders of magnitude at shallow positions, and the count
+ * a player wants there is "how often have they been here", not "how many can I open".
+ */
+function tabCount(shown: number, hasMore?: boolean, total?: number): string {
+  if (total && total > shown) return total.toLocaleString();
+  return formatCount(shown, hasMore);
+}
 import { RepertoireMatchList } from '@components/repertoire/RepertoireMatchList';
 import { MoveTree } from '@utils/MoveTree';
 import { ChapterFenMatch } from '@utils/extractRepertoirePositions';
@@ -53,6 +63,8 @@ interface ChessAnalysisLayoutProps {
   /** Set only when preparing against someone: their games, and the name for the tab. */
   opponentGames?: MasterGame[];
   opponentHasMore?: boolean;
+  opponentTotal?: number;
+  masterTotal?: number;
   opponentName?: string;
   opponentBookId?: string;
   loadingGames: boolean;
@@ -87,6 +99,8 @@ export function ChessAnalysisLayout({
   masterHasMore,
   opponentGames,
   opponentHasMore,
+  opponentTotal,
+  masterTotal,
   opponentName,
   opponentBookId,
   loadingGames,
@@ -164,10 +178,10 @@ export function ChessAnalysisLayout({
   const TABS: { key: AnalysisTab; label: string }[] = [
     { key: 'moves', label: 'Moves' },
     ...(visibleTabs.yourGames ? [{ key: 'yourGames' as const, label: `Your Games (${formatCount(userGames.length, userHasMore)})` }] : []),
-    ...(visibleTabs.masterGames ? [{ key: 'masterGames' as const, label: `Master (${formatCount(masterGames.length, masterHasMore)})` }] : []),
+    ...(visibleTabs.masterGames ? [{ key: 'masterGames' as const, label: `Master (${tabCount(masterGames.length, masterHasMore, masterTotal)})` }] : []),
     // Only present while preparing against someone, so it never competes for space
     // in ordinary analysis.
-    ...(opponentName ? [{ key: 'opponent' as const, label: `${opponentName} (${formatCount((opponentGames ?? []).length, opponentHasMore)})` }] : []),
+    ...(opponentName ? [{ key: 'opponent' as const, label: `${opponentName} (${tabCount((opponentGames ?? []).length, opponentHasMore, opponentTotal)})` }] : []),
     ...(visibleTabs.findPosition ? [{ key: 'findPosition' as const, label: `Find Position (${repertoireMatches.length})` }] : []),
   ];
   const effectiveActiveTab: AnalysisTab = TABS.some(t => t.key === activeTab) ? activeTab : 'moves';
@@ -214,6 +228,7 @@ export function ChessAnalysisLayout({
                     title="Master Games"
                     games={masterGames}
                     hasMore={masterHasMore}
+                    total={masterTotal}
                     onSelect={onSelectGame}
                     defaultCollapsed={false}
                     loading={loadingGames}
@@ -315,6 +330,7 @@ export function ChessAnalysisLayout({
                 title={`${opponentName} here`}
                 games={opponentGames ?? []}
                 hasMore={opponentHasMore}
+                total={opponentTotal}
                 onSelect={onSelectGame}
                 defaultCollapsed={false}
                 loading={false}
@@ -335,6 +351,7 @@ export function ChessAnalysisLayout({
                 title="Master Games"
                 games={masterGames}
                 hasMore={masterHasMore}
+                total={masterTotal}
                 onSelect={onSelectGame}
                 defaultCollapsed={false}
                 loading={false}

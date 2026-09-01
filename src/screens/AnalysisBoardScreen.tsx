@@ -32,7 +32,8 @@ export default function AnalysisBoardScreen({ route, navigation }: AnalysisBoard
   const opponentName = route?.params?.opponentName;
   const {
     userGames, userHasMore, masterGames, masterHasMore,
-    opponentGames, opponentHasMore, loading: loadingGames, reset: resetGames,
+    opponentGames, opponentHasMore, opponentTotal, masterTotal,
+    loading: loadingGames, reset: resetGames,
   } = useGameSearch(currentFen, opponentBookId);
 
   // Load game if provided via navigation
@@ -157,6 +158,8 @@ export default function AnalysisBoardScreen({ route, navigation }: AnalysisBoard
       masterHasMore={masterHasMore}
       opponentGames={opponentGames}
       opponentHasMore={opponentHasMore}
+      opponentTotal={opponentTotal}
+      masterTotal={masterTotal}
       opponentName={opponentName}
       opponentBookId={opponentBookId}
       loadingGames={loadingGames}

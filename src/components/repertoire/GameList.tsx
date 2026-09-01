@@ -16,6 +16,14 @@ interface GameListProps {
   loading?: boolean;
   /** More games exist than the sample cap returned — shown as a trailing "+". */
   hasMore?: boolean;
+  /**
+   * Games that really reach this position, when that is larger than the list.
+   *
+   * A book keeps a bounded sample of games per move, so at a shallow position the list is
+   * a tiny fraction of what passed through. Showing only the list length reads as "this is
+   * all there is", which is wrong by orders of magnitude.
+   */
+  total?: number;
 }
 
 /** "50+" when the cap hid games, plain "50" when it did not. */
@@ -23,9 +31,16 @@ export function formatCount(shown: number, hasMore?: boolean): string {
   return hasMore ? `${shown}+` : `${shown}`;
 }
 
-export function GameList({ title, games, onSelect, defaultCollapsed, loading, hasMore }: GameListProps) {
+export function GameList({
+  title, games, onSelect, defaultCollapsed, loading, hasMore, total,
+}: GameListProps) {
   // A bare count reads as a total. Books answer with a bounded sample, so say so.
-  const titleText = loading ? title : `${title} (${formatCount(games.length, hasMore)})`;
+  const shown = formatCount(games.length, hasMore);
+  const titleText = loading
+    ? title
+    : total && total > games.length
+      ? `${title} (${shown} of ${total.toLocaleString()})`
+      : `${title} (${shown})`;
 
   return (
     <CollapsiblePanel title={titleText} defaultCollapsed={defaultCollapsed}>

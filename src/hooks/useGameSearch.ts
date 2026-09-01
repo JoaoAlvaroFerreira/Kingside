@@ -17,6 +17,9 @@ export function useGameSearch(fen: string, opponentBookId?: string) {
   const [masterHasMore, setMasterHasMore] = useState(false);
   const [opponentGames, setOpponentGames] = useState<MasterGame[]>([]);
   const [opponentHasMore, setOpponentHasMore] = useState(false);
+  /** How many games really reach this position, as opposed to how many can be opened. */
+  const [opponentTotal, setOpponentTotal] = useState(0);
+  const [masterTotal, setMasterTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const playerMovesOnly = useStore(s => s.reviewSettings.books.playerMovesOnly);
   // Keyed on every input to the search, not just the FEN: the position is only one of the
@@ -51,7 +54,7 @@ export function useGameSearch(fen: string, opponentBookId?: string) {
           // Scoped to the opponent's own book, and to their moves only.
           opponentBookId
             ? BookService.getGamesAtPosition(normalized, true, undefined, opponentBookId)
-            : Promise.resolve({ games: [], hasMore: false }),
+            : Promise.resolve({ games: [] as MasterGame[], hasMore: false, totalGames: 0 }),
         ]);
         if (!cancelled) {
           setUserGames(uGames.games);
@@ -61,6 +64,8 @@ export function useGameSearch(fen: string, opponentBookId?: string) {
           setMasterHasMore(mGames.hasMore || bookGames.hasMore);
           setOpponentGames(oppGames.games);
           setOpponentHasMore(oppGames.hasMore);
+          setOpponentTotal(oppGames.totalGames);
+          setMasterTotal(mGames.games.length + bookGames.totalGames);
           lastSearchedRef.current = searchKey;
         }
       } catch {
@@ -71,6 +76,8 @@ export function useGameSearch(fen: string, opponentBookId?: string) {
           setMasterHasMore(false);
           setOpponentGames([]);
           setOpponentHasMore(false);
+          setOpponentTotal(0);
+          setMasterTotal(0);
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -87,10 +94,12 @@ export function useGameSearch(fen: string, opponentBookId?: string) {
     setMasterHasMore(false);
     setOpponentGames([]);
     setOpponentHasMore(false);
+    setOpponentTotal(0);
+    setMasterTotal(0);
   }, []);
 
   return {
     userGames, userHasMore, masterGames, masterHasMore,
-    opponentGames, opponentHasMore, loading, reset,
+    opponentGames, opponentHasMore, opponentTotal, masterTotal, loading, reset,
   };
 }
