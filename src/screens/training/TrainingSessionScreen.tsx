@@ -562,11 +562,11 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
                 : guidance === 'semi-learn' ? 'Semi' : 'Drill'}
             </Text>
           </View>
-          <View>
-            <Text style={styles.progressText}>
+          <View style={styles.headerProgress}>
+            <Text style={styles.progressText} numberOfLines={1}>
               Line {progress.lineNumber}/{progress.totalLines}
             </Text>
-            <Text style={styles.subProgressText}>
+            <Text style={styles.subProgressText} numberOfLines={1}>
               Move {progress.moveNumber}/{progress.totalMovesInLine}
               {progress.holdbackCount > 0 && ` · ${progress.holdbackCount} on hold`}
             </Text>
@@ -793,10 +793,19 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#444',
   },
+  // The counts grow with the repertoire — three digits a side, plus "120 on hold" — while
+  // the buttons are a fixed width. Without a shrinking left half the row simply overflowed
+  // and pushed End Session off the screen.
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    flexShrink: 1,
+    minWidth: 0,
+  },
+  headerProgress: {
+    flexShrink: 1,
+    minWidth: 0,
   },
   modeBadge: {
     backgroundColor: '#f57c00',
@@ -826,6 +835,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    flexShrink: 0,
   },
   altButton: {
     backgroundColor: '#455a64',

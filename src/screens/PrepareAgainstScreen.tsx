@@ -239,7 +239,9 @@ const styles = StyleSheet.create({
   prepBlackText: { color: '#e8e6e3', fontSize: 14, fontWeight: '600' },
   cardName: { color: '#fff', fontSize: 17, fontWeight: '600', marginBottom: 4 },
   cardMeta: { color: '#888', fontSize: 13 },
-  cardActions: { flexDirection: 'row', gap: 8, alignItems: 'center' },
+  // Four actions do not fit one phone-width row, and the last of them — Delete — was the
+  // one pushed off the edge.
+  cardActions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, alignItems: 'center' },
   action: {
     backgroundColor: '#2c2c2e', borderRadius: 6, paddingHorizontal: 14, paddingVertical: 8,
   },

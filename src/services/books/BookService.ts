@@ -222,6 +222,18 @@ class BookServiceClass {
       const meta = await this.readMeta(db);
       const info = await FileSystem.getInfoAsync(destination);
 
+      // Nothing about a .kbook is unique on disk, so importing the same file twice used to
+      // install it twice: two records, two connections, and every count on the board — the
+      // arrows' frequencies, a position's game total — silently doubled. Refuse the
+      // re-import the way a re-imported OTB PGN is refused.
+      const installed = await this.findMatchingBook(meta, info);
+      if (installed) {
+        throw new BookImportError(
+          'already-installed',
+          `"${installed.name}" is already installed. Delete it in Settings first if you want to replace it.`
+        );
+      }
+
       const record: BookRecord = {
         id,
         kind,
@@ -251,6 +263,31 @@ class BookServiceClass {
         ? e
         : new BookImportError('not-a-database', `The file could not be opened as a book: ${e}`);
     }
+  }
+
+  /**
+   * An installed book holding the same corpus as the file being imported, if there is one.
+   *
+   * Books carry no id of their own, so identity is what the generator wrote about the
+   * corpus plus the file's size: two builds that agree on the source file, the player, the
+   * game count, the depth *and* the byte count are the same book.
+   */
+  private async findMatchingBook(
+    meta: Record<string, string>,
+    info: FileSystem.FileInfo
+  ): Promise<BookRecord | null> {
+    const size = (info as any).size ?? 0;
+    const gameCount = Number(meta.game_count) || 0;
+    const maxPly = Number(meta.max_ply) || 0;
+    const books = await this.allBooks();
+
+    return books.find(book =>
+      book.sizeBytes === size &&
+      book.gameCount === gameCount &&
+      book.maxPly === maxPly &&
+      book.player === (meta.player || '') &&
+      book.sourceFile === (meta.source_file || '')
+    ) ?? null;
   }
 
   /** Read and validate book_meta, rejecting anything this build cannot read. */

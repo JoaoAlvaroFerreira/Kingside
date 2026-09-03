@@ -560,6 +560,19 @@ params and the config must stay the same shape.
 
 Things worth knowing about the individual values:
 
+- **`width-first` interleaves the pool by branch before the split**, for the same reason
+  `random` shuffles before it. Lines come out of extraction depth-first, so the head of the
+  pool — which is exactly the active batch — is every deep continuation of the *first*
+  reply. A chapter answering five third moves spent the whole session inside two of them
+  and left the rest in holdback. `LineExtractor.orderForWidthFirst` round-robins the
+  branches at each ply so one batch covers the alternatives.
+- **The next position is the least-drilled unfinished line**, not "scan forward for a line
+  sitting at the depth we are on". Rating a line moves the cursor to wherever the next
+  unfinished line is, so the cursor's depth and a line's own progress are different
+  numbers; the forward scan also passed over earlier lines still owing a move at this
+  depth, and the next pass asked them one move *deeper* — the owed move was never asked
+  and the line was rated as if it had been. `nextWidthFirstLine` is the single place that
+  choice is made, and every caller sets `currentMoveIndex` to that line's own progress.
 - **`random` shuffles before the active/holdback split**, not after. Shuffling the active
   batch alone just reorders the same first hundred lines and never reaches the rest of a
   large repertoire. The exception is `recommended`, where priority order is the point: there

@@ -188,24 +188,17 @@ export const LineExtractor = {
   },
 
   /**
-   * Reorder lines for width-first drilling
-   * Groups moves by depth level across all lines
-   * Returns array of { line, moveIndex } pairs
+   * Reorder lines so the front of the list covers as many distinct branches as possible.
+   *
+   * Extraction is depth-first, so the first lines of a chapter are every continuation of
+   * its first branch. A session only drills ACTIVE_BATCH_SIZE lines at a time and that
+   * batch is the head of this list — in DFS order, one or two of the opponent's replies
+   * drilled to exhaustion while the rest sit in holdback, which is the opposite of what
+   * width-first is for. Round-robin across the branches at each ply instead, so a chapter
+   * meeting c6/c5/a6/g6/Bf5 puts one line from each of the five at the front.
    */
-  orderForWidthFirst(lines: Line[]): Array<{ line: Line; moveIndex: number }> {
-    const maxDepth = Math.max(...lines.map(l => l.depth));
-    const result: Array<{ line: Line; moveIndex: number }> = [];
-
-    // For each depth level, add all lines that have a move at that depth
-    for (let depth = 0; depth < maxDepth; depth++) {
-      for (const line of lines) {
-        if (depth < line.depth) {
-          result.push({ line, moveIndex: depth });
-        }
-      }
-    }
-
-    return result;
+  orderForWidthFirst(lines: Line[]): Line[] {
+    return interleaveBranches(lines, 0);
   },
 
   /**
@@ -222,3 +215,41 @@ export const LineExtractor = {
     return line.moves.filter(move => move.isUserMove);
   },
 };
+
+/**
+ * Round-robin the lines across the branches they take at a given depth, recursively.
+ * Lines sharing a move at this depth stay grouped and are spread out one ply deeper.
+ */
+function interleaveBranches(lines: Line[], depth: number): Line[] {
+  if (lines.length <= 1) return lines;
+
+  const groups: Line[][] = [];
+  const byMove = new Map<string, Line[]>();
+  let anyMove = false;
+
+  for (const line of lines) {
+    const san = line.moves[depth]?.san;
+    if (san !== undefined) anyMove = true;
+    // A line that has already ended forms its own group rather than joining a branch.
+    const key = san ?? '';
+    let bucket = byMove.get(key);
+    if (!bucket) {
+      bucket = [];
+      byMove.set(key, bucket);
+      groups.push(bucket);
+    }
+    bucket.push(line);
+  }
+
+  if (!anyMove) return lines;                                           // past every line's end
+  if (groups.length === 1) return interleaveBranches(lines, depth + 1); // shared prefix
+
+  const ordered = groups.map(group => interleaveBranches(group, depth + 1));
+  const result: Line[] = [];
+  for (let i = 0; result.length < lines.length; i++) {
+    for (const group of ordered) {
+      if (i < group.length) result.push(group[i]);
+    }
+  }
+  return result;
+}

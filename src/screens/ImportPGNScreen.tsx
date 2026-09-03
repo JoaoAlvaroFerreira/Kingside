@@ -33,6 +33,8 @@ function bookErrorMessage(error: BookImportError): string {
       return error.message;
     case 'copy-failed':
       return `The file could not be copied into the app: ${error.message}`;
+    case 'already-installed':
+      return error.message;
   }
 }
 
@@ -907,6 +909,34 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
           >
             <Text style={styles.buttonText}>Select PGN File</Text>
           </TouchableOpacity>
+
+          {/* Paste a PGN directly — a game copied out of a chat or a site is not a file. */}
+          <View style={styles.divider}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>OR</Text>
+            <View style={styles.dividerLine} />
+          </View>
+
+          <Text style={styles.sectionTitle}>Paste PGN</Text>
+          <TextInput
+            style={[styles.input, styles.pgnInput]}
+            value={pgnText}
+            onChangeText={setPgnText}
+            placeholder={'1. e4 e5 2. Nf3 ...'}
+            placeholderTextColor="#666"
+            multiline
+            textAlignVertical="top"
+            autoCapitalize="none"
+            autoCorrect={false}
+            editable={!isImporting && !fileSelected}
+          />
+          <TouchableOpacity
+            style={[styles.button, !pgnText.trim() && styles.buttonDisabled]}
+            onPress={() => handleImport(pgnText)}
+            disabled={!pgnText.trim() || isImporting || fileSelected}
+          >
+            <Text style={styles.buttonText}>Import Pasted PGN</Text>
+          </TouchableOpacity>
         </>
       )}
     </ScrollView>
@@ -951,6 +981,11 @@ const styles = StyleSheet.create({
     color: '#e0e0e0',
     marginBottom: 10,
     fontSize: 16,
+  },
+  pgnInput: {
+    minHeight: 120,
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+    fontSize: 13,
   },
   label: {
     color: '#e0e0e0',

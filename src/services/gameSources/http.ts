@@ -11,6 +11,15 @@ const USER_AGENT = 'Kingside/1.0 (personal chess trainer)';
 /** Lichess asks clients to back off for a minute; chess.com is less strict. */
 const RATE_LIMIT_WAIT_MS = 60_000;
 const MAX_ATTEMPTS = 4;
+/**
+ * How long one request gets before it is abandoned and retried.
+ *
+ * fetch has no timeout of its own, so a connection that stalls mid-month never settles:
+ * the build stops with no error and no progress until the user cancels it. A month of a
+ * busy account is a large response, so this is generous — it is a stall detector, not a
+ * latency budget.
+ */
+const REQUEST_TIMEOUT_MS = 120_000;
 
 export function throwIfAborted(signal: AbortSignal): void {
   if (signal.aborted) throw new FetchCancelled();
@@ -60,16 +69,31 @@ export async function httpGet(
     if (options.accept) headers.Accept = options.accept;
     if (options.token) headers.Authorization = `Bearer ${options.token.trim()}`;
 
+    // The caller's signal still cancels; this one additionally fires on a stall. The body
+    // is read inside the same window, because a response can arrive and then stop midway.
+    const attemptAbort = new AbortController();
+    const relayAbort = () => attemptAbort.abort();
+    signal.addEventListener('abort', relayAbort, { once: true });
+    let timedOut = false;
+    const timer = setTimeout(() => { timedOut = true; attemptAbort.abort(); }, REQUEST_TIMEOUT_MS);
+
     let response: Response;
+    let body: string;
     try {
-      response = await fetch(url, { headers, signal });
+      response = await fetch(url, { headers, signal: attemptAbort.signal });
+      body = await response.text();
     } catch (e: any) {
       if (signal.aborted) throw new FetchCancelled();
-      if (attempt === MAX_ATTEMPTS - 1) {
-        throw new FetchError('network', `Could not reach ${hostOf(url)}: ${e?.message ?? e}`);
-      }
+      const what = timedOut
+        ? `${hostOf(url)} stopped responding after ${REQUEST_TIMEOUT_MS / 1000}s`
+        : `Could not reach ${hostOf(url)}: ${e?.message ?? e}`;
+      if (attempt === MAX_ATTEMPTS - 1) throw new FetchError('network', what);
+      onStatus?.(`${what} — retrying…`);
       await delay(2000 * (attempt + 1), signal);
       continue;
+    } finally {
+      clearTimeout(timer);
+      signal.removeEventListener('abort', relayAbort);
     }
 
     if (response.status === 404 && options.notFound !== 'throttled') {
@@ -86,9 +110,15 @@ export async function httpGet(
       continue;
     }
     if (!response.ok) {
-      throw new FetchError('network', `HTTP ${response.status} from ${hostOf(url)}`);
+      // The body is worth carrying: both APIs explain a refusal there, and "HTTP 403" on
+      // its own is not something a report can be acted on.
+      const detail = body.trim().slice(0, 200);
+      throw new FetchError(
+        'network',
+        `HTTP ${response.status} from ${hostOf(url)}${detail ? `: ${detail}` : ''}`
+      );
     }
-    return response.text();
+    return body;
   }
   throw new FetchError(
     'rate-limited',

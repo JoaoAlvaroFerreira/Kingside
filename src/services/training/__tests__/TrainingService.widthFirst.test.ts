@@ -8,6 +8,7 @@
  */
 
 import { TrainingService } from '../TrainingService';
+import { LineExtractor } from '../LineExtractor';
 import { Line, LineMove, TrainingSession, LineStats } from '@types';
 
 function lm(san: string, preFen: string, isUserMove: boolean): LineMove {
@@ -200,5 +201,75 @@ describe('a line that finished on its last move', () => {
     const second = TrainingService.completeLineAndAdvance(session, 4, []);
     expect(second.hasMore).toBe(false);
     expect(session.isComplete).toBe(true);
+  });
+});
+
+/**
+ * The reported failure, in its own shape: a chapter that reaches one position where the
+ * opponent has five replies, one of which is analysed far more deeply than the others.
+ */
+describe('a position with many replies, one of them deep', () => {
+  const REPLIES = ['c6', 'c5', 'a6', 'g6', 'Bf5'];
+
+  /** Trunk d4/Nf3/Bf4, then the answer to one reply, then `extra` further user moves. */
+  function branch(reply: string, index: number, extra: number): Line {
+    const sans = ['d4', 'Nf3', 'Bf4', `answer-${reply}`];
+    for (let i = 0; i < extra; i++) sans.push(`${reply}-deep${i}-${index}`);
+    return lineFromUserMoves(`${reply}#${index}`, sans);
+  }
+
+  function pool(): Line[] {
+    const lines: Line[] = [];
+    // Extraction is depth-first, so every continuation of the first reply comes first.
+    for (let i = 0; i < 150; i++) lines.push(branch('c6', i, 4));
+    for (let i = 0; i < 150; i++) lines.push(branch('c5', i, 4));
+    for (const reply of ['a6', 'g6', 'Bf5']) lines.push(branch(reply, 0, 1));
+    return lines;
+  }
+
+  it('covers every reply in the first batch, not just the first two', () => {
+    // The active batch is the head of the pool. In extraction order that head is 100
+    // lines of c6 alone, so a6/g6/Bf5 sat in holdback and were never drilled — the
+    // branches the session existed to cover.
+    const ordered = LineExtractor.orderForWidthFirst(pool());
+    const covered = new Set(ordered.slice(0, 100).map(line => line.id.split('#')[0]));
+    expect([...covered].sort()).toEqual([...REPLIES].sort());
+  });
+
+  it('asks the answer to every reply before drilling any branch deeper', () => {
+    const session = makeSession(LineExtractor.orderForWidthFirst(pool()).slice(0, 100));
+    const { asked } = runSession(session, 5000);
+
+    const ANSWER_DEPTH = 3;
+    const answers = asked.filter(a => a.san.startsWith('answer-'));
+    expect(new Set(answers.map(a => a.san)).size).toBe(REPLIES.length);
+    expect(answers.every(a => a.depth === ANSWER_DEPTH)).toBe(true);
+
+    // Nothing deeper is touched until all five answers have been asked.
+    const lastAnswer = asked.map(a => a.san).lastIndexOf(answers[answers.length - 1].san);
+    expect(asked.slice(0, lastAnswer).every(a => a.depth <= ANSWER_DEPTH)).toBe(true);
+  });
+});
+
+describe('a rating that lands mid-sweep', () => {
+  it('does not skip the first move of a line it jumps to', () => {
+    // A and B finish on their first move, so the sweep stops for two ratings before the
+    // other two lines have been asked anything. The cursor then jumped to a line by array
+    // position while the depth carried on rising, and D — still owing its first move —
+    // was picked up at depth 1: 'first' was never asked, and the line was rated as if it
+    // had been. Choosing the least-drilled line instead is what keeps depth and progress
+    // the same number.
+    const session = makeSession([
+      lineFromUserMoves('A', ['e4']),
+      lineFromUserMoves('B', ['e4']),
+      lineFromUserMoves('C', ['e4', 'Nc3', 'd4', 'Bb5']),
+      lineFromUserMoves('D', ['first', 'second']),
+    ]);
+
+    const { asked, rated } = runSession(session);
+
+    expect(asked.map(a => a.san)).toContain('first');
+    expect(asked.filter(a => a.line === 'D').map(a => a.depth)).toEqual([0, 1]);
+    expect([...rated].sort()).toEqual(['A', 'B', 'C', 'D']);
   });
 });

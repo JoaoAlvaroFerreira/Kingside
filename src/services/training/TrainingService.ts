@@ -84,6 +84,13 @@ export const TrainingService = {
       allLines = this.shuffle(allLines);
     }
 
+    // Same reason, for width-first: the batch is the head of the pool, and in extraction
+    // order that head is the deepest continuations of the first branch. Interleaving the
+    // branches is what lets one batch actually cover the position's alternatives.
+    if (config.order === 'width-first' && config.selection.kind !== 'recommended') {
+      allLines = LineExtractor.orderForWidthFirst(allLines);
+    }
+
     // Split into active batch and holdback when over the limit
     let activeLines = allLines.slice(0, ACTIVE_BATCH_SIZE);
     const holdbackLines = allLines.slice(ACTIVE_BATCH_SIZE);
@@ -405,39 +412,46 @@ export const TrainingService = {
       return false;
     }
 
-    // Find next line at current depth that hasn't been tested yet
-    for (let i = session.currentLineIndex + 1; i < session.lines.length; i++) {
-      const line = session.lines[i];
-      const userMoves = line.moves.filter(m => m.isUserMove);
-      const progress = session.lineProgress[line.id] || 0;
-
-      // Check if this line has a move at current depth that hasn't been tested
-      if (userMoves.length > currentDepth && progress <= currentDepth) {
-        session.currentLineIndex = i;
-        session.currentMoveIndex = currentDepth;
-        return true;
-      }
+    const next = this.nextWidthFirstLine(session);
+    if (!next) {
+      session.isComplete = true;
+      return false;
     }
 
-    // All lines at current depth tested - move to next depth
-    session.currentDepth++;
-    session.currentMoveIndex++;
+    session.currentLineIndex = next.index;
+    session.currentMoveIndex = next.progress;
+    session.currentDepth = next.progress;
+    return true;
+  },
 
-    // Find first line with a move at next depth
-    for (let i = 0; i < session.lines.length; i++) {
-      const line = session.lines[i];
-      const userMoves = line.moves.filter(m => m.isUserMove);
+  /**
+   * The least-drilled line still unfinished, which is the whole of the width-first rule.
+   *
+   * Written as "least progress wins" rather than "scan forward for a line at the depth we
+   * are on": rating a line moves the cursor to wherever the next unfinished line sits, so
+   * the depth the cursor is on and a line's own progress are not the same number. Scanning
+   * forward from the cursor also passed over earlier lines still owing a move at this
+   * depth, and the next pass then asked them one move deeper — skipping the move they were
+   * owed and never coming back to it.
+   *
+   * Ties scan from just past the current line, so equally-drilled lines take turns instead
+   * of the list order deciding everything.
+   */
+  nextWidthFirstLine(session: TrainingSession): { index: number; progress: number } | null {
+    const count = session.lines.length;
+    let best: { index: number; progress: number } | null = null;
+
+    for (let step = 1; step <= count; step++) {
+      const index = (session.currentLineIndex + step) % count;
+      const line = session.lines[index];
+      const total = line.moves.filter(m => m.isUserMove).length;
+      if (total === 0) continue;
       const progress = session.lineProgress[line.id] || 0;
-
-      if (userMoves.length > session.currentMoveIndex && progress <= session.currentMoveIndex) {
-        session.currentLineIndex = i;
-        return true;
-      }
+      if (progress >= total) continue;
+      if (!best || progress < best.progress) best = { index, progress };
     }
 
-    // All lines at all depths complete
-    session.isComplete = true;
-    return false;
+    return best;
   },
 
   /**
@@ -500,31 +514,13 @@ export const TrainingService = {
         return { updatedStats, alsoCompleted, hasMore: false };
       }
     } else {
-      // Width-first: find next incomplete line
-      // Check from current line onwards
-      for (let i = session.currentLineIndex + 1; i < session.lines.length; i++) {
-        const line = session.lines[i];
-        const userMoves = line.moves.filter(m => m.isUserMove);
-        const progress = session.lineProgress[line.id] || 0;
-
-        if (progress < userMoves.length) {
-          session.currentLineIndex = i;
-          session.currentMoveIndex = progress;
-          return { updatedStats, alsoCompleted, hasMore: true };
-        }
-      }
-
-      // Check from beginning if not found
-      for (let i = 0; i <= session.currentLineIndex; i++) {
-        const line = session.lines[i];
-        const userMoves = line.moves.filter(m => m.isUserMove);
-        const progress = session.lineProgress[line.id] || 0;
-
-        if (progress < userMoves.length) {
-          session.currentLineIndex = i;
-          session.currentMoveIndex = progress;
-          return { updatedStats, alsoCompleted, hasMore: true };
-        }
+      // Width-first: resume on the least-drilled line still unfinished
+      const next = this.nextWidthFirstLine(session);
+      if (next) {
+        session.currentLineIndex = next.index;
+        session.currentMoveIndex = next.progress;
+        session.currentDepth = next.progress;
+        return { updatedStats, alsoCompleted, hasMore: true };
       }
 
       // All active lines complete — check holdback
@@ -609,6 +605,17 @@ export const TrainingService = {
     session.lines = [...incompleteLines, ...promoted];
     session.currentLineIndex = 0;
     session.currentMoveIndex = 0;
+
+    // Width-first can carry part-drilled lines across a promotion, and move 0 of one of
+    // those has already been answered. Place the cursor by progress, as everywhere else.
+    if (session.order === 'width-first') {
+      const next = this.nextWidthFirstLine(session);
+      if (next) {
+        session.currentLineIndex = next.index;
+        session.currentMoveIndex = next.progress;
+        session.currentDepth = next.progress;
+      }
+    }
   },
 
   /**

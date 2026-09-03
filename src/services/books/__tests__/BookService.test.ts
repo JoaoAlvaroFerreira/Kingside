@@ -501,6 +501,7 @@ describe('change notification', () => {
     expect(seen).toHaveLength(2);
     unsubscribe();
 
+    mockDb.getBookRecords.mockResolvedValue([]); // 'a' was just deleted
     await BookService.importBook('file:///picked/b.kbook');
     expect(seen).toHaveLength(2); // unsubscribed listeners stop hearing about it
   });
@@ -538,5 +539,33 @@ describe('pruneOrphanFiles', () => {
     const deleted = mockFs.deleteAsync.mock.calls.map(c => c[0]);
     expect(deleted).toContain('file:///mock-documents/SQLite/orphan.kbook');
     expect(deleted).not.toContain('file:///mock-documents/SQLite/half-built.kbook');
+  });
+});
+
+describe('importing a book that is already installed', () => {
+  it('is refused rather than installed a second time', async () => {
+    // Two records over the same corpus double every count the board shows: the arrow
+    // frequencies and a position's game total are summed across books.
+    mockDb.getBookRecords.mockResolvedValue([record({ id: 'a', fileName: 'a.kbook' })]);
+    mockSQLite.openDatabaseAsync.mockResolvedValue(fakeBook({}));
+
+    await expect(BookService.importBook('file:///picked/same.kbook'))
+      .rejects.toMatchObject({ reason: 'already-installed' });
+
+    expect(mockDb.addBookRecord).not.toHaveBeenCalled();
+    // The rejected copy does not stay behind on disk.
+    const deleted = mockFs.deleteAsync.mock.calls.map((c: any[]) => c[0]);
+    expect(deleted.some((path: string) => path.endsWith('.kbook'))).toBe(true);
+  });
+
+  it('still installs a book that only shares its name', async () => {
+    mockDb.getBookRecords.mockResolvedValue([
+      record({ id: 'a', fileName: 'a.kbook', gameCount: 4000, sourceFile: 'other.pgn' }),
+    ]);
+    mockSQLite.openDatabaseAsync.mockResolvedValue(fakeBook({}));
+
+    const imported = await BookService.importBook('file:///picked/new.kbook');
+    expect(imported.gameCount).toBe(1000);
+    expect(mockDb.addBookRecord).toHaveBeenCalled();
   });
 });

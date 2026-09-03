@@ -81,7 +81,8 @@ export type BookImportFailure =
   | 'not-a-database'
   | 'not-a-book'
   | 'unsupported-version'
-  | 'copy-failed';
+  | 'copy-failed'
+  | 'already-installed';
 
 export class BookImportError extends Error {
   constructor(public readonly reason: BookImportFailure, message: string) {
