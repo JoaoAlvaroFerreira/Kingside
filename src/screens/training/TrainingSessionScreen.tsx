@@ -414,7 +414,7 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
   };
 
   // Guidance is a property of the whole drill, so a detour and the line it interrupted
-  // change together — otherwise Resume Line would come back with the old setting.
+  // change together â€” otherwise Resume Line would come back with the old setting.
   const handleChangeGuidance = (next: Guidance) => {
     if (!session) return;
     session.guidance = next;
@@ -639,7 +639,7 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
         </View>
         <View style={styles.headerRight}>
           <TouchableOpacity onPress={() => setMenuVisible(true)} style={styles.menuButton}>
-            <Text style={styles.menuButtonText}>•••</Text>
+            <Text style={styles.menuButtonText}>{'\u2022\u2022\u2022'}</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={handleEndSession} style={styles.endButton}>
             <Text style={styles.endButtonText}>End Session</Text>
