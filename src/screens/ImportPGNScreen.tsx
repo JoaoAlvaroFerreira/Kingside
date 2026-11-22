@@ -7,6 +7,7 @@ import { OpeningClassifier } from '@services/openings/OpeningClassifier';
 import { LichessService } from '@services/lichess/LichessService';
 import { useStore } from '@store';
 import { RepertoireColor, BookImportError } from '@types';
+import { splitByOrientation } from '@services/pgn/splitByOrientation';
 import { BookService } from '@services/books/BookService';
 import { MoveTree } from '@utils/MoveTree';
 
@@ -68,6 +69,7 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
   const [masterDaysBack, setMasterDaysBack] = useState('0');
   const [isImportingLichess, setIsImportingLichess] = useState(false);
   const [lichessStudyUrl, setLichessStudyUrl] = useState('');
+  const [bothColors, setBothColors] = useState(false);
   const [chessableMode, setChessableMode] = useState(false);
   const [chessableDirectMode, setChessableDirectMode] = useState(false);
   const [isImportingBook, setIsImportingBook] = useState(false);
@@ -475,45 +477,59 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
           navigation.goBack();
 
         } else {
-          // Standard import: 1 game = 1 chapter
-          const chapters = await processBatch(games, 50, (parsed, index) => {
-            const moveTree = PGNService.toMoveTree(parsed);
-            const classification = OpeningClassifier.classify(
-              PGNService.toUserGame(parsed).moves,
-              PGNService.getECO(parsed)
+          // Standard import: 1 game = 1 chapter. With "both colors" the games are split by
+          // orientation first and each side becomes its own repertoire, so every colour-based
+          // feature (tabs, training, review) keeps seeing a repertoire with one colour.
+          const groups: Array<{ color: RepertoireColor; games: typeof games }> = [];
+          if (bothColors) {
+            const split = splitByOrientation(games, color);
+            if (split.white.length > 0) groups.push({ color: 'white', games: split.white });
+            if (split.black.length > 0) groups.push({ color: 'black', games: split.black });
+          } else {
+            groups.push({ color, games });
+          }
+
+          const repertoires = [];
+          for (const group of groups) {
+            const chapters = await processBatch(group.games, 50, (parsed, index) => {
+              const moveTree = PGNService.toMoveTree(parsed);
+              const classification = OpeningClassifier.classify(
+                PGNService.toUserGame(parsed).moves,
+                PGNService.getECO(parsed)
+              );
+
+              return {
+                id: generateId(),
+                name: PGNService.getOpeningName(parsed) || classification.name || `Chapter ${index + 1}`,
+                pgn: PGNService.toPGNString(parsed),
+                moveTree: moveTree.toJSON(),
+                order: index,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+              };
+            }, 'Processing chapters');
+
+            const classification = OpeningClassifier.classifyRepertoire(
+              group.games,
+              g => PGNService.toUserGame(g).moves,
+              g => PGNService.getECO(g),
             );
 
-            return {
+            repertoires.push({
               id: generateId(),
-              name: PGNService.getOpeningName(parsed) || classification.name || `Chapter ${index + 1}`,
-              pgn: PGNService.toPGNString(parsed),
-              moveTree: moveTree.toJSON(),
-              order: index,
+              name,
+              color: group.color,
+              openingType: classification.openingType,
+              eco: classification.eco,
+              chapters,
               createdAt: new Date(),
               updatedAt: new Date(),
-            };
-          }, 'Processing chapters');
-
-          const classification = OpeningClassifier.classifyRepertoire(
-            games,
-            g => PGNService.toUserGame(g).moves,
-            g => PGNService.getECO(g),
-          );
-
-          const repertoire = {
-            id: generateId(),
-            name,
-            color,
-            openingType: classification.openingType,
-            eco: classification.eco,
-            chapters,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          };
+            });
+          }
 
           throwIfAborted();
-          setProgress({ current: chapters.length, total: chapters.length, phase: 'Saving repertoire...' });
-          await addRepertoire(repertoire);
+          setProgress({ current: repertoires.length, total: repertoires.length, phase: 'Saving repertoire...' });
+          for (const repertoire of repertoires) await addRepertoire(repertoire);
 
           setIsImporting(false);
           setFileSelected(false);
@@ -843,6 +859,22 @@ export default function ImportPGNScreen({ route, navigation }: ImportPGNScreenPr
                   </TouchableOpacity>
                 </View>
               </View>
+
+              {/* Both colors: split a Lichess study by its chapter orientation */}
+              {!chessableMode && (
+                <TouchableOpacity
+                  style={styles.chessableToggle}
+                  onPress={() => setBothColors(!bothColors)}
+                  activeOpacity={0.7}
+                >
+                  <View style={[styles.checkbox, bothColors && styles.checkboxActive]}>
+                    {bothColors && <Text style={styles.checkmark}>✓</Text>}
+                  </View>
+                  <Text style={styles.chessableLabel}>
+                    Both colors (split by chapter orientation; untagged chapters use &quot;Playing as&quot;)
+                  </Text>
+                </TouchableOpacity>
+              )}
 
               {/* Chessable mode toggle */}
               <TouchableOpacity

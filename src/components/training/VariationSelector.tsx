@@ -13,6 +13,7 @@ interface VariationSelectorProps {
   onLongPressLine?: (lineIndex: number) => void;
   lineProgress?: Record<string, number>;
   holdbackCount?: number;
+  onLoadMore?: () => void;
 }
 
 export const VariationSelector: React.FC<VariationSelectorProps> = ({
@@ -22,6 +23,7 @@ export const VariationSelector: React.FC<VariationSelectorProps> = ({
   onLongPressLine,
   lineProgress = {},
   holdbackCount = 0,
+  onLoadMore,
 }) => {
   const scrollViewRef = useRef<ScrollView>(null);
   const itemOffsets = useRef<Record<number, number>>({});
@@ -68,9 +70,20 @@ export const VariationSelector: React.FC<VariationSelectorProps> = ({
   return (
     <View style={styles.container}>
       {holdbackCount > 0 && (
-        <Text style={styles.holdbackText}>+{holdbackCount} on hold</Text>
+        <TouchableOpacity onPress={onLoadMore} disabled={!onLoadMore}>
+          <Text style={styles.holdbackText}>+{holdbackCount} on hold{onLoadMore ? ' — tap or scroll to load' : ''}</Text>
+        </TouchableOpacity>
       )}
-      <ScrollView ref={scrollViewRef} style={styles.list} showsVerticalScrollIndicator={true} nestedScrollEnabled>
+      <ScrollView ref={scrollViewRef} style={styles.list} showsVerticalScrollIndicator={true}
+        nestedScrollEnabled
+        scrollEventThrottle={100}
+        onScroll={({ nativeEvent: { contentOffset, layoutMeasurement, contentSize } }) => {
+          if (onLoadMore && holdbackCount > 0 &&
+              contentOffset.y + layoutMeasurement.height >= contentSize.height - 40) {
+            onLoadMore();
+          }
+        }}
+      >
         {lines.map((line, index) => {
           const isCurrent = index === currentLineIndex;
           const status = getLineStatus(line);

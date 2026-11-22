@@ -7,20 +7,23 @@ import {
   ScrollView,
   Alert,
   Platform,
+  AppState,
   useWindowDimensions,
 } from 'react-native';
 import { useStore } from '@store';
-import { TrainingSession, TrainingConfig, TrainingTimingSettings, normalizeFen } from '@types';
+import { Guidance, TrainingSession, TrainingConfig, TrainingTimingSettings, normalizeFen } from '@types';
 import { TrainingService } from '@services/training/TrainingService';
+import { SessionSnapshot } from '@services/training/SessionSnapshot';
 import { DatabaseService } from '@services/database/DatabaseService';
 import { ChessWorkspace } from '@components/chess/ChessWorkspace/ChessWorkspace';
 import { VariationSelector } from '@components/training/VariationSelector';
+import { SessionMenu } from '@components/training/SessionMenu';
 import { Chess } from 'chess.js';
 
 interface TrainingSessionScreenProps {
   navigation: any;
   route: {
-    params: TrainingConfig;
+    params: TrainingConfig & { resume?: boolean };
   };
 }
 
@@ -42,6 +45,12 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
    */
   const [pausedSession, setPausedSession] = useState<TrainingSession | null>(null);
   const inAlternatives = pausedSession !== null;
+  const [menuVisible, setMenuVisible] = useState(false);
+
+  const closeSession = () => {
+    setTrainingSession(null);
+    void SessionSnapshot.clear();
+  };
   const [currentFen, setCurrentFen] = useState<string>(new Chess().fen());
   const [feedback, setFeedback] = useState<'correct' | 'incorrect' | 'alternative' | null>(null);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -107,6 +116,23 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
     }
   };
 
+  const begin = (newSession: TrainingSession, repertoireId: string) => {
+    setSession(newSession);
+    setTrainingSession(newSession);
+
+    if (newSession.guidance === 'semi-learn') {
+      DatabaseService.getSeenMoves(repertoireId).then(setSeenMoves);
+    }
+
+    // Set initial position
+    const position = TrainingService.getCurrentPosition(newSession);
+    if (position) {
+      setCurrentFen(position.fen);
+      setExpectedMove(position.expectedMove);
+    }
+    updateComment(newSession);
+  };
+
   // Initialize session
   useEffect(() => {
     const repertoire = repertoires.find(r => r.id === route.params.repertoireId);
@@ -118,6 +144,17 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
         Alert.alert('Error', msg);
       }
       navigation.goBack();
+      return;
+    }
+
+    if (route.params.resume) {
+      SessionSnapshot.load().then(saved => {
+        if (saved && saved.repertoireId === repertoire.id) begin(saved, repertoire.id);
+        else {
+          Alert.alert('Session not found', 'The saved training session is no longer available.');
+          navigation.goBack();
+        }
+      });
       return;
     }
 
@@ -134,21 +171,20 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
       return;
     }
 
-    setSession(newSession);
-    setTrainingSession(newSession);
-
-    if (newSession.guidance === 'semi-learn') {
-      DatabaseService.getSeenMoves(repertoire.id).then(setSeenMoves);
-    }
-
-    // Set initial position
-    const position = TrainingService.getCurrentPosition(newSession);
-    if (position) {
-      setCurrentFen(position.fen);
-      setExpectedMove(position.expectedMove);
-    }
-    updateComment(newSession);
+    begin(newSession, repertoire.id);
   }, []);
+
+  // Standby can kill the process, so snapshot on the way out. A detour is not saved: the
+  // line it interrupted is, and the detour is cheap to start again.
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', state => {
+      const toSave = pausedSession ?? session;
+      if (state !== 'active' && toSave && !toSave.isComplete) {
+        void SessionSnapshot.save(toSave);
+      }
+    });
+    return () => sub.remove();
+  }, [session, pausedSession]);
 
   // Progress info
   const progress = useMemo(() => {
@@ -305,7 +341,7 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
       } else {
         Alert.alert('Session Complete', msg);
       }
-      setTrainingSession(null);
+      closeSession();
       navigation.goBack();
     }
   };
@@ -343,7 +379,7 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
       } else {
         Alert.alert('Session Complete', msg);
       }
-      setTrainingSession(null);
+      closeSession();
       navigation.goBack();
     }
   };
@@ -375,6 +411,24 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
       setExpectedMove(position.expectedMove);
     }
     updateComment(session);
+  };
+
+  // Guidance is a property of the whole drill, so a detour and the line it interrupted
+  // change together — otherwise Resume Line would come back with the old setting.
+  const handleChangeGuidance = (next: Guidance) => {
+    if (!session) return;
+    session.guidance = next;
+    if (pausedSession) pausedSession.guidance = next;
+    if (next === 'semi-learn') {
+      DatabaseService.getSeenMoves(session.repertoireId).then(setSeenMoves);
+    }
+    setSession({ ...session });
+    updateComment(session);
+  };
+
+  const handleLoadMore = () => {
+    if (!session || TrainingService.loadMoreFromHoldback(session) === 0) return;
+    setSession({ ...session });
   };
 
   const handleTestAlternatives = () => {
@@ -441,7 +495,7 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
     if (Platform.OS === 'web') {
       const confirmed = window.confirm(msg);
       if (confirmed) {
-        setTrainingSession(null);
+        closeSession();
         navigation.goBack();
       }
     } else {
@@ -451,7 +505,7 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
           text: 'End',
           style: 'destructive',
           onPress: () => {
-            setTrainingSession(null);
+            closeSession();
             navigation.goBack();
           },
         },
@@ -481,7 +535,7 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
 
     const newLines = session.lines.filter((_, i) => i !== lineIndex);
     if (newLines.length === 0) {
-      setTrainingSession(null);
+      closeSession();
       navigation.goBack();
       return;
     }
@@ -548,6 +602,17 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
 
   return (
     <View style={styles.container}>
+      <SessionMenu
+        visible={menuVisible}
+        onClose={() => setMenuVisible(false)}
+        guidance={guidance}
+        onChangeGuidance={handleChangeGuidance}
+        inAlternatives={inAlternatives}
+        alternativesDisabled={isAnimating || session.awaitingRating}
+        onAlternatives={handleTestAlternatives}
+        onResume={resumeMainSession}
+      />
+
       {/* Progress Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
@@ -573,22 +638,9 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
           </View>
         </View>
         <View style={styles.headerRight}>
-          {inAlternatives ? (
-            <TouchableOpacity onPress={resumeMainSession} style={styles.altButton}>
-              <Text style={styles.altButtonText}>Resume Line</Text>
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity
-              onPress={handleTestAlternatives}
-              disabled={isAnimating || session.awaitingRating}
-              style={[
-                styles.altButton,
-                (isAnimating || session.awaitingRating) && styles.altButtonDisabled,
-              ]}
-            >
-              <Text style={styles.altButtonText}>Alternatives</Text>
-            </TouchableOpacity>
-          )}
+          <TouchableOpacity onPress={() => setMenuVisible(true)} style={styles.menuButton}>
+            <Text style={styles.menuButtonText}>•••</Text>
+          </TouchableOpacity>
           <TouchableOpacity onPress={handleEndSession} style={styles.endButton}>
             <Text style={styles.endButtonText}>End Session</Text>
           </TouchableOpacity>
@@ -629,6 +681,7 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
                 onLongPressLine={handleLongPressLine}
                 lineProgress={session.lineProgress}
                 holdbackCount={session.holdbackLines.length}
+                onLoadMore={handleLoadMore}
               />
             </View>
           )}
@@ -764,6 +817,7 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
               onLongPressLine={handleLongPressLine}
               lineProgress={session.lineProgress}
               holdbackCount={session.holdbackLines.length}
+                onLoadMore={handleLoadMore}
             />
           </View>
         )}
@@ -837,19 +891,16 @@ const styles = StyleSheet.create({
     gap: 8,
     flexShrink: 0,
   },
-  altButton: {
+  menuButton: {
     backgroundColor: '#455a64',
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 4,
   },
-  altButtonDisabled: {
-    opacity: 0.4,
-  },
-  altButtonText: {
+  menuButtonText: {
     color: '#fff',
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   modeBadgeAlt: {
     backgroundColor: '#455a64',

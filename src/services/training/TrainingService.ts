@@ -71,30 +71,27 @@ export const TrainingService = {
       allLines = LineExtractor.filterLinesWithUserMoves(allLines);
     }
 
+    // Order the whole pool before the batch split: the batch is the head of the pool, so
+    // ordering only the batch would drill the first hundred lines of a big repertoire and
+    // never reach the rest. Shuffle for random; for width-first interleave the branches,
+    // since extraction order puts every deep continuation of the first reply at the head.
+    if (config.order === 'random') {
+      allLines = this.shuffle(allLines);
+    } else if (config.order === 'width-first') {
+      allLines = LineExtractor.orderForWidthFirst(allLines);
+    }
+
+    // The sort is stable, so lines the score cannot separate (a repertoire not yet drilled
+    // ties them all) keep the order above instead of falling back to extraction order.
     if (config.selection.kind === 'recommended') {
       allLines = this.sortByRecommendation(allLines, allLineStats);
-    }
-
-    // Shuffle before the batch split, not after — shuffling only the active batch would
-    // just reorder the same first 50 lines and never surface the rest of a big repertoire.
-    // Except under 'recommended', where the priority order is the whole point: there the
-    // batch is still the highest-priority lines, and random only shuffles within it.
-    const shuffleWholePool = config.order === 'random' && config.selection.kind !== 'recommended';
-    if (shuffleWholePool) {
-      allLines = this.shuffle(allLines);
-    }
-
-    // Same reason, for width-first: the batch is the head of the pool, and in extraction
-    // order that head is the deepest continuations of the first branch. Interleaving the
-    // branches is what lets one batch actually cover the position's alternatives.
-    if (config.order === 'width-first' && config.selection.kind !== 'recommended') {
-      allLines = LineExtractor.orderForWidthFirst(allLines);
     }
 
     // Split into active batch and holdback when over the limit
     let activeLines = allLines.slice(0, ACTIVE_BATCH_SIZE);
     const holdbackLines = allLines.slice(ACTIVE_BATCH_SIZE);
-    if (config.order === 'random' && !shuffleWholePool) {
+    // Under 'recommended' the batch is the highest-priority lines; random reorders within it
+    if (config.order === 'random' && config.selection.kind === 'recommended') {
       activeLines = this.shuffle(activeLines);
     }
 
@@ -590,6 +587,16 @@ export const TrainingService = {
    * Replace completed active lines with the next batch from holdback.
    * Removes all completed lines, appends up to ACTIVE_BATCH_SIZE new ones.
    */
+  /**
+   * Bring the next batch out of holdback without waiting for the active lines to finish.
+   * Lines are appended, so every index — including the cursor's — stays valid.
+   */
+  loadMoreFromHoldback(session: TrainingSession): number {
+    const more = session.holdbackLines.splice(0, ACTIVE_BATCH_SIZE);
+    session.lines = [...session.lines, ...more];
+    return more.length;
+  },
+
   promoteFromHoldback(session: TrainingSession): void {
     // Remove completed lines from active set
     const incompleteLines = session.lines.filter(line => {

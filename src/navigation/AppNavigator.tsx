@@ -1,7 +1,9 @@
 import { LineSelection, LineOrder, Guidance, HeroColor } from '@types';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { createStackNavigator } from '@react-navigation/stack';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, createNavigationContainerRef } from '@react-navigation/native';
+import { Alert } from 'react-native';
+import { SessionSnapshot } from '@services/training/SessionSnapshot';
 
 import AnalysisBoardScreen from '@screens/AnalysisBoardScreen';
 import RepertoireScreen from '@screens/RepertoireScreen';
@@ -38,6 +40,7 @@ export type RootStackParamList = {
     guidance: Guidance;
     maxDepth?: number;
     opponentBranchingOnly?: boolean;
+    resume?: boolean;
   };
   GameReview: { gameId: string };
   LineAnalysis: { line: { moves: string[]; startFen?: string } };
@@ -106,9 +109,34 @@ function DrawerNavigator() {
   );
 }
 
+const navigationRef = createNavigationContainerRef<any>();
+
+/** Standby can kill the process mid-drill; if a snapshot survived, offer to pick it up. */
+async function offerToResumeSession() {
+  const saved = await SessionSnapshot.load();
+  if (!saved) return;
+  Alert.alert(
+    'Resume training?',
+    `You were ${saved.linesCompleted} of ${saved.totalLineCount} lines into a session.`,
+    [
+      { text: 'Discard', style: 'destructive', onPress: () => void SessionSnapshot.clear() },
+      {
+        text: 'Resume',
+        onPress: () => navigationRef.navigate('TrainingSession', {
+          repertoireId: saved.repertoireId,
+          selection: { kind: 'all' },
+          order: saved.order,
+          guidance: saved.guidance,
+          resume: true,
+        }),
+      },
+    ]
+  );
+}
+
 export default function AppNavigator() {
   return (
-    <NavigationContainer>
+    <NavigationContainer ref={navigationRef} onReady={offerToResumeSession}>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Main" component={DrawerNavigator} />
         <Stack.Screen
