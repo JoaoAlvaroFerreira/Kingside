@@ -1,0 +1,14 @@
+diff --git a/node_modules/react-native-stockfish-chess-engine/android/CMakeLists.txt b/node_modules/react-native-stockfish-chess-engine/android/CMakeLists.txt
+index 64410c6..d60ca3d 100644
+--- a/node_modules/react-native-stockfish-chess-engine/android/CMakeLists.txt
++++ b/node_modules/react-native-stockfish-chess-engine/android/CMakeLists.txt
+@@ -41,3 +41,9 @@ include_directories(
+             ../cpp/stockfish/nnue
+             ../cpp/stockfish/syzygy
+ )
++
++
++# Google Play requires 16 KB page support; NDK r27 and older link at 4 KB by default.
++target_link_options(stockfish PRIVATE
++            "-Wl,-z,max-page-size=16384"
++            "-Wl,-z,common-page-size=16384")
