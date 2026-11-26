@@ -7,6 +7,21 @@ which the Stockfish wrapper was written for. A further upgrade will be needed la
 
 Branch: `release` (`master` stays on SDK 52 until the first release is finalized)
 
+## Where we left off (2026-11-26)
+
+**Start here:** the release build fails (Metaspace) — item 0 under "Next session".
+
+- Done: SDK 54 upgrade and edge-to-edge insets, pushed to `release`; `master` unchanged.
+  `tsc` clean, 537/537 tests. Debug APK targets API 36, 64-bit libraries 16 KB aligned.
+  On the emulator: installed over beta.2 keeping data, loaded, engine started, training header
+  and move arrows clear the system bars.
+- Do not install `app-release.apk` from the build folder: stale 22 Nov build targeting API 34.
+- Not checked: landscape, modals, game review, PGN and `.kbook` import, backup/restore, engine
+  output, 16 KB-page emulator, physical phone. **Export a phone backup before installing.**
+- Machine: the builds installed SDK 36 and NDK 27 components. The emulator has the new build,
+  engine analysis switched on and a test move played; its storage is nearly full (see the
+  run skill). `issues.txt` is untracked.
+
 ## Progress
 
 - [ ] **0. Baseline** — branch ✅, `tsc` ✅ and 537/537 tests ✅; **still to do (manual): export a DB backup from the phone**
