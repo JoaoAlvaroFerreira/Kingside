@@ -17,7 +17,7 @@ Branch: `release` (`master` stays on SDK 52 until the first release is finalized
       remove `react-native-paper` and `@react-navigation/bottom-tabs` if confirmed unused
 - [x] **4. Native project** — generate a fresh SDK 54 template outside the repo, merge into `android/` by hand.
       Never run `prebuild` on the real folder
-- [ ] **5. Edge-to-edge** — safe-area insets on custom headers, bottom controls, modals
+- [ ] **5. Edge-to-edge** — insets added (root, headerless screens, chapter picker); **landscape, modals and game review not yet checked**
 - [ ] **6. Verify** — API 36 emulator with 16 KB pages, then phone
 
 ## Keep during the native merge
@@ -34,11 +34,25 @@ Release signing, ABI filters, `StockfishChessEngine_*SdkVersion` overrides (set 
 - [ ] Startup with a large repertoire still fast
 - [ ] Nothing under system bars, portrait and landscape
 
+## Next session
+
+0. **Release build is broken**: out of Metaspace in `minifyReleaseWithR8` and
+   `lintVitalAnalyzeRelease` (plus a lint crash in `expo-modules-core`, possibly a knock-on).
+   Try raising `-XX:MaxMetaspaceSize` (now 512m) in `android/gradle.properties`, then recheck
+   target SDK and 16 KB alignment on the release APK
+1. Phase 6: landscape, chapter picker, game review, other modals, back button/gesture
+2. PGN import, `.kbook` import, backup and restore (the file-system code changed import path)
+3. Engine: confirm analysis output, stop and restart
+4. Run on a 16 KB-page emulator image (needs downloading)
+5. Phone: **export a database backup first**, then install the release APK
+6. Update the rest of `CLAUDE.md` if behaviour differs, then merge `release` into `master`
+
+Other Play Store work is listed in `PLAYSTORE_TODO.md`.
+
 ## Risks / open points
 
-- No safe-area handling found in `src/`: phase 5 is likely the most visible work
-- The wrapper has old Gradle settings (`jcenter()`); compatibility only shows in phase 4
-- SDK 54's default NDK believed to be r27 (needs the flags) — unconfirmed
+- SDK 54 uses NDK 27.1, so the engine linker patch stays necessary
+- Reanimated 3.19 and the legacy architecture end here: the next SDK upgrade needs both replaced
 - Out of scope: app sends `Use NNUE value false` yet embeds the network (see `StockfishBridge.ts`)
 
 ## Log
@@ -53,7 +67,6 @@ Release signing, ABI filters, `StockfishChessEngine_*SdkVersion` overrides (set 
   listed in `expo.install.exclude`). `tsc` clean, 537/537 tests. Native files merged from
   `expo-template-bare-minimum@54.0.55`; Gradle 8.14.3, NDK 27.1. Debug APK: target/compile 36,
   all 38 64-bit libraries 16 KB aligned. Release (R8) build and device run not yet verified.
-  `CLAUDE.md` still states the old versions: update before merging to `master`.
 - 2026-11-26: added `babel-preset-expo` (no longer hoisted; bundling failed without it).
   Phase 5: bottom/side inset at the navigator root, top inset on the headerless screens and the
   chapter picker. Emulator (API 36.1, 4 KB pages, x86_64 debug): installs over beta.2 keeping
@@ -62,3 +75,6 @@ Release signing, ABI filters, `StockfishChessEngine_*SdkVersion` overrides (set 
   eval correctness, a 16 KB-page image, a physical phone.
   Seen once: Master tab read 0 for a while after leaving a training session, then correct
   (2,000). Not compared with SDK 52.
+- 2026-11-26: `assembleRelease` failed (Metaspace); not fixed yet. The `app-release.apk` on disk
+  dated 22 Nov is a stale SDK 52 build (targets 34) — do not install or publish it.
+  After the doc updates: `tsc` clean, 537/537 tests.

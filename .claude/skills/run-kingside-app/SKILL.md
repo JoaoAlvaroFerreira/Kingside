@@ -88,3 +88,12 @@ not a splash.
   that need repertoire data, import a small one first: Repertoire → Import
   Repertoire → paste PGN text (e.g. `1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4
   Nf6`) → Import.
+
+## If install fails for lack of storage
+
+Build only the emulator's ABI (much smaller APK; output lands in
+`android/app/build/intermediates/apk/debug/`, install with `adb install -t`):
+
+```bash
+cd android && ./gradlew assembleDebug -Pandroid.injected.build.abi=x86_64
+```

@@ -23,12 +23,15 @@ Kingside is a React Native/Expo chess training app. Personal tool for a 2000+ ra
 
 ## Architecture
 
-**Tech Stack:** React Native 0.76.9, Expo SDK 52, TypeScript (strict), chess.js 1.0.0-beta.8, Zustand, react-native-svg, React Navigation
+**Tech Stack:** React Native 0.81.5, Expo SDK 54 (legacy architecture, Reanimated 3), TypeScript (strict), chess.js 1.0.0-beta.8, Zustand, react-native-svg, React Navigation
 
 **Android Build Requirements:**
 - JDK 17 (configured in `android/gradle.properties`)
-- Android SDK 35, Gradle 8.10.2
-- Minimum SDK 23, Target SDK 35
+- Android SDK 36, Gradle 8.14.3, NDK 27.1
+- Minimum SDK 24, Target SDK 36
+- 16 KB page alignment for Stockfish comes from `patches/` (applied by `postinstall`); keep it
+- Android draws edge-to-edge: the navigator root insets bottom/sides, headerless screens add the top
+- File APIs are imported from `expo-file-system/legacy`
 
 **Path Aliases** (use these, not relative imports):
 ```
