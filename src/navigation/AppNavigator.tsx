@@ -2,7 +2,8 @@ import { LineSelection, LineOrder, Guidance, HeroColor } from '@types';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { createStackNavigator } from '@react-navigation/stack';
 import { NavigationContainer, createNavigationContainerRef } from '@react-navigation/native';
-import { Alert } from 'react-native';
+import { Alert, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { SessionSnapshot } from '@services/training/SessionSnapshot';
 
 import AnalysisBoardScreen from '@screens/AnalysisBoardScreen';
@@ -136,66 +137,74 @@ async function offerToResumeSession() {
 
 export default function AppNavigator() {
   return (
-    <NavigationContainer ref={navigationRef} onReady={offerToResumeSession}>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="Main" component={DrawerNavigator} />
-        <Stack.Screen
-          name="ImportPGN"
-          component={ImportPGNScreen}
-          options={{
-            headerShown: true,
-            headerStyle: { backgroundColor: '#2c2c2c' },
-            headerTintColor: '#e0e0e0',
-            presentation: 'modal',
-          }}
-        />
-        <Stack.Screen
-          name="BuildBook"
-          component={BuildBookScreen}
-          options={{
-            headerShown: true,
-            headerStyle: { backgroundColor: '#2c2c2c' },
-            headerTintColor: '#e0e0e0',
-            title: 'Build Book',
-          }}
-        />
-        <Stack.Screen
-          name="RepertoireStudy"
-          component={RepertoireStudyScreen}
-          options={{
-            headerShown: true,
-            headerStyle: { backgroundColor: '#2c2c2c' },
-            headerTintColor: '#e0e0e0',
-            title: 'Study Repertoire',
-          }}
-        />
-        <Stack.Screen
-          name="TrainingSession"
-          component={TrainingSessionScreen}
-          options={{
-            headerShown: false,
-            presentation: 'modal',
-          }}
-        />
-        <Stack.Screen
-          name="LineAnalysis"
-          component={AnalysisBoardScreen}
-          options={{
-            headerShown: true,
-            headerStyle: { backgroundColor: '#2c2c2c' },
-            headerTintColor: '#e0e0e0',
-            title: 'Analyse Line',
-          }}
-        />
-        <Stack.Screen
-          name="GameReview"
-          component={GameReviewScreen}
-          options={{
-            headerShown: false,
-            presentation: 'modal',
-          }}
-        />
-      </Stack.Navigator>
-    </NavigationContainer>
+    // Android draws edge-to-edge. Headers already clear the status bar, so only the other
+    // edges are inset here; screens without a header add the top one themselves.
+    <SafeAreaView style={styles.root} edges={['bottom', 'left', 'right']}>
+      <NavigationContainer ref={navigationRef} onReady={offerToResumeSession}>
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="Main" component={DrawerNavigator} />
+          <Stack.Screen
+            name="ImportPGN"
+            component={ImportPGNScreen}
+            options={{
+              headerShown: true,
+              headerStyle: { backgroundColor: '#2c2c2c' },
+              headerTintColor: '#e0e0e0',
+              presentation: 'modal',
+            }}
+          />
+          <Stack.Screen
+            name="BuildBook"
+            component={BuildBookScreen}
+            options={{
+              headerShown: true,
+              headerStyle: { backgroundColor: '#2c2c2c' },
+              headerTintColor: '#e0e0e0',
+              title: 'Build Book',
+            }}
+          />
+          <Stack.Screen
+            name="RepertoireStudy"
+            component={RepertoireStudyScreen}
+            options={{
+              headerShown: true,
+              headerStyle: { backgroundColor: '#2c2c2c' },
+              headerTintColor: '#e0e0e0',
+              title: 'Study Repertoire',
+            }}
+          />
+          <Stack.Screen
+            name="TrainingSession"
+            component={TrainingSessionScreen}
+            options={{
+              headerShown: false,
+              presentation: 'modal',
+            }}
+          />
+          <Stack.Screen
+            name="LineAnalysis"
+            component={AnalysisBoardScreen}
+            options={{
+              headerShown: true,
+              headerStyle: { backgroundColor: '#2c2c2c' },
+              headerTintColor: '#e0e0e0',
+              title: 'Analyse Line',
+            }}
+          />
+          <Stack.Screen
+            name="GameReview"
+            component={GameReviewScreen}
+            options={{
+              headerShown: false,
+              presentation: 'modal',
+            }}
+          />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  root: { flex: 1, backgroundColor: '#1e1e1e' },
+});

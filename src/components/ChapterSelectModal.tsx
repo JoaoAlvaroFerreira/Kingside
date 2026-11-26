@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Chapter } from '@types';
 import { countMoveTreeNodes, formatLastStudied } from '@utils/chapterUtils';
 
@@ -75,7 +76,7 @@ export function ChapterSelectModal({
       transparent={false}
       onRequestClose={handleClose}
     >
-      <View style={styles.container}>
+      <SafeAreaView style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.title}>Select Chapter</Text>
           <TouchableOpacity onPress={handleClose} testID="close-button">
@@ -98,7 +99,7 @@ export function ChapterSelectModal({
             <Text style={styles.emptyText}>No chapters found</Text>
           }
         />
-      </View>
+      </SafeAreaView>
     </Modal>
   );
 }

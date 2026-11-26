@@ -10,6 +10,7 @@ import {
   AppState,
   useWindowDimensions,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useStore } from '@store';
 import { Guidance, TrainingSession, TrainingConfig, TrainingTimingSettings, normalizeFen } from '@types';
 import { TrainingService } from '@services/training/TrainingService';
@@ -584,9 +585,9 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
 
   if (!session || !progress) {
     return (
-      <View style={styles.container}>
+      <SafeAreaView style={styles.container} edges={['top']}>
         <Text style={styles.loadingText}>Loading...</Text>
-      </View>
+      </SafeAreaView>
     );
   }
 
@@ -601,7 +602,7 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
     : undefined;
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <SessionMenu
         visible={menuVisible}
         onClose={() => setMenuVisible(false)}
@@ -822,7 +823,7 @@ export default function TrainingSessionScreen({ navigation, route }: TrainingSes
           </View>
         )}
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 

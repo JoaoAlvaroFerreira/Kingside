@@ -13,6 +13,7 @@ import {
   useWindowDimensions,
   ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useStore } from '@store';
 import { ChessWorkspace } from '@components/chess/ChessWorkspace/ChessWorkspace';
 import { EvalGraph } from '@components/chess/EvalGraph';
@@ -207,7 +208,7 @@ export default function GameReviewScreen({ navigation, route: _route }: GameRevi
   );
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
@@ -455,7 +456,7 @@ export default function GameReviewScreen({ navigation, route: _route }: GameRevi
           )}
         </View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 

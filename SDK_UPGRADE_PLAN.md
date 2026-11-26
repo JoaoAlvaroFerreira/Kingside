@@ -54,3 +54,11 @@ Release signing, ABI filters, `StockfishChessEngine_*SdkVersion` overrides (set 
   `expo-template-bare-minimum@54.0.55`; Gradle 8.14.3, NDK 27.1. Debug APK: target/compile 36,
   all 38 64-bit libraries 16 KB aligned. Release (R8) build and device run not yet verified.
   `CLAUDE.md` still states the old versions: update before merging to `master`.
+- 2026-11-26: added `babel-preset-expo` (no longer hoisted; bundling failed without it).
+  Phase 5: bottom/side inset at the navigator root, top inset on the headerless screens and the
+  chapter picker. Emulator (API 36.1, 4 KB pages, x86_64 debug): installs over beta.2 keeping
+  data, loads, engine reaches ready, training header and move arrows clear the system bars.
+  Not yet checked: landscape, chapter picker, game review, other modals, import, backup/restore,
+  eval correctness, a 16 KB-page image, a physical phone.
+  Seen once: Master tab read 0 for a while after leaving a training session, then correct
+  (2,000). Not compared with SDK 52.
