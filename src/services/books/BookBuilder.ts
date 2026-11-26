@@ -36,7 +36,7 @@ import {
 import { getGameSource } from '@services/gameSources';
 import { scanGame, splitGames } from '@services/gameSources/pgnScan';
 import { BookService } from './BookService';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 
 let SQLite: any = null;
 if (Platform.OS !== 'web') {

@@ -13,7 +13,7 @@ const mockFs = {
     createFileAsync: jest.fn().mockResolvedValue('content://target/kingside.db'),
   },
 };
-jest.mock('expo-file-system', () => mockFs);
+jest.mock('expo-file-system/legacy', () => mockFs);
 
 const mockPicker = { getDocumentAsync: jest.fn() };
 jest.mock('expo-document-picker', () => mockPicker);

@@ -12,10 +12,10 @@ Branch: `release` (`master` stays on SDK 52 until the first release is finalized
 - [ ] **0. Baseline** — branch ✅, `tsc` ✅ and 537/537 tests ✅; **still to do (manual): export a DB backup from the phone**
 - [x] **1. Engine spike** — 16 KB linker flags in the wrapper's `CMakeLists.txt` via `patch-package`; build on SDK 52.
       Done when `arm64-v8a` and `x86_64` `libstockfish.so` are 16 KB aligned
-- [ ] **2. JS upgrade** — `expo@54`, `expo install --fix` (RN 0.81, React 19); `newArchEnabled=false`; stay on Reanimated 3
-- [ ] **3. Code changes** — `expo-file-system/legacy` imports (6 files); React 19 type errors;
+- [x] **2. JS upgrade** — `expo@54`, `expo install --fix` (RN 0.81, React 19); `newArchEnabled=false`; stay on Reanimated 3
+- [x] **3. Code changes** — `expo-file-system/legacy` imports (6 files); React 19 type errors;
       remove `react-native-paper` and `@react-navigation/bottom-tabs` if confirmed unused
-- [ ] **4. Native project** — generate a fresh SDK 54 template outside the repo, merge into `android/` by hand.
+- [x] **4. Native project** — generate a fresh SDK 54 template outside the repo, merge into `android/` by hand.
       Never run `prebuild` on the real folder
 - [ ] **5. Edge-to-edge** — safe-area insets on custom headers, bottom controls, modals
 - [ ] **6. Verify** — API 36 emulator with 16 KB pages, then phone
@@ -49,3 +49,8 @@ Release signing, ABI filters, `StockfishChessEngine_*SdkVersion` overrides (set 
   Still 4 KB in the APK, to recheck after phase 4: `libc++_shared`, `libcrsqlite`, `libexpo-*`,
   Hermes, RN, Fresco, Reanimated/worklets, screens, JSI. Check with `llvm-readelf -lW`
   (`LOAD` alignment); `zipalign -P 16` passed even with these, so it is not sufficient.
+- 2026-11-26, phases 2–4: Expo 54, RN 0.81.5, React 19.1, Reanimated held at 3.19 (legacy arch,
+  listed in `expo.install.exclude`). `tsc` clean, 537/537 tests. Native files merged from
+  `expo-template-bare-minimum@54.0.55`; Gradle 8.14.3, NDK 27.1. Debug APK: target/compile 36,
+  all 38 64-bit libraries 16 KB aligned. Release (R8) build and device run not yet verified.
+  `CLAUDE.md` still states the old versions: update before merging to `master`.

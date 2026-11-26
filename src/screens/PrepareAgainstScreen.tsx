@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import * as DocumentPicker from 'expo-document-picker';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import { BookRecord, FetchError, HeroColor } from '@types';
 import { BookService } from '@services/books/BookService';
 import { BookBuilder } from '@services/books/BookBuilder';

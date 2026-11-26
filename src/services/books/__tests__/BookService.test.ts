@@ -8,7 +8,7 @@ const mockFs = {
   makeDirectoryAsync: jest.fn().mockResolvedValue(undefined),
   readDirectoryAsync: jest.fn().mockResolvedValue([]),
 };
-jest.mock('expo-file-system', () => mockFs);
+jest.mock('expo-file-system/legacy', () => mockFs);
 
 const mockSQLite = { openDatabaseAsync: jest.fn() };
 jest.mock('expo-sqlite', () => mockSQLite, { virtual: true });

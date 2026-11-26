@@ -8,7 +8,7 @@ import { UserGame, MasterGame, Repertoire, normalizeFen, EngineEvaluation, LineS
 import { Chess } from 'chess.js';
 import { WebDatabaseService } from './WebDatabaseService';
 import { extractChapterMoves, extractChapterPositions, mergePositionMaps, PositionMap, PositionMove } from '@utils/extractRepertoirePositions';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import {
   encodeMoves, decodeMoves, encodeEvals, decodeEvals, extractEvalsFromPgn, buildPgn,
 } from './gameStorage';

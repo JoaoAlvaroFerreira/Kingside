@@ -16,6 +16,11 @@ jest.mock('expo-sqlite', () => ({
   openDatabaseAsync: (...args: any[]) => mockOpenDatabaseAsync(...args),
 }));
 
+jest.mock('expo-file-system/legacy', () => ({
+  documentDirectory: 'file:///documents/',
+  deleteAsync: jest.fn().mockResolvedValue(undefined),
+}));
+
 // Also mock WebDatabaseService (not needed for native path)
 jest.mock('../WebDatabaseService', () => ({
   WebDatabaseService: {
